@@ -11,6 +11,12 @@ class SimpleTraceable(TraceableObject):
     value: str
 
 
+def test_traceable_defaults_set():
+    s = SimpleTraceable("this is the value")
+    assert s.id != ""
+    assert s.creation_time_millis > 0
+
+
 def test_json_round_trip_traceable():
     original = SimpleTraceable("this is the value")
     as_json = to_json(original)
