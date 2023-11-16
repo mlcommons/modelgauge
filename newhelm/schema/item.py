@@ -20,7 +20,7 @@ class Reference:
 
 
 @dataclass(frozen=True)
-class Item:
+class Item(TraceableObject):
     """The basic unit of a test, storing the raw data."""
 
     text: str
