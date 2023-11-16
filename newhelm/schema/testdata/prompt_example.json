@@ -1,0 +1,11 @@
+{
+    "id": "8326333f020a42ef955ab13e9394f157",
+    "creation_time_millis": 1699999591252,
+    "text": "This is the prompt",
+    "template_id": "1234",
+    "sut_specialization": {
+        "sut_id": "abcd123",
+        "num_in_context_examples_truncated": 2,
+        "num_characters_truncated": 432
+    }
+}
