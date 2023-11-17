@@ -4,7 +4,7 @@ from typing import List, Optional
 
 @dataclass(frozen=True)
 class DatasetConfig:
-    """Specifies which set of Items to use, and any filtering to perform."""
+    """Specifies which set of Instances to use, and any filtering to perform."""
 
     dataset_name: str
     # TODO Fill in
@@ -13,7 +13,7 @@ class DatasetConfig:
 
 @dataclass(frozen=True)
 class PertubationConfig:
-    """Specifies a way of modifying Items before making them into prompts."""
+    """Specifies a way of modifying Instances before making them into prompts."""
 
     # TODO Fill in
     pass
@@ -21,7 +21,7 @@ class PertubationConfig:
 
 @dataclass(frozen=True)
 class AdapterConfig:
-    """Specifies how to structure the Items into prompts."""
+    """Specifies how to structure the Instances into prompts."""
 
     # TODO Fill in
     pass
@@ -32,7 +32,7 @@ class AdapterConfig:
 
 @dataclass(frozen=True)
 class StaticPromptResponseConfig:
-    """Specifies how to go from a list of static Items to a list of Prompts."""
+    """Specifies how to go from a list of static Instances to a list of Prompts."""
 
     dataset_config: DatasetConfig
     perturbation_methods: List[PertubationConfig]
