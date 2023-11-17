@@ -20,7 +20,7 @@ class Reference:
 
 
 @dataclass(frozen=True)
-class Item(TraceableObject):
+class Instance(TraceableObject):
     """The basic unit of a test, storing the raw data."""
 
     text: str
@@ -36,28 +36,28 @@ class Item(TraceableObject):
 
 
 @dataclass(frozen=True)
-class ItemPromptBlock:
-    """Block of text / other data derived from a single Item."""
+class InstancePromptBlock:
+    """Block of text / other data derived from a single Instance."""
 
     text: str
 
     # TODO References to the Image/video/audio data can go here.
 
-    item_id: str
-    """The Item this was originally derived from."""
+    instance_id: str
+    """The Instance this was originally derived from."""
 
 
 @dataclass(frozen=True, kw_only=True)
-class ItemPromptTemplate(TraceableObject):
+class InstancePromptTemplate(TraceableObject):
     """Contains all information required to make a specific prompt, without any SUT specific data"""
 
-    eval_item_block: ItemPromptBlock
+    eval_instance_block: InstancePromptBlock
     """Specify the evaluation text and where it came from."""
 
     reference_index: Optional[int] = None
-    """Record the additional reference information used from the eval Item, if any."""
+    """Record the additional reference information used from the eval Instance, if any."""
 
-    train_items: List[ItemPromptBlock] = field(default_factory=list)
+    train_instances: List[InstancePromptBlock] = field(default_factory=list)
     """List the text and origin of in-context examples, if any."""
 
     # TODO Something about what adapter was used

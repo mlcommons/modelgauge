@@ -1,0 +1,12 @@
+{
+    "id": "025d360242974681aa092624bf3391bf",
+    "creation_time_millis": 1699998606466,
+    "eval_instance_block": {
+        "text": "The color of the sky is: blue", "instance_id": "1111"
+    },
+    "reference_index": 3,
+    "train_instances": [
+        {"text": "The color of a polar bear is: white", "instance_id": "123"},
+        {"text": "The color of space is: black", "instance_id": "987"}
+    ]
+}
