@@ -3,7 +3,7 @@ import json
 import time
 from typing import Any, Dict, TypeVar
 import uuid
-
+import yaml
 import dacite
 
 # Type vars helpful in defining templates.
@@ -32,3 +32,9 @@ def to_json(obj) -> str:
 
 def from_json(cls: type[_InT], value: str) -> _InT:
     return dacite.from_dict(cls, json.loads(value), config=dacite.Config(strict=True))
+
+
+def from_yaml(cls: type[_InT], value: str) -> _InT:
+    return dacite.from_dict(
+        cls, yaml.safe_load(value), config=dacite.Config(strict=True)
+    )

@@ -11,6 +11,8 @@ pytest = "^7.4.3"
 mypy = "^1.7.0"
 black = "^23.11.0"
 dacite = "^1.8.1"
+pyyaml = "^6.0.1"
+types-pyyaml = "^6.0.12.12"
 
 
 [build-system]

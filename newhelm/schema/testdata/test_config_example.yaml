@@ -1,0 +1,15 @@
+---
+name: "Example Test"
+prompt_response_config:
+  dataset_config:
+    dataset_name: "best-data"
+  perturbation_methods:
+    - {}
+    - {}
+  adapter_method: {}
+model_annotation_config:
+  - {}
+metric_config:
+  - {}
+  - {}
+  
