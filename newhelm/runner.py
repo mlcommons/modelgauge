@@ -25,7 +25,8 @@ def end_to_end_run(
     # TODO `interact` and `annotate` should be asynchronous as either one could have a human
     # in the loop / make slow external calls.
 
-    # In HELM's run_one method, this is everything up to and including `executor.execute`
+    # In HELM's run_one method, this encapsulates the code from DataPreprocessor.preprocess
+    # up to and including `executor.execute`
     sut_interactions = interaction_maker.interact(suts)
     # TODO write down all interactions
 
