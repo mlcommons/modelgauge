@@ -1,0 +1,24 @@
+from newhelm.interaction_annotator import (
+    IndependentCallAnnotator,
+    IndependentCallAnnotatorClient,
+)
+from newhelm.metric import MetricCalculator
+from newhelm.prompt import InstancePromptTemplate
+import newhelm.runners.prefect_runner as prefect_runner
+from newhelm.sut import SUT
+from newhelm.sut_interaction import StaticPromptResponseStrategy
+
+
+def test_run():
+    results = prefect_runner.run(
+        # One prompt
+        interaction_maker=StaticPromptResponseStrategy([InstancePromptTemplate()]),
+        # One SUT
+        suts=[SUT()],
+        # One annotator
+        annotators=[IndependentCallAnnotator(IndependentCallAnnotatorClient())],
+        # One metric
+        metrics=[MetricCalculator()],
+    )
+    # Currently just outputting 1 result per interaction and 1 per annotation
+    assert len(results) == 2

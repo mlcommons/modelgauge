@@ -11,6 +11,8 @@ pytest = "^7.4.3"
 mypy = "^1.7.0"
 black = "^23.11.0"
 dacite = "^1.8.1"
+prefect = "^2.14.8"
+pydantic = ">=1.0, <2.0"
 
 
 [build-system]
