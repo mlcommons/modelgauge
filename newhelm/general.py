@@ -1,7 +1,9 @@
 from dataclasses import asdict, is_dataclass
 import json
+import shlex
+import subprocess
 import time
-from typing import Any, Dict, TypeVar
+from typing import Any, Dict, List, TypeVar
 import uuid
 
 import dacite
@@ -32,3 +34,12 @@ def to_json(obj) -> str:
 
 def from_json(cls: type[_InT], value: str) -> _InT:
     return dacite.from_dict(cls, json.loads(value), config=dacite.Config(strict=True))
+
+
+def shell(args: List[str]):
+    """Executes the shell command in `args`."""
+    cmd = shlex.join(args)
+    print(f"Executing: {cmd}")
+    exit_code = subprocess.call(args)
+    if exit_code != 0:
+        print(f"Failed with exit code {exit_code}: {cmd}")

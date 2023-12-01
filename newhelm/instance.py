@@ -29,7 +29,9 @@ class PassageQuestionInput(Input):
         question_prefix: str = "Question: ",
         separator: str = "\n",
     ):
-        super().__init__(f"{passage_prefix}{passage}{separator}{question_prefix}{question}")
+        super().__init__(
+            f"{passage_prefix}{passage}{separator}{question_prefix}{question}"
+        )
 
 
 @dataclass(frozen=True)
