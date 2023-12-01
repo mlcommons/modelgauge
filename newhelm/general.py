@@ -1,4 +1,5 @@
 from dataclasses import asdict, is_dataclass
+import hashlib
 import json
 import shlex
 import subprocess
@@ -43,3 +44,15 @@ def shell(args: List[str]):
     exit_code = subprocess.call(args)
     if exit_code != 0:
         print(f"Failed with exit code {exit_code}: {cmd}")
+
+
+def hash_file(filename, block_size=65536):
+    file_hash = hashlib.sha256()
+    with open(filename, "rb") as f:
+        while True:
+            block = f.read(block_size)
+            if not block:
+                break
+            file_hash.update(block)
+
+    return file_hash.hexdigest()
