@@ -47,6 +47,7 @@ def shell(args: List[str]):
 
 
 def hash_file(filename, block_size=65536):
+    """Apply sha256 to the bytes of `filename`."""
     file_hash = hashlib.sha256()
     with open(filename, "rb") as f:
         while True:

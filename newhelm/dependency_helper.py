@@ -136,10 +136,8 @@ class FromSourceDependencyHelper(DependencyHelper):
                 # TODO Allow for overwriting
                 return version
             os.makedirs(os.path.join(self.data_dir, dependency_key), exist_ok=True)
-            os.rename(tmp_location, final_path)
-            # os.makedirs(final_path, exist_ok=True)
-            # shutil.move(tmp_location, final_path)
             # TODO all the fancy unpacking in HELM's ensure_file_download.
+            os.rename(tmp_location, final_path)
             metadata_file = final_path + ".metadata"
             with open(metadata_file, "w") as f:
                 f.write(to_json(DependencyVersionMetadata(version)))
