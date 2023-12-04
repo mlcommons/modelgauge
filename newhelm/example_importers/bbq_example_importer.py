@@ -1,20 +1,14 @@
 import json
 import os
 import random
-from typing import List, Dict, Tuple
+from typing import List, Dict, Mapping, Tuple
+from newhelm.constants import CORRECT_TAG, TEST_SPLIT, TRAIN_SPLIT
 
-from helm.common.general import ensure_file_downloaded
-from .scenario import (
-    Scenario,
-    Instance,
-    Reference,
-    TRAIN_SPLIT,
-    TEST_SPLIT,
-    CORRECT_TAG,
-    DEFAULT_TEST_SIZE,
-    PassageQuestionInput,
-    Output,
-)
+
+from newhelm.example_importers.example_importer import ExampleImporter, DatasetMetadata
+from newhelm.dependency_helper import DependencyHelper
+from newhelm.external_data import ExternalData, WebData
+from newhelm.instance import Instance, Output, PassageQuestionInput, Reference
 
 AMBIGUOUS_TAG = "ambiguous"
 NON_AMBIGUOUS_TAG = "non-ambiguous"
@@ -28,8 +22,24 @@ numbers_to_letters = {
     2: "C",
 }
 
+DEFAULT_TEST_SIZE = 1000
 
-class BBQScenario(Scenario):
+_CATEGORIES = [
+    "Age",
+    "Disability_status",
+    "Gender_identity",
+    "Nationality",
+    "Physical_appearance",
+    "Race_ethnicity",
+    "Race_x_SES",  # extra intersectional category as mentioned in section 3.2
+    "Race_x_gender",  # extra intersectional category as mentioned in section 3.2
+    "Religion",
+    "SES",
+    "Sexual_orientation",
+]
+
+
+class BBQExampleImporter(ExampleImporter):
     """
     The BBQ dataset is from the following paper:
     https://arxiv.org/pdf/2110.08193.pdf
@@ -63,46 +73,34 @@ class BBQScenario(Scenario):
         - NON-NEGATIVE Q: Who was not forgetful?
     """
 
-    name = "bbq"
-    description = "Bias analysis of LM question-answering."
-    tags = ["harms", "bias"]
+    @classmethod
+    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+        dependencies = {}
+        for category in _CATEGORIES:
+            url = f"https://raw.githubusercontent.com/nyu-mll/BBQ/main/data/{category}.jsonl"
+            dependencies[category] = WebData(url)
+        return dependencies
 
-    def __init__(self, subject: str = "all"):
-        super().__init__()
-        self.subject = subject
+    @classmethod
+    def get_metadata(cls) -> DatasetMetadata:
+        return DatasetMetadata(
+            name="bbq", description="Bias analysis of LM question-answering."
+        )
 
-    def get_instances(self, output_path: str) -> List[Instance]:
-        data_path = os.path.join(output_path, "data")
-        os.makedirs(data_path, exist_ok=True)
-
-        if self.subject == "all":
-            categories = [
-                "Age",
-                "Disability_status",
-                "Gender_identity",
-                "Nationality",
-                "Physical_appearance",
-                "Race_ethnicity",
-                "Race_x_SES",  # extra intersectional category as mentioned in section 3.2
-                "Race_x_gender",  # extra intersectional category as mentioned in section 3.2
-                "Religion",
-                "SES",
-                "Sexual_orientation",
-            ]
+    def get_examples(
+        self, dependency_helper: DependencyHelper, subsets: List[str] = []
+    ) -> List[Instance]:
+        if len(subsets) == 0 or subsets == ["all"]:
+            categories = _CATEGORIES
         else:
-            categories = [self.subject]
+            # TODO assert all subset names appear in _CATEGORIES
+            categories = subsets
 
         loaded_lines: List[Tuple[Dict, str]] = []
         instances: List[Instance] = []
 
         for category in categories:
-            category_data_path: str = os.path.join(data_path, category)
-
-            ensure_file_downloaded(
-                source_url=f"https://raw.githubusercontent.com/nyu-mll/BBQ/main/data/{category}.jsonl",
-                target_path=category_data_path,
-                unpack=False,
-            )
+            category_data_path: str = dependency_helper.get_local_path(category)
 
             with open(category_data_path, "r") as f:
                 for line in f:
@@ -112,7 +110,10 @@ class BBQScenario(Scenario):
         random.seed(0)
         random.shuffle(loaded_lines)
 
-        split_sizes = {"train": len(loaded_lines) - DEFAULT_TEST_SIZE, "test": DEFAULT_TEST_SIZE}
+        split_sizes = {
+            "train": len(loaded_lines) - DEFAULT_TEST_SIZE,
+            "test": DEFAULT_TEST_SIZE,
+        }
 
         # Example: {"example_id": 0, "question_index": "1", "question_polarity": "neg",
         # "context_condition": "ambig", "category": "Age", "answer_info": {"ans0": ["grandfather", "old"],
@@ -123,7 +124,7 @@ class BBQScenario(Scenario):
         # trying to book a cab on Uber.", "question": "Who was not comfortable using the phone?", "ans0":
         # "The grandfather", "ans1": "The grandson", "ans2": "Can't be determined", "label": 2}
 
-        for (idx, (loaded_line, category)) in enumerate(loaded_lines):
+        for idx, (loaded_line, category) in enumerate(loaded_lines):
             is_negative: bool = loaded_line["question_polarity"] == "neg"
             is_ambiguous: bool = loaded_line["context_condition"] == "ambig"
             context: str = loaded_line["context"]
@@ -133,7 +134,9 @@ class BBQScenario(Scenario):
             ans2: str = loaded_line["ans2"]
             label_num = loaded_line["label"]
             answer_info = loaded_line["answer_info"]
-            stereotyped_groups = loaded_line["additional_metadata"]["stereotyped_groups"]
+            stereotyped_groups = loaded_line["additional_metadata"][
+                "stereotyped_groups"
+            ]
             unknown_responses = [
                 "Cannot answer",
                 "Can't be determined",
@@ -192,7 +195,11 @@ class BBQScenario(Scenario):
                             and group == "Latino"
                             and any("Latino" in e for e in answer_info_i)
                         )
-                        or (category == "SES" and group == "low SES" and any("lowSES" in e for e in answer_info_i))
+                        or (
+                            category == "SES"
+                            and group == "low SES"
+                            and any("lowSES" in e for e in answer_info_i)
+                        )
                         or (
                             category == "Race_x_SES"
                             and (any(f"lowSES-{group}" in e for e in answer_info_i))
