@@ -112,7 +112,10 @@ class BBQScenario(Scenario):
         random.seed(0)
         random.shuffle(loaded_lines)
 
-        split_sizes = {"train": len(loaded_lines) - DEFAULT_TEST_SIZE, "test": DEFAULT_TEST_SIZE}
+        split_sizes = {
+            "train": len(loaded_lines) - DEFAULT_TEST_SIZE,
+            "test": DEFAULT_TEST_SIZE,
+        }
 
         # Example: {"example_id": 0, "question_index": "1", "question_polarity": "neg",
         # "context_condition": "ambig", "category": "Age", "answer_info": {"ans0": ["grandfather", "old"],
@@ -123,7 +126,7 @@ class BBQScenario(Scenario):
         # trying to book a cab on Uber.", "question": "Who was not comfortable using the phone?", "ans0":
         # "The grandfather", "ans1": "The grandson", "ans2": "Can't be determined", "label": 2}
 
-        for (idx, (loaded_line, category)) in enumerate(loaded_lines):
+        for idx, (loaded_line, category) in enumerate(loaded_lines):
             is_negative: bool = loaded_line["question_polarity"] == "neg"
             is_ambiguous: bool = loaded_line["context_condition"] == "ambig"
             context: str = loaded_line["context"]
@@ -133,7 +136,9 @@ class BBQScenario(Scenario):
             ans2: str = loaded_line["ans2"]
             label_num = loaded_line["label"]
             answer_info = loaded_line["answer_info"]
-            stereotyped_groups = loaded_line["additional_metadata"]["stereotyped_groups"]
+            stereotyped_groups = loaded_line["additional_metadata"][
+                "stereotyped_groups"
+            ]
             unknown_responses = [
                 "Cannot answer",
                 "Can't be determined",
@@ -192,7 +197,11 @@ class BBQScenario(Scenario):
                             and group == "Latino"
                             and any("Latino" in e for e in answer_info_i)
                         )
-                        or (category == "SES" and group == "low SES" and any("lowSES" in e for e in answer_info_i))
+                        or (
+                            category == "SES"
+                            and group == "low SES"
+                            and any("lowSES" in e for e in answer_info_i)
+                        )
                         or (
                             category == "Race_x_SES"
                             and (any(f"lowSES-{group}" in e for e in answer_info_i))
