@@ -1,6 +1,6 @@
 from newhelm.interaction_annotator import (
-    IndependentCallAnnotator,
-    IndependentCallAnnotatorClient,
+    SimpleInteractionAnnotator,
+    PerspectiveAPIAnnotatorClient,
 )
 from newhelm.metric import MetricCalculator
 from newhelm.prompt import InstancePromptTemplate
@@ -16,7 +16,7 @@ def test_run():
         # One SUT
         suts=[SUT()],
         # One annotator
-        annotators=[IndependentCallAnnotator(IndependentCallAnnotatorClient())],
+        annotators=[SimpleInteractionAnnotator(PerspectiveAPIAnnotatorClient())],
         # One metric
         metrics=[MetricCalculator()],
     )

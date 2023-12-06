@@ -9,8 +9,16 @@ class InteractionAnnotation:
     """Placeholder for data returnd by an annotator"""
 
 
-class IndependentCallAnnotatorClient:
-    """Base class for an annotator that annotates each interaction independently."""
+class SimpleAnnotatorClient(ABC):
+    """Base class for a client that can annotate a single annotation."""
+
+    @abstractmethod
+    def annotate(self, interaction: SUTInteraction) -> List[InteractionAnnotation]:
+        pass
+
+
+class PerspectiveAPIAnnotatorClient(SimpleAnnotatorClient):
+    """Stub out the primary example of this from HELM."""
 
     def annotate(self, interaction: SUTInteraction) -> List[InteractionAnnotation]:
         # Return a dummy annotation.
@@ -27,6 +35,8 @@ class InteractionAnnotationTask(Task):
 
 
 class InteractionAnnotator(ABC):
+    """Base class for how to request an external service provide more data about the SUTs' behavior."""
+
     @abstractmethod
     def get_tasks(
         self, sut_interactions: List[SUTInteraction]
@@ -34,8 +44,8 @@ class InteractionAnnotator(ABC):
         pass
 
 
-class IndependentCallAnnotator(InteractionAnnotator):
-    """Placeholder for things like calling Perspective API."""
+class SimpleInteractionAnnotator(InteractionAnnotator):
+    """Makes a separate task for passing each interaction to the client."""
 
     def __init__(self, annotator_client):
         self.annotator_client = annotator_client
