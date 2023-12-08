@@ -42,9 +42,12 @@ jobs:
         key: pydeps-${{ hashFiles('**/poetry.lock') }}
 
     
-    - name: Install dependencies
+    - name: Install dependencies with caching
       run: poetry install --no-interaction --no-root
       if: steps.cache-deps.outputs.cache-hit != 'true'
+
+    - name: Install the project
+      run: poetry install --no-interaction
 
     - name: Test with pytest
       run: |
