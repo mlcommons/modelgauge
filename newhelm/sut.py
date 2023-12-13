@@ -1,11 +1,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import List
 
 from newhelm.placeholders import Prompt, PromptTemplate
 
 
 @dataclass(frozen=True)
-class SUTResponse:
+class Turn:
     """This is mostly a placeholder"""
 
     prompt: Prompt
@@ -13,6 +14,11 @@ class SUTResponse:
 
     completion: str
     """The data that came back from the SUT."""
+
+
+@dataclass(frozen=True)
+class Interaction:
+    turns: List[Turn]
 
 
 class PromptResponseSUT(ABC):
@@ -23,5 +29,5 @@ class PromptResponseSUT(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, prompt: Prompt) -> SUTResponse:
+    def evaluate(self, prompt: Prompt) -> Interaction:
         pass

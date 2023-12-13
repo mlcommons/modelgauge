@@ -6,7 +6,7 @@ from newhelm.placeholders import (
     PlaceholderTokenizer,
     WindowServiceConfig,
 )
-from newhelm.sut import PromptResponseSUT, SUTResponse
+from newhelm.sut import Interaction, PromptResponseSUT, Turn
 
 
 def template_to_string(prompt_template: PromptTemplate):
@@ -24,6 +24,7 @@ def template_to_string(prompt_template: PromptTemplate):
 
 class GPT2(PromptResponseSUT):
     """The SUT should have all the details currently spread across model_deployment and model_metadata."""
+
     def __init__(self):
         self.window_service = LocalWindowService(
             PlaceholderTokenizer(),
@@ -42,7 +43,7 @@ class GPT2(PromptResponseSUT):
         )
         return Prompt(text=prompt_text, truncated=True)
 
-    def evaluate(self, prompt: Prompt) -> SUTResponse:
+    def evaluate(self, prompt: Prompt) -> Interaction:
         # Pure placeholder.
         number_of_words = len(prompt.text.split())
-        return SUTResponse(prompt, f"The prompt has {number_of_words} words.")
+        return Interaction([Turn(prompt, f"The prompt has {number_of_words} words.")])

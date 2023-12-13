@@ -2,7 +2,7 @@
 
 from newhelm.placeholders import Prompt, PromptTemplate, WindowServiceConfig
 from newhelm.plugins.suts.gpt_2_sut import GPT2
-from newhelm.sut import SUTResponse
+from newhelm.sut import Interaction, Turn
 
 
 def test_specialize():
@@ -63,5 +63,5 @@ A polar bear\
 def test_evaluate():
     sut = GPT2()
     prompt = Prompt("One two three")
-    response = sut.evaluate(prompt)
-    assert response == SUTResponse(prompt=prompt, completion="The prompt has 3 words.")
+    interaction = sut.evaluate(prompt)
+    assert interaction == Interaction([Turn(prompt=prompt, completion="The prompt has 3 words.")])

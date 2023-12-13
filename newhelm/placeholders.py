@@ -52,6 +52,7 @@ class PlaceholderTokenizer(BaseTokenizer):
 
 class LocalWindowService:
     """This is roughly copied over from HELM's local_window_service with simplifications."""
+
     def __init__(self, tokenizer: BaseTokenizer, config: WindowServiceConfig):
         self.tokenizer = tokenizer
         self.config = config
@@ -71,7 +72,7 @@ class LocalWindowService:
         template_to_string: Callable[[PromptTemplate], str],
     ) -> str:
         """Copied over from HELM's InContextLearningAdapter._make_prompt_fit.
-        
+
         One big difference is passing in template_to_string, which lets the individual SUT
         decide how to convert the PromptTemplate to a string.
         """
