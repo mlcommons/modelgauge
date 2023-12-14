@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Callable, List
 
 
@@ -11,14 +11,14 @@ class Prompt:
     truncated: bool = False
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class PromptTemplate:
     """All the pieces necessary for a SUT to construct a Prompt in its own form."""
 
-    instructions_block: str
+    instructions_block: str = ""
     """Instructions for the task."""
 
-    train_instance_blocks: List[str]
+    train_instance_blocks: List[str] = field(default_factory=list)
     """Train instance blocks for the prompt."""
 
     eval_instance_block: str
