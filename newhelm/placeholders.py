@@ -95,6 +95,8 @@ class LocalWindowService:
 
 @dataclass(frozen=True)
 class Result:
+    """The measurement produced by Test."""
+
     # Just a placeholder.
     name: str
     value: float

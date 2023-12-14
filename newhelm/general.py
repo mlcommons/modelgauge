@@ -1,7 +1,7 @@
 from dataclasses import asdict, is_dataclass
 import json
 import time
-from typing import Any, Dict, TypeVar
+from typing import Any, Dict, Set, Type, TypeVar
 import uuid
 
 import dacite
@@ -32,3 +32,11 @@ def to_json(obj) -> str:
 
 def from_json(cls: type[_InT], value: str) -> _InT:
     return dacite.from_dict(cls, json.loads(value), config=dacite.Config(strict=True))
+
+
+def get_all_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
+    result = set()
+    for subclass in cls.__subclasses__():
+        result.add(subclass)
+        result.update(get_all_subclasses(subclass))
+    return result

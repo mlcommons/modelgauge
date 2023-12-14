@@ -14,8 +14,11 @@ class BaseTest(ABC):
 
 
 class BasePromptResponseTest(ABC):
+    """This is the base class for all tests that are single turn."""
+
     @abstractmethod
     def make_prompt_templates(self) -> List[PromptTemplate]:
+        """Generate all data that will eventually go to the SUT."""
         pass
 
     # TODO Insert a method here for how the test can specify what annotators to run.
@@ -24,4 +27,5 @@ class BasePromptResponseTest(ABC):
     def calculate_results(
         self, interactions: List[AnnotatedInteraction]
     ) -> List[Result]:
+        """Use the SUT responses with annotations to produce a list of Results."""
         pass
