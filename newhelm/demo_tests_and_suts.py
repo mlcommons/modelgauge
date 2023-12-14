@@ -3,18 +3,18 @@ from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.load_plugins import load_plugins
 from newhelm.sut import PromptResponseSUT
-from newhelm.general import get_all_subclasses
+from newhelm.general import get_concrete_subclasses
 
 
 if __name__ == "__main__":
     load_plugins()
 
     all_suts: List[PromptResponseSUT] = [
-        cls() for cls in get_all_subclasses(PromptResponseSUT)  # type: ignore[type-abstract]
+        cls() for cls in get_concrete_subclasses(PromptResponseSUT)  # type: ignore[type-abstract]
     ]
 
     all_tests: List[BasePromptResponseTest] = [
-        cls() for cls in get_all_subclasses(BasePromptResponseTest)  # type: ignore[type-abstract]
+        cls() for cls in get_concrete_subclasses(BasePromptResponseTest)  # type: ignore[type-abstract]
     ]
     for test in all_tests:
         print("\n\nStarting a new test:", test.__class__.__name__)
