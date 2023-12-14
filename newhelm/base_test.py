@@ -8,12 +8,10 @@ from newhelm.placeholders import PromptTemplate, Result
 class BaseTest(ABC):
     """This is the placeholder base class for all tests."""
 
-    @abstractmethod
-    def run(self):
-        pass
+    pass
 
 
-class BasePromptResponseTest(ABC):
+class BasePromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
     @abstractmethod
