@@ -14,6 +14,7 @@ import newhelm.plugins
 import newhelm.plugins.benchmarks
 import newhelm.plugins.suts
 import newhelm.plugins.tests
+import newhelm.plugins.runners
 
 
 def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
