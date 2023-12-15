@@ -2,6 +2,7 @@ from typing import List
 from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.placeholders import PromptTemplate, Result
+from newhelm.test_registry import TESTS
 
 
 class BBQ(BasePromptResponseTest):
@@ -30,3 +31,6 @@ class BBQ(BasePromptResponseTest):
                 value=prompt_longer_count / len(interactions),
             )
         ]
+
+
+TESTS.register("bbq", BBQ())

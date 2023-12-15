@@ -7,6 +7,7 @@ from newhelm.placeholders import (
     WindowServiceConfig,
 )
 from newhelm.sut import Interaction, PromptResponseSUT, Turn
+from newhelm.sut_registry import SUTS
 
 
 def template_to_string(prompt_template: PromptTemplate):
@@ -47,3 +48,6 @@ class GPT2(PromptResponseSUT):
         # Pure placeholder.
         number_of_words = len(prompt.text.split())
         return Interaction([Turn(prompt, f"The prompt has {number_of_words} words.")])
+
+
+SUTS.register("gpt2", GPT2())

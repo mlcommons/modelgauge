@@ -2,6 +2,7 @@ from typing import List
 from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest, BaseTest
 from newhelm.placeholders import PromptTemplate, Result
+from newhelm.test_registry import TESTS
 
 
 class MMLU(BasePromptResponseTest):
@@ -21,3 +22,6 @@ class MMLU(BasePromptResponseTest):
     ) -> List[Result]:
         # In the real thing, this would be handled by Metric objects
         return [Result("count", value=len(interactions))]
+
+
+TESTS.register("mmlu", MMLU())
