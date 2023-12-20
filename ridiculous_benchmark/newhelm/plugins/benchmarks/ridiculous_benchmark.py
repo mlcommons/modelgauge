@@ -4,6 +4,7 @@ from newhelm.plugins.tests.mmlu import MMLU
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
 from newhelm.placeholders import Result
+from newhelm.plugins.tests.pretend_bbq import PretendBBQ
 from newhelm.plugins.tests.bbq import BBQ
 
 

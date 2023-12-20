@@ -10,7 +10,7 @@ from newhelm.single_turn_prompt_response import (
 )
 
 
-class BBQ(BasePromptResponseTest):
+class PretendBBQ(BasePromptResponseTest):
     def make_test_items(self) -> List[TestItem]:
         # In the real thing, this would use DependencyHelper and other libraries.
         lines = [
