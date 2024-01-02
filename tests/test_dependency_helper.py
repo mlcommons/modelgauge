@@ -271,7 +271,7 @@ def test_from_source_unpacks(tmpdir):
 
     assert d1_path.endswith(f"d1/{_DATA_1_HASH}")
 
-    assert os.listdir(d1_path) == [
+    assert sorted(os.listdir(d1_path)) == [
         "0.txt",
         "1.txt",
         "2.txt",

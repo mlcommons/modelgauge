@@ -38,7 +38,7 @@ def test_data_unpacking(unpacker, input_filename, parent_directory, tmpdir):
     destination_dir = str(tmpdir)
     unpacker.unpack(source_filename, destination_dir)
 
-    assert os.listdir(destination_dir) == ["f1.txt", "f2.txt"]
+    assert sorted(os.listdir(destination_dir)) == ["f1.txt", "f2.txt"]
 
     # Check file contents.
     with open(os.path.join(destination_dir, "f1.txt"), "r") as f:
