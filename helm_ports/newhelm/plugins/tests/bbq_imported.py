@@ -26,7 +26,7 @@ class FakeWindowService(DefaultWindowService):
     def fits_within_context_window(self, *args, **kwargs):
         return True
 
-class BBQ(BasePromptResponseTest):
+class BBQImported(BasePromptResponseTest):
     def __init__(self):
         register_builtin_configs_from_helm_package()
         self.run_spec = get_bbq_spec("all")

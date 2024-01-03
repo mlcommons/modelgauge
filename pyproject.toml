@@ -25,4 +25,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 all_supported_tests = ["mmlu", "helm_ports"]
-all_supported_benchmarks = ["ridiculous_benchmark"]
+all_supported_benchmarks = ["ridiculous_benchmark", "helm_ports"]

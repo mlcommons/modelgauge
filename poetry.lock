@@ -3629,10 +3629,10 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-supported-benchmarks = ["ridiculous_benchmark"]
+all-supported-benchmarks = ["helm_ports", "ridiculous_benchmark"]
 all-supported-tests = ["helm_ports", "mmlu"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "b04d34777c6e692cf0d018f80f6047cddf399cda03978924599c54f19f03d273"
+content-hash = "dd501936bfb5047b484253a8f361d2882e344774fbc931818e1169dd9a780d6e"
