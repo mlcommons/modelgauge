@@ -12,7 +12,7 @@ python = ">=3.10,<3.11"
 pyext = {url = "https://files.pythonhosted.org/packages/b0/be/9b6005ac644aaef022527ce49617263379e49dbdbd433d1d3dd66d71f570/pyext-0.7.tar.gz"}
 # This is needed to make HELM happy.
 cryptography = "^41.0.7"
-crfm-helm = "^0.3.0"
+crfm-helm = "^0.4.0"
 
 
 
