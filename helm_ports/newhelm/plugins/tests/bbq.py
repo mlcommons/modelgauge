@@ -1,24 +1,39 @@
+from dataclasses import replace
 import os
 from typing import List
 from helm.benchmark.scenarios.scenario import create_scenario
 from helm.benchmark.run_specs import get_bbq_spec
 from helm.benchmark.data_preprocessor import DataPreprocessor
 from helm.benchmark.adaptation.adapters.adapter_factory import AdapterFactory
-from helm.benchmark.run_expander import ModelRunExpander
+from helm.benchmark.config_registry import (
+    register_builtin_configs_from_helm_package,
+)
+from helm.benchmark.window_services.tokenizer_service import TokenizerService
+from helm.benchmark.window_services.default_window_service import DefaultWindowService
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.placeholders import Measurement, Prompt, Result
 
 from newhelm.single_turn_prompt_response import AnnotatedTestItem, MeasuredTestItem, PromptWithContext, TestItem
 
-class FakeWindowService:
+
+class FakeTokenizerService(TokenizerService):
+    def __init__(self):
+        pass
+
+class FakeWindowService(DefaultWindowService):
+    def __init__(self):
+        pass
     def fits_within_context_window(self, *args, **kwargs):
         return True
 
 class BBQ(BasePromptResponseTest):
     def __init__(self):
+        register_builtin_configs_from_helm_package()
         self.run_spec = get_bbq_spec("all")
-        # Get a valid model so that get_adapter works. We're going to ignore it anyway.
-        self.run_spec = ModelRunExpander("text").expand(self.run_spec)[0]
+        # The model_deployment has to be real in order to pass some helm checks,
+        # but otherwise we don't need it.
+        adapter_spec = replace(self.run_spec.adapter_spec, model_deployment="simple/model1")
+        self.run_spec = replace(self.run_spec, adapter_spec=adapter_spec)
 
     def make_test_items(self) -> List[TestItem]:
         scenario = create_scenario(self.run_spec.scenario_spec)
@@ -28,7 +43,7 @@ class BBQ(BasePromptResponseTest):
         instances = DataPreprocessor(self.run_spec.data_augmenter_spec).preprocess(instances)
 
 
-        adapter = AdapterFactory.get_adapter(self.run_spec.adapter_spec, None)
+        adapter = AdapterFactory.get_adapter(self.run_spec.adapter_spec, FakeTokenizerService())
         # Monkey patch the window service
         adapter.window_service = FakeWindowService()
         scenario_state = adapter.adapt(instances, 1)
