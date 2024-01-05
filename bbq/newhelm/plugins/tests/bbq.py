@@ -50,9 +50,20 @@ _CATEGORIES = [
 
 
 @dataclass(frozen=True)
+class BBQTestItemContext:
+    is_negative: bool
+    is_ambiguous: bool
+    label_letter: str
+    # completion correctness later on
+    target_letter: str
+    non_target_letter: str
+    unknown_letter: str
+
+
+@dataclass(frozen=True)
 class BBQQuestion:
     question: MultipleChoiceQuestion
-    tags: List[str]
+    context: BBQTestItemContext
 
 
 class BBQ(BasePromptResponseTest):
@@ -237,15 +248,14 @@ class BBQ(BasePromptResponseTest):
                     options=answers,
                     correct_option=label_num,
                 ),
-                tags=[
-                    NEGATIVE_TAG if is_negative else NON_NEGATIVE_TAG,
-                    AMBIGUOUS_TAG if is_ambiguous else NON_AMBIGUOUS_TAG,
-                    label_letter,  # store the multiple choice letter as a tag for ease of checking
-                    # completion correctness later on
-                    target_letter,
-                    non_target_letter,
-                    unknown_letter,
-                ],
+                context=BBQTestItemContext(
+                    is_negative=is_negative,
+                    is_ambiguous=is_ambiguous,
+                    label_letter=label_letter,
+                    target_letter=target_letter,
+                    non_target_letter=non_target_letter,
+                    unknown_letter=unknown_letter,
+                ),
             )
             instances.append(question)
 
@@ -280,7 +290,7 @@ class BBQ(BasePromptResponseTest):
                     [
                         PromptWithContext(
                             Prompt(text),
-                            context=test_question.tags,
+                            context=test_question.context,
                         )
                     ]
                 )
