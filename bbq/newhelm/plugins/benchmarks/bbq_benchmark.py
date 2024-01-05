@@ -1,5 +1,5 @@
 from typing import Dict, List
-from bbq.newhelm.plugins.tests.bbq import BBQ
+from newhelm.plugins.tests.bbq import BBQ
 
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
