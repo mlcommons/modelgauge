@@ -4,7 +4,6 @@ import os
 from typing import List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
-from newhelm.data_packing import ZipPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Measurement, Prompt, Result
@@ -45,14 +44,12 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         # Read the questions from a jsonl file.
-        print("File:", dependency_helper.get_local_path("jsonl_questions"))
         with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
             for line in f.readlines():
                 if not line.strip():
                     # Skip empty lines
                     continue
                 data = json.loads(line)
-                print(data)
                 test_items.append(self._make_test_item(data))
         return test_items
 
