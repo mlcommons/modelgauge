@@ -128,7 +128,7 @@ class BBQ(BasePromptResponseTest):
             categories = [self.subject]
 
         loaded_lines: List[Tuple[Dict, str]] = []
-        instances: List[MultipleChoiceQuestion] = []
+        instances: List[BBQQuestion] = []
 
         for category in categories:
             category_data_path = dependency_helper.get_local_path(category)
@@ -242,7 +242,7 @@ class BBQ(BasePromptResponseTest):
                 # must be non_target
                 non_target_letter = numbers_to_letters[i]
 
-            question = BBQQuestion(
+            bbq_question = BBQQuestion(
                 question=MultipleChoiceQuestion(
                     question=f"{context}\nQuestion: {question}",
                     options=answers,
@@ -257,7 +257,7 @@ class BBQ(BasePromptResponseTest):
                     unknown_letter=unknown_letter,
                 ),
             )
-            instances.append(question)
+            instances.append(bbq_question)
 
         return instances[:-DEFAULT_TEST_SIZE], instances[-DEFAULT_TEST_SIZE:]
 
