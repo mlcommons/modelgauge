@@ -106,6 +106,5 @@ Question: What color is the sky?
 A) Red
 B) Green
 C) Blue
-Answer:
-"""
+Answer:"""
     )
