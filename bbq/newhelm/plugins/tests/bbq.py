@@ -8,7 +8,6 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
     MultipleChoiceQuestion,
-    basic_multiple_choice_format,
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
