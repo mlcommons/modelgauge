@@ -5,7 +5,6 @@ from newhelm.annotation import Annotation
 from newhelm.benchmark import Score
 from newhelm.placeholders import Measurement, Result
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
     PromptInteraction,
     TestItem,
 )
