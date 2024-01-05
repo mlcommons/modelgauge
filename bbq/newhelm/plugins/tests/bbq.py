@@ -6,6 +6,7 @@ from typing import List, Dict, Mapping, Tuple
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
+    MultipleChoiceFormatting,
     MultipleChoiceQuestion,
     basic_multiple_choice_format,
     question_with_training_to_text,
@@ -252,7 +253,18 @@ class BBQ(BasePromptResponseTest):
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         train_questions, test_questions = self._make_questions(dependency_helper)
-        formatting = basic_multiple_choice_format()
+        formatting = MultipleChoiceFormatting(
+            question_prefix="Passage: ",
+            question_suffix="\n",
+            # All capital letters
+            option_identifiers=[chr(ord("A") + i) for i in range(26)],
+            option_identifier_separator=". ",
+            option_separator="\n",
+            answer_prefix="\nAnswer: ",
+            answer_suffix="\n",
+            instructions_block="The following are multiple choice questions (with answers).\n",
+            block_separator="\n",
+        )
         # TODO make behavior this smarter and a library function
         context_training_sample = random.sample(
             train_questions, self.in_context_examples
