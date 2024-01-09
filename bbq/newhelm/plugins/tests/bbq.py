@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import json
 import random
 from typing import List, Dict, Mapping, Tuple
+from newhelm.aggregations import mean_of_measurement, sum_measurements
 
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
@@ -448,30 +449,3 @@ class BBQ(BasePromptResponseTest):
         stats = [Result("acc", accuracy), amb_bias_stat, disamb_bias_stat]
 
         return stats
-
-
-# DO_NOT_SUBMIT until this is cleaned up / merged with existing aggregations
-def get_measurements(
-    measurement_name: str, items: List[MeasuredTestItem]
-) -> List[Measurement]:
-    """Extract a desired measurement for all TestItems."""
-    # TODO: Consider adding asserts that all test items have exactly one
-    # measurement with this name.
-    measurements = []
-    for test_item in items:
-        for measurement in test_item.measurements:
-            if measurement.name == measurement_name:
-                measurements.append(measurement)
-    return measurements
-
-
-def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) -> float:
-    """Calculate the mean across all TestItems for a desired measurement."""
-    measurements = get_measurements(measurement_name, items)
-    total = sum(measurement.value for measurement in measurements)
-    return total / len(measurements)
-
-
-def sum_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> float:
-    measurements = get_measurements(measurement_name, items)
-    return sum(measurement.value for measurement in measurements)
