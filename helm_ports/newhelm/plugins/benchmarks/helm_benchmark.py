@@ -4,6 +4,7 @@ from newhelm.benchmark import BaseBenchmark, Score
 from newhelm.placeholders import Result
 from newhelm.plugins.tests.bbq_imported import BBQImported
 
+
 class HelmBenchmark(BaseBenchmark):
     def get_tests(self) -> List[BaseTest]:
         return [BBQImported()]
