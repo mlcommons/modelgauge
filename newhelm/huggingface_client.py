@@ -46,19 +46,23 @@ def create_tokenizer(
         # From https://huggingface.co/course/chapter6/3, "slow tokenizers are those written in Python inside
         # the Hugging Face Transformers library, while the fast versions are the ones provided by Hugging Face
         # Tokenizers, which are written in Rust." So, use the "fast" version of the tokenizers if available.
-        return WrappedPreTrainedTokenizer(AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path,
-            local_files_only=True,
-            use_fast=True,
-            **kwargs,
-        ))
+        return WrappedPreTrainedTokenizer(
+            AutoTokenizer.from_pretrained(
+                pretrained_model_name_or_path,
+                local_files_only=True,
+                use_fast=True,
+                **kwargs,
+            )
+        )
     except OSError:
-        return WrappedPreTrainedTokenizer(AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path,
-            local_files_only=False,
-            use_fast=True,
-            **kwargs,
-        ))
+        return WrappedPreTrainedTokenizer(
+            AutoTokenizer.from_pretrained(
+                pretrained_model_name_or_path,
+                local_files_only=False,
+                use_fast=True,
+                **kwargs,
+            )
+        )
 
 
 class StopAtSpecificTokenCriteria(StoppingCriteria):
@@ -90,7 +94,6 @@ class HuggingFaceRequest(TypedDict):
     echo_prompt: bool
     top_k_per_token: int
     stop_sequences: List
-
 
 
 @dataclass(frozen=True)
@@ -235,6 +238,7 @@ def truncate_sequence(
 
 TORCH_DTYPE_KEY = "torch_dtype"
 TORCH_DTYPE_VALUE_PREFIX = "torch."
+
 
 def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     """Process the kwargs for HuggingFaceClient.
