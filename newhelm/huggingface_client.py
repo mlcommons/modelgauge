@@ -265,7 +265,7 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     return processed_kwargs
 
 
-class HuggingFaceServer:
+class HuggingFaceClient:
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
     def __init__(self, pretrained_model_name_or_path: str, **kwargs):
@@ -273,15 +273,16 @@ class HuggingFaceServer:
             self.device: str = "cuda:0"
         else:
             self.device = "cpu"
+        hg_kwargs = _process_huggingface_client_kwargs(kwargs)
         # WARNING this may fail if your GPU does not have enough memory
         self.model = AutoModelForCausalLM.from_pretrained(
-            pretrained_model_name_or_path, trust_remote_code=True, **kwargs
+            pretrained_model_name_or_path, trust_remote_code=True, **hg_kwargs
         ).to(self.device)
         self.wrapped_tokenizer: WrappedPreTrainedTokenizer = create_tokenizer(
-            pretrained_model_name_or_path, **kwargs
+            pretrained_model_name_or_path, **hg_kwargs
         )
 
-    def serve_request(self, raw_request: HuggingFaceRequest):
+    def _serve_request(self, raw_request: HuggingFaceRequest):
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
                 raw_request["prompt"], return_tensors="pt", return_token_type_ids=False
@@ -462,7 +463,7 @@ class HuggingFaceClient:
             "stop_sequences": request.stop_sequences,
         }
         try:
-            response = self.huggingface_model.serve_request(raw_request)
+            response = self._serve_request(raw_request)
         except Exception as e:  # Do something if error is encountered.
             error: str = f"HuggingFace error: {e}"
             return RequestResult(success=False, error=error, completions=[])
