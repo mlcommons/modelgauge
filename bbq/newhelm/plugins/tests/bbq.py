@@ -350,8 +350,6 @@ class BBQ(BasePromptResponseTest):
         is_negative = prompt.context.is_negative
         is_ambiguous = prompt.context.is_ambiguous
 
-        # same order as in `answer_to_reference()` in
-        # BBQScenario.get_instances()
         is_correct = response.completion == prompt.context.label_letter
         is_target = response.completion == prompt.context.target_letter
         is_non_target = response.completion == prompt.context.non_target_letter
