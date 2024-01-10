@@ -12,6 +12,7 @@ zstandard = "^0.22.0"
 demo_plugin = {path = "demo_plugin", optional = true, develop = true}
 mmlu = {path = "mmlu", optional = true, develop = true}
 ridiculous_benchmark = {path = "ridiculous_benchmark", optional = true, develop = true}
+transformers = "^4.36.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
