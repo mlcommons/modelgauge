@@ -441,16 +441,6 @@ class HuggingFaceClient:
             "input_length": len(encoded_input.input_ids[0]),
         }
 
-
-class HuggingFaceClient:
-    def __init__(self, pretrained_model_name_or_path: str, **kwargs):
-        self._pretrained_model_name_or_path = pretrained_model_name_or_path
-        self._kwargs = _process_huggingface_client_kwargs(kwargs)
-
-        self.huggingface_model: HuggingFaceServer = HuggingFaceServer(
-            pretrained_model_name_or_path, **self._kwargs
-        )
-
     def make_request(self, request: Request) -> RequestResult:
         raw_request: HuggingFaceRequest = {
             "prompt": request.prompt,
