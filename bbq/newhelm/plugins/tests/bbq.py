@@ -109,7 +109,6 @@ class BBQ(BasePromptResponseTest):
 
     @classmethod
     def get_dependencies(cls) -> Mapping[str, ExternalData]:
-        """No external dependencies."""
         dependencies = {}
         for category in _CATEGORIES:
             dependencies[category] = WebData(
@@ -117,9 +116,9 @@ class BBQ(BasePromptResponseTest):
             )
         return dependencies
 
-    def __init__(self, subject: str = "all", in_context_examples=5):
+    def __init__(self, subject: str = "all", num_in_context_examples=5):
         self.subject = subject
-        self.in_context_examples = in_context_examples
+        self.num_in_context_examples = num_in_context_examples
 
     def _make_questions(
         self, dependency_helper: DependencyHelper
@@ -280,7 +279,7 @@ class BBQ(BasePromptResponseTest):
         # TODO make behavior this smarter and a library function
         all_train_mcqa = [t.question for t in train_questions]
         context_training_questions = sample_examples(
-            all_train_mcqa, 0, self.in_context_examples
+            all_train_mcqa, 0, self.num_in_context_examples
         )
         test_items = []
         for test_question in test_questions:
