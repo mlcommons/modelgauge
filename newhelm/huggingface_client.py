@@ -27,7 +27,6 @@ Example usage:
 """
 
 
-# TODO Maybe make this thread safe?
 def create_tokenizer(
     pretrained_model_name_or_path: str, **kwargs
 ) -> WrappedPreTrainedTokenizer:
