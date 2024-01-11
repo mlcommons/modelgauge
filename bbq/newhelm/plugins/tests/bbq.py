@@ -381,8 +381,8 @@ class BBQ(BasePromptResponseTest):
             "is_correct": 1 if is_correct else 0,
             "amb_non_unknown": amb_non_unknown,
             "disamb_non_unknown": disamb_non_unknown,
-            "disamb_target_and_neg": disamb_target_and_neg,
             "amb_non_target_and_non_neg": amb_non_target_and_non_neg,
+            "amb_target_and_neg": amb_target_and_neg,
             "disamb_non_target_and_non_neg": disamb_non_target_and_non_neg,
             "disamb_target_and_neg": disamb_target_and_neg,
         }
