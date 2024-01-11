@@ -11,6 +11,10 @@ def get_measurements(
     return [item.measurements[measurement_name] for item in items]
 
 
+def sum_measurements(measurement_name: str, items: List[MeasuredTestItem]) -> float:
+    measurements = get_measurements(measurement_name, items)
+    return sum(measurement for measurement in measurements)
+
 def mean_of_measurement(measurement_name: str, items: List[MeasuredTestItem]) -> float:
     """Calculate the mean across all TestItems for a desired measurement."""
     measurements = get_measurements(measurement_name, items)

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
+from typing import Dict, List, Mapping
+from newhelm.annotation import Annotation
 
 from newhelm.benchmark import Score
 from newhelm.placeholders import Result

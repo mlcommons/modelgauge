@@ -1,9 +1,7 @@
 import json
-import os
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
-from newhelm.data_packing import ZipPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Prompt, Result
@@ -33,16 +31,13 @@ class DemoSimpleQATest(BasePromptResponseTest):
             "jsonl_questions": WebData(
                 source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl"
             ),
-            "zipped_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.zip",
-                unpacker=ZipPacker(),
-            ),
+            # If your test depends on multiple files, you can specify each here.
         }
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        """Read questions from our two dependencies and convert them into TestItems."""
+        """Read questions from our dependency and convert them into TestItems."""
         test_items: List[TestItem] = []
-        # Read some questions from a jsonl file.
+        # Read the jsonl file one line at a time and convert each into a TestItem.
         with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
             for line in f.readlines():
                 if not line.strip():
@@ -55,23 +50,9 @@ class DemoSimpleQATest(BasePromptResponseTest):
                     context=data["safe_answer"],
                 )
                 test_items.append(TestItem([prompt]))
-        # Read some more questions, this time from a zip file containing separate question
-        # and answer files. Because we specified an unpacker get_dependencies,
-        # this points at a directory.
-        zip_dir = dependency_helper.get_local_path("zipped_questions")
-        with open(os.path.join(zip_dir, "questions.txt"), "r") as f:
-            questions = f.readlines()
-        with open(os.path.join(zip_dir, "answers.txt"), "r") as f:
-            answers = f.readlines()
-        for question, answer in zip(questions, answers):
-            if not question.strip() or not answer.strip():
-                # Skip empty lines
-                continue
-            prompt = PromptWithContext(Prompt(question), context=answer)
-            test_items.append(TestItem([prompt]))
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+    def measure_quality(self, item: AnnotatedTestItem) -> List[Dict[str, float]]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
         interaction = item.item_with_interactions.interactions[0]
