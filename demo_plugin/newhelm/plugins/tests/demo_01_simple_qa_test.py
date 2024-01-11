@@ -52,7 +52,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 test_items.append(TestItem([prompt]))
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Dict[str, float]]:
+    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
         interaction = item.item_with_interactions.interactions[0]
