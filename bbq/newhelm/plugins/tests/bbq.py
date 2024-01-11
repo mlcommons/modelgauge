@@ -107,7 +107,6 @@ class BBQ(BasePromptResponseTest):
 
     @classmethod
     def get_dependencies(cls) -> Mapping[str, ExternalData]:
-        """No external dependencies."""
         dependencies = {}
         for category in _CATEGORIES:
             dependencies[category] = WebData(
