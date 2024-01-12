@@ -1,14 +1,24 @@
+import os
 from typing import List
-from newhelm.annotation import AnnotatedInteraction
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
-from newhelm.journal import BenchmarkJournal, TestJournal
+from newhelm.dependency_helper import FromSourceDependencyHelper
+from newhelm.journal import BenchmarkJournal, TestItemJournal, TestJournal
+from newhelm.single_turn_prompt_response import (
+    AnnotatedTestItem,
+    MeasuredTestItem,
+    PromptInteraction,
+    TestItemInteractions,
+)
 from newhelm.sut import SUT, PromptResponseSUT
 
 
 class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     """Demonstration of running a whole benchmark on a SUT, all calls serial."""
+
+    def __init__(self, data_dir: str):
+        self.data_dir = data_dir
 
     def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkJournal]:
         # Not all runners can run all Test types, so validate up front
@@ -52,14 +62,45 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
     ) -> TestJournal:
         """Demonstration for how to run a single Test on a single SUT, all calls serial."""
-        templates = test.make_prompt_templates()
-        interactions = []
-        for template in templates:
-            prompt = sut.specialize(template)
-            interactions.append(sut.evaluate(prompt))
+        # This runner just records versions, it doesn't specify a required version.
+        dependency_helper = FromSourceDependencyHelper(
+            os.path.join(self.data_dir, test.get_metadata().name),
+            test.get_dependencies(),
+            required_versions={},
+        )
+
+        test_items = test.make_test_items(dependency_helper)
+        item_interactions = []
+        for item in test_items:
+            interactions = []
+            for prompt in item.prompts:
+                response = sut.evaluate(prompt.prompt)
+                interactions.append(PromptInteraction(prompt, response))
+            item_interactions.append(TestItemInteractions(interactions, item))
         # Here is where an annotator would go
-        annotated = [AnnotatedInteraction(interaction) for interaction in interactions]
-        results = test.calculate_results(annotated)
+        with_annotations = [AnnotatedTestItem(item) for item in item_interactions]
+        measured_test_items = []
+        test_item_journals = []
+        for annotated in with_annotations:
+            measurements = test.measure_quality(annotated)
+            test_item_journals.append(
+                TestItemJournal(
+                    annotated.item_with_interactions.test_item,
+                    annotated.item_with_interactions.interactions,
+                    annotated.annotations,
+                    measurements,
+                )
+            )
+            measured_test_items.append(
+                MeasuredTestItem(
+                    annotated.item_with_interactions.test_item, measurements
+                )
+            )
+        results = test.aggregate_measurements(measured_test_items)
         return TestJournal(
-            test.__class__.__name__, sut.__class__.__name__, annotated, results
+            test.__class__.__name__,
+            dependency_helper.versions_used(),
+            sut.__class__.__name__,
+            test_item_journals,
+            results,
         )
