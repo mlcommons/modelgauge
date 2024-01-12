@@ -13,4 +13,5 @@ class GPT2(PromptResponseSUT):
         # Pick a letter A, B, C, or D based on prompt length.
         return SUTResponse(chr(ord("A") + number_of_words % 4))
 
+
 SUTS.register("gpt2", GPT2())

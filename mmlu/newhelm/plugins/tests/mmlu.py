@@ -11,6 +11,7 @@ from newhelm.single_turn_prompt_response import (
 )
 from newhelm.test_registry import TESTS
 
+
 class MMLU(BasePromptResponseTest):
     @classmethod
     def get_metadata(cls) -> TestMetadata:
@@ -42,6 +43,11 @@ class MMLU(BasePromptResponseTest):
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         # In the real thing, this would be handled by Metric objects
-        return [Result("count", value=len(interactions))]
+        total = 0.0
+        for item in items:
+            for measurement in item.measurements:
+                total += measurement.value
+        return [Result("total", value=total)]
+
 
 TESTS.register("mmlu", MMLU())
