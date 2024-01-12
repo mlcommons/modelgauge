@@ -1,6 +1,7 @@
 from typing import List
 from newhelm.placeholders import Prompt
 from newhelm.sut import SUTResponse, PromptResponseSUT
+from newhelm.sut_registry import SUTS
 
 
 class DemoMultipleChoiceSUT(PromptResponseSUT):
@@ -10,3 +11,6 @@ class DemoMultipleChoiceSUT(PromptResponseSUT):
         # Pick a letter A, B, C, or D based on prompt length.
         number_of_words = len(prompt.text.split())
         return SUTResponse(chr(ord("A") + number_of_words % 4))
+
+
+SUTS.register("gpt2", GPT2())
