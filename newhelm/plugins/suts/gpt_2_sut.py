@@ -27,4 +27,5 @@ class GPT2(PromptResponseSUT):
         )
         return SUTResponse(response.completions[0].text)
 
+
 SUTS.register("gpt2", GPT2())

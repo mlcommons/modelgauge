@@ -1,15 +1,15 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 import torch
-from transformers import AutoModelForCausalLM
-from transformers.generation.stopping_criteria import (
+from transformers import AutoModelForCausalLM  # type: ignore
+from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteria,
     StoppingCriteriaList,
 )
+from transformers import AutoTokenizer, PreTrainedTokenizerBase  # type: ignore
 from typing import Any, Dict, List, Optional, TypedDict
 import os
 from typing import Any, Dict, Optional
-from transformers import AutoTokenizer, PreTrainedTokenizerBase
 
 from newhelm.concurrency import ThreadSafeWrapper
 
