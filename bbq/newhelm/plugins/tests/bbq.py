@@ -254,7 +254,7 @@ class BBQ(BasePromptResponseTest):
             )
             questions.append(bbq_question)
 
-        return question
+        return questions
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         all_questions = self._make_questions(dependency_helper)
