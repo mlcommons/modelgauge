@@ -1,14 +1,15 @@
-from typing import List, Mapping
+from typing import Dict, List, Mapping
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
-from newhelm.placeholders import Measurement, Prompt, Result
+from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
     AnnotatedTestItem,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 class MMLU(BasePromptResponseTest):
@@ -37,13 +38,16 @@ class MMLU(BasePromptResponseTest):
             TestItem([PromptWithContext(Prompt("But the worst part is when"))]),
         ]
 
-    def measure_quality(self, item: AnnotatedTestItem) -> List[Measurement]:
-        return [Measurement("count", 1)]
+    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+        return {"count": 1}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         # In the real thing, this would be handled by Metric objects
         total = 0.0
         for item in items:
-            for measurement in item.measurements:
-                total += measurement.value
+            for measurement in item.measurements.values():
+                total += measurement
         return [Result("total", value=total)]
+
+
+TESTS.register("mmlu", MMLU())
