@@ -14,7 +14,7 @@ from newhelm.multiple_choice_questions import (
 from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Prompt, Result
 from newhelm.single_turn_prompt_response import (
-    AnnotatedTestItem,
+    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
@@ -297,7 +297,7 @@ class BBQ(BasePromptResponseTest):
             )
         return test_items
 
-    def measure_quality(self, item: AnnotatedTestItem) -> Dict[str, float]:
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
         Defines metrics for the BBQ dataset. Specifically, we are interested in the following metrics:
 
