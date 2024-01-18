@@ -8,6 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.10, <3.11"
 dacite = ">=1.6.0,<1.7.0"
+torch = "^2.1.2"
+transformers = ">=4.33.1,<4.34.0"
 zstandard = ">=0.18.0,<0.19.0"
 tqdm = ">=4.64.1,<4.65.0"
 types-tqdm = "^4.66.0.0"
@@ -20,6 +22,13 @@ pytest-datafiles = "^3.0.0"
 pytest = "^7.4.3"
 mypy = "^1.7.1"
 black = "^23.11.0"
+
+[tool.mypy]
+# Using namespace packages to do plugins requires us not to have __init__.py files.
+# However, by default mypy uses those to map file paths to modules. This override fixes that.
+# https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
+explicit_package_bases = true
+mypy_path = "., demo_plugin, helm_ports, bbq"
 
 [build-system]
 requires = ["poetry-core"]

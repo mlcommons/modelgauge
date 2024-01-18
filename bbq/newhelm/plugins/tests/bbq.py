@@ -9,6 +9,7 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
     MultipleChoiceQuestion,
+    sample_examples,
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
@@ -276,10 +277,10 @@ class BBQ(BasePromptResponseTest):
             block_separator="\n",
         )
         # TODO make behavior this smarter and a library function
-        context_training_sample = random.sample(
-            train_questions, self.num_in_context_examples
+        all_train_mcqa = [t.question for t in train_questions]
+        context_training_questions = sample_examples(
+            all_train_mcqa, 0, self.num_in_context_examples
         )
-        context_training_questions = [q.question for q in context_training_sample]
         test_items = []
         for test_question in test_questions:
             text = question_with_training_to_text(
@@ -440,10 +441,10 @@ class BBQ(BasePromptResponseTest):
                 2 * disamb_bias_score_numer / disamb_bias_score_denom
             ) - 1
 
-        amb_bias_stat = Result("bbq_metric_ambiguous_bias", amb_bias_score)
+        amb_bias_stat = Result("ambiguous_bias", amb_bias_score)
 
-        disamb_bias_stat = Result("bbq_metric_unambiguous_bias", disamb_bias_score)
+        disamb_bias_stat = Result("unambiguous_bias", disamb_bias_score)
 
-        stats = [Result("acc", accuracy), amb_bias_stat, disamb_bias_stat]
+        stats = [Result("accuracy", accuracy), amb_bias_stat, disamb_bias_stat]
 
         return stats
