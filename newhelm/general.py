@@ -22,7 +22,7 @@ def current_timestamp_millis() -> int:
     return time.time_ns() // 1_000_000
 
 
-def _asdict_without_nones(obj: Any) -> Dict[str, Any]:
+def asdict_without_nones(obj: Any) -> Dict[str, Any]:
     if not is_dataclass(obj):
         raise ValueError(f"Expected dataclass, got '{obj}'")
     return asdict(obj, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
@@ -31,11 +31,15 @@ def _asdict_without_nones(obj: Any) -> Dict[str, Any]:
 def to_json(obj, indent=None) -> str:
     if not is_dataclass(obj):
         raise ValueError(f"Expected dataclass, got '{obj}'")
-    return json.dumps(_asdict_without_nones(obj), indent=indent)
+    return json.dumps(asdict_without_nones(obj), indent=indent)
+
+
+def from_dict(cls: type[_InT], dict: Dict) -> _InT:
+    return dacite.from_dict(cls, dict, config=dacite.Config(strict=True))
 
 
 def from_json(cls: type[_InT], value: str) -> _InT:
-    return dacite.from_dict(cls, json.loads(value), config=dacite.Config(strict=True))
+    return from_dict(cls, json.loads(value))
 
 
 def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
