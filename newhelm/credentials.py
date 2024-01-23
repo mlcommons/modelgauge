@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from json import JSONDecodeError
 from typing import Any, Dict
 
 from newhelm.general import subset_dict
