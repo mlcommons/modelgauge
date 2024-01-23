@@ -75,6 +75,7 @@ class OpenAIChat(
         self.client = OpenAI(api_key=data["api_key"], organization=data.get("org_id"))
 
     def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
+        # TODO #56 - Allow Tests to specify the full message set.
         message = OpenAIChatMessage(prompt.text, role=_USER_ROLE)
         return OpenAIChatRequest(messages=[message], model=self.model)
 
