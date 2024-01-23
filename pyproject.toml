@@ -39,4 +39,4 @@ build-backend = "poetry.core.masonry.api"
 demo = ["demo_plugin"]
 helm_ports = ["helm_ports"]
 bbq = ["bbq"]
-open_ai = ["newhelm_openai"]
+openai = ["newhelm_openai"]
