@@ -4,6 +4,8 @@ from typing import Any
 
 
 class RequiresCredentials(ABC):
+    """Mixin for classes that require secret information."""
+
     @abstractmethod
     def credential_instructions(self) -> str:
         """Return a string description on how to set up the credentials file."""
@@ -15,6 +17,7 @@ class RequiresCredentials(ABC):
 
 
 def optionally_load_credentials(obj: Any, secrets_dir: str) -> None:
+    """Will handle loading credentials for obj, if it needs credentials."""
     if not isinstance(obj, RequiresCredentials):
         return
     try:
