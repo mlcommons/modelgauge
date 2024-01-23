@@ -3805,6 +3805,7 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
+all-plugins = ["demo_plugin", "newhelm_openai"]
 bbq = ["bbq"]
 demo = ["demo_plugin"]
 helm-ports = ["helm_ports"]
@@ -3813,4 +3814,4 @@ openai = ["newhelm_openai"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "1141ecc3f7c351d53a7a340a75fd18511737bc308b2c689e6b9b07d866598b4f"
+content-hash = "df7bb6ca8a7e2754747cc6771f3fb9a8d7a5215ddc1da898dff88ba7f2473787"
