@@ -6,6 +6,7 @@ from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.credentials import optionally_load_credentials
 from newhelm.dependency_helper import FromSourceDependencyHelper
+from newhelm.general import get_or_create_json_file
 from newhelm.journal import BenchmarkRecord, TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -19,9 +20,9 @@ from newhelm.sut import SUT, PromptResponseSUT
 class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     """Demonstration of running a whole benchmark on a SUT, all calls serial."""
 
-    def __init__(self, data_dir: str, secrets_dir: str):
+    def __init__(self, data_dir: str, secrets_file: str):
         self.data_dir = data_dir
-        self.secrets_dir = secrets_dir
+        self.secrets_dict = get_or_create_json_file(secrets_file)
 
     def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkRecord]:
         # Not all runners can run all Test types, so validate up front
@@ -40,7 +41,7 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
         # Actually run the tests
         benchmark_journals = []
         for sut in suts:
-            optionally_load_credentials(sut, self.secrets_dir)
+            optionally_load_credentials(sut, self.secrets_dict)
             test_journals = []
             for test in prompt_response_tests:
                 assert isinstance(

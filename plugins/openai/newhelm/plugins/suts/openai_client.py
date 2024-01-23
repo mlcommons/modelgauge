@@ -3,7 +3,7 @@ import json
 import os
 from typing import Dict, List, Optional, Union
 from newhelm.credentials import RequiresCredentials, optionally_load_credentials
-from newhelm.general import asdict_without_nones
+from newhelm.general import asdict_without_nones, get_or_create_json_file
 from newhelm.placeholders import Prompt
 from newhelm.sut import PromptResponseSUT, SUTResponse
 from openai import OpenAI
@@ -60,19 +60,17 @@ class OpenAIChat(
         self.model = model
         self.client: Optional[OpenAI] = None
 
-    def credential_instructions(self) -> str:
-        return (
-            "To evaluate requests, you need to create a file in the secrets folder "
-            "named openai.json. The contents of the file should be json with the following keys:\n"
-            " * api_key: https://platform.openai.com/api-keys\n"
-            " * org_id: https://platform.openai.com/account/organization\n"
-            "The api_key field is required, org_id is optional."
-        )
+    def get_credential_instructions(self) -> Dict[str, str]:
+        return {
+            "openai_api_key": "See https://platform.openai.com/api-keys",
+            "openai_org_id": "Optional, see https://platform.openai.com/account/organization",
+        }
 
-    def load_credentials(self, secrets_dir: str) -> None:
-        with open(os.path.join(secrets_dir, "openai.json"), "r") as f:
-            data = json.loads(f.read())
-        self.client = OpenAI(api_key=data["api_key"], organization=data.get("org_id"))
+    def load_credentials(self, secrets_dict: Dict[str, str]) -> None:
+        self.client = OpenAI(
+            api_key=secrets_dict["openai_api_key"],
+            organization=secrets_dict.get("openai_org_id"),
+        )
 
     def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
         # TODO #56 - Allow Tests to specify the full message set.
@@ -102,7 +100,8 @@ if __name__ == "__main__":
     prompt = Prompt(prompt_text)
     request = client.translate_request(prompt)
     print(request, "\n")
-    optionally_load_credentials(client, "secrets")
+    secrets_dict = get_or_create_json_file("secrets", "default.json")
+    optionally_load_credentials(client, secrets_dict)
     response = client.evaluate(request)
     print(response, "\n")
     result = client.translate_response(prompt, response)

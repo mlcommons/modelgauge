@@ -2,6 +2,7 @@ from dataclasses import asdict, is_dataclass
 import inspect
 import hashlib
 import json
+import os
 import shlex
 import subprocess
 import time
@@ -49,6 +50,32 @@ def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
             result.add(subclass)
         result.update(get_concrete_subclasses(subclass))
     return result
+
+
+def subset_dict(dictionary: Dict, keys) -> Dict:
+    """Return a new dictionary with only specific keys.
+
+    If a key does not exist in `dictionary`, it is ignored.
+    """
+    subset = {}
+    for key in keys:
+        try:
+            subset[key] = dictionary[key]
+        except KeyError:
+            pass
+    return subset
+
+
+def get_or_create_json_file(*path_pieces):
+    """Reads a json file, creating an empty one if none exists."""
+    path = os.path.join(*path_pieces)
+    if not os.path.exists(path):
+        result = {}
+        with open(path, "w") as f:
+            json.dump(result, f)
+        return result
+    with open(path, "r") as f:
+        return json.load(f)
 
 
 def shell(args: List[str]):
