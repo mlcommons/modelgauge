@@ -6,7 +6,7 @@ from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
 from newhelm.credentials import optionally_load_credentials
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.journal import BenchmarkRecord, TestItemRecord, TestRecord
+from newhelm.records import BenchmarkRecord, TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -38,29 +38,27 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 assert isinstance(sut, PromptResponseSUT)
 
         # Actually run the tests
-        benchmark_journals = []
+        benchmark_records = []
         for sut in suts:
             optionally_load_credentials(sut, self.secrets_dict)
-            test_journals = []
+            test_records = []
             for test in prompt_response_tests:
                 assert isinstance(
                     sut, PromptResponseSUT
                 )  # Redo the assert to make type checking happy.
-                test_journals.append(self._run_prompt_response_test(test, sut))
+                test_records.append(self._run_prompt_response_test(test, sut))
             # Run other kinds of tests on the SUT here
-            test_results = {
-                journal.test_name: journal.results for journal in test_journals
-            }
+            test_results = {record.test_name: record.results for record in test_records}
             score = benchmark.summarize(test_results)
-            benchmark_journals.append(
+            benchmark_records.append(
                 BenchmarkRecord(
                     benchmark.__class__.__name__,
                     sut.__class__.__name__,
-                    test_journals,
+                    test_records,
                     score,
                 )
             )
-        return benchmark_journals
+        return benchmark_records
 
     def _run_prompt_response_test(
         self, test: BasePromptResponseTest, sut: PromptResponseSUT
@@ -90,10 +88,10 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             for item in item_interactions
         ]
         measured_test_items = []
-        test_item_journals = []
+        test_item_records = []
         for annotated in with_annotations:
             measurements = test.measure_quality(annotated)
-            test_item_journals.append(
+            test_item_records.append(
                 TestItemRecord(
                     annotated.test_item,
                     annotated.interactions,
@@ -109,6 +107,6 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             test.__class__.__name__,
             dependency_helper.versions_used(),
             sut.__class__.__name__,
-            test_item_journals,
+            test_item_records,
             results,
         )

@@ -37,4 +37,4 @@ class DemoMultipleChoiceSUT(
         return SUTResponse(response["text"])
 
 
-SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT())
+SUTS.register("DemoMultipleChoiceSUT", DemoMultipleChoiceSUT)

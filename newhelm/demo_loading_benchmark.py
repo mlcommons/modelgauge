@@ -12,12 +12,12 @@ if __name__ == "__main__":
     all_benchmarks: List[BaseBenchmark] = [
         cls() for cls in get_concrete_subclasses(BaseBenchmark)  # type: ignore[type-abstract]
     ]
-    all_suts: List[SUT] = [sut for _, sut in SUTS.items()]
+    all_suts: List[SUT] = [sut.make_instance() for _, sut in SUTS.items()]
     secrets_dict = get_or_create_json_file("secrets", "default.json")
     runner = SimpleBenchmarkRunner("run_data", secrets_dict)
     for benchmark in all_benchmarks:
         print("\n\nStarting:", benchmark.__class__.__name__)
-        benchmark_journals = runner.run(benchmark, all_suts)
-        for journal in benchmark_journals:
+        benchmark_records = runner.run(benchmark, all_suts)
+        for record in benchmark_records:
             # make it print pretty
-            print(to_json(journal, indent=4))
+            print(to_json(record, indent=4))
