@@ -31,12 +31,11 @@ class PerspectiveAPIResponse(Annotation):
     """
 
 
-# https://developers.perspectiveapi.com/s/about-the-api-methods?language=en_US
-
-
 class PerspectiveAPIAnnotator(
     BaseAnnotator[PerspectiveAPIResponse], RequiresCredentials
 ):
+    """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
+
     def __init__(
         self, desired_attributes: List[str], languages: Optional[List[str]] = None
     ):
