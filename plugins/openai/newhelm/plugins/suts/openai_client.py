@@ -90,7 +90,7 @@ class OpenAIChat(
         return SUTResponse(text)
 
 
-SUTS.register("gpt-3.5-turbo", OpenAIChat("gpt-3.5-turbo"))
+SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
 
 if __name__ == "__main__":
     import sys
