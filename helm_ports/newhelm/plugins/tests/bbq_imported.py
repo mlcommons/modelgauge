@@ -20,6 +20,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 class FakeTokenizerService(TokenizerService):
@@ -95,3 +96,5 @@ class BBQImported(BasePromptResponseTest):
         """Combine the measurements for each TestItem into a list of Results."""
         # TODO
         return []
+
+TESTS.register("bbq-imported", BBQImported)
