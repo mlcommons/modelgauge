@@ -2,7 +2,7 @@ from typing import Dict, List
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
 from newhelm.placeholders import Result
-from newhelm.plugins.tests.bbq_imported import BBQImported
+from newhelm.tests.bbq_imported import BBQImported
 
 
 class HelmBenchmark(BaseBenchmark):

@@ -2,7 +2,7 @@ from typing import List
 from newhelm.benchmark import BaseBenchmark
 from newhelm.load_plugins import load_plugins
 from newhelm.general import get_concrete_subclasses, get_or_create_json_file, to_json
-from newhelm.plugins.runners.simple_benchmark_runner import SimpleBenchmarkRunner
+from newhelm.runners.simple_benchmark_runner import SimpleBenchmarkRunner
 from newhelm.sut import SUT
 from newhelm.sut_registry import SUTS
 
