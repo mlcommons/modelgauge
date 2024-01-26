@@ -23,7 +23,7 @@ ATTRIBUTE_FLIRTATION = "FLIRTATION"
 
 
 @dataclass(frozen=True)
-class PerspectiveAPIResponse(Annotation):
+class PerspectiveAPIAnnotation(Annotation):
     interaction_scores: Sequence[Mapping[str, float]]
     """Each element in the list corresponds to a Prompt in the TestItem.
     
@@ -32,7 +32,7 @@ class PerspectiveAPIResponse(Annotation):
 
 
 class PerspectiveAPIAnnotator(
-    BaseAnnotator[PerspectiveAPIResponse], RequiresCredentials
+    BaseAnnotator[PerspectiveAPIAnnotation], RequiresCredentials
 ):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
@@ -66,7 +66,7 @@ class PerspectiveAPIAnnotator(
 
     def annotate_test_item(
         self, interactions: List[PromptInteraction]
-    ) -> PerspectiveAPIResponse:
+    ) -> PerspectiveAPIAnnotation:
         assert self.client, "Must call load_credentials before annotate_test_item."
         requests = []
         for interaction in interactions:
@@ -80,7 +80,7 @@ class PerspectiveAPIAnnotator(
         scores = []
         for response in responses:
             scores.append(self._process_analyze_comment_response(response))
-        return PerspectiveAPIResponse(interaction_scores=scores)
+        return PerspectiveAPIAnnotation(interaction_scores=scores)
 
     def _make_analyze_comment_request(self, interaction: PromptInteraction):
         # https://developers.perspectiveapi.com/s/about-the-api-methods

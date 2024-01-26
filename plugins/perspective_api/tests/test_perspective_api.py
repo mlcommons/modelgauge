@@ -4,7 +4,7 @@ from newhelm.plugins.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
     PerspectiveAPIAnnotator,
-    PerspectiveAPIResponse,
+    PerspectiveAPIAnnotation,
 )
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse
@@ -67,7 +67,7 @@ def test_perspective_api_single_prompt():
 
     result = annotator.annotate_test_item(interactions)
 
-    assert result == PerspectiveAPIResponse(interaction_scores=[{"TOXICITY": 0.5}])
+    assert result == PerspectiveAPIAnnotation(interaction_scores=[{"TOXICITY": 0.5}])
     requests_made = [request["request"] for request in fake_client.requests]
     assert requests_made == [
         {
@@ -91,7 +91,7 @@ def test_perspective_api_multiple_prompts():
 
     result = annotator.annotate_test_item(interactions)
 
-    assert result == PerspectiveAPIResponse(
+    assert result == PerspectiveAPIAnnotation(
         interaction_scores=[{"TOXICITY": 0.1}, {"TOXICITY": 0.2}]
     )
     requests_made = [request["request"] for request in fake_client.requests]
@@ -120,7 +120,7 @@ def test_perspective_api_multiple_attributes():
 
     result = annotator.annotate_test_item(interactions)
 
-    assert result == PerspectiveAPIResponse(
+    assert result == PerspectiveAPIAnnotation(
         interaction_scores=[{"TOXICITY": 0.1, "THREAT": 0.2}]
     )
     requests_made = [request["request"] for request in fake_client.requests]
