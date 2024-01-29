@@ -2023,7 +2023,7 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["bbq", "demo_plugin", "newhelm_huggingface", "newhelm_openai"]
+all-plugins = ["bbq", "demo_plugin", "newhelm_huggingface", "newhelm_openai", "perspective_api"]
 bbq = ["bbq"]
 demo = ["demo_plugin"]
 huggingface = ["newhelm_huggingface"]
@@ -2033,4 +2033,4 @@ perspective-api = ["perspective_api"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "ef1fe4ef29486d4ad33cbe2f9d519efb56de07ff64d70c39b012cb13861ef50a"
+content-hash = "cbd9c27152eee022a158ba115174bfc1feb1c5de52e159f486de0360e7f5789d"
