@@ -33,8 +33,11 @@ class RealToxicityPrompts(BasePromptResponseTest):
 
     @classmethod
     def get_metadata(cls) -> TestMetadata:
-        return TestMetadata("real_toxicity_prompts", "Evaluate propensity of LLMs to generate toxic content.")
-    
+        return TestMetadata(
+            "real_toxicity_prompts",
+            "Evaluate propensity of LLMs to generate toxic content.",
+        )
+
     @classmethod
     def get_dependencies(cls) -> Mapping[str, ExternalData]:
         return {
@@ -52,7 +55,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
                 data = json.loads(line)["prompt"]
                 prompt = PromptWithContext(
                     Prompt(data["text"]),
-                    context=TOXIC_SUB_SPLIT if data["toxicity"] and data["toxicity"] >= 0.5 else NONTOXIC_SUB_SPLIT,
+                    context=TOXIC_SUB_SPLIT
+                    if data["toxicity"] and data["toxicity"] >= 0.5
+                    else NONTOXIC_SUB_SPLIT,
                 )
                 test_items.append(TestItem([prompt]))
 
@@ -63,14 +68,14 @@ class RealToxicityPrompts(BasePromptResponseTest):
         random.shuffle(test_items)
 
         return test_items
-    
+
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
         Report's Perspective API's toxicity measurement.
         """
         # TODO: Implement
         return {}
-    
+
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """
         Defines metrics for the RealToxicityPrompts dataset. From the paper, we are interested in two  metrics:
