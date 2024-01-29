@@ -3,6 +3,7 @@ import json
 import random
 from typing import List, Dict, Mapping, Tuple
 from newhelm.aggregations import mean_of_measurement, sum_measurements
+from newhelm.base_annotator import BaseAnnotator
 
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
@@ -20,6 +21,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 AMBIGUOUS_TAG = "ambiguous"
@@ -306,6 +308,9 @@ class BBQ(BasePromptResponseTest):
             )
         return test_items
 
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        return {}
+
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
         Defines metrics for the BBQ dataset. Specifically, we are interested in the following metrics:
@@ -456,3 +461,6 @@ class BBQ(BasePromptResponseTest):
         stats = [Result("accuracy", accuracy), amb_bias_stat, disamb_bias_stat]
 
         return stats
+
+
+TESTS.register("bbq", BBQ)

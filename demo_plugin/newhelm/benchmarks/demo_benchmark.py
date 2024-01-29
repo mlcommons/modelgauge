@@ -1,13 +1,14 @@
 from typing import Dict, List
-from newhelm.plugins.tests.demo_02_unpacking_dependency_test import (
+from newhelm.benchmark_registry import BENCHMARKS
+from newhelm.tests.demo_02_unpacking_dependency_test import (
     DemoUnpackingDependencyTest,
 )
-from newhelm.plugins.tests.demo_03_paired_prompts_test import (
+from newhelm.tests.demo_03_paired_prompts_test import (
     DemoPairedPromptsTest,
 )
 from newhelm.aggregations import mean_of_results
 
-from newhelm.plugins.tests.demo_01_simple_qa_test import DemoSimpleQATest
+from newhelm.tests.demo_01_simple_qa_test import DemoSimpleQATest
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
 from newhelm.placeholders import Result
@@ -27,3 +28,6 @@ class DemoBenchmark(BaseBenchmark):
     def summarize(self, results: Dict[str, List[Result]]) -> Score:
         """This demo reports the mean over all test Results."""
         return Score(mean_of_results(results))
+
+
+BENCHMARKS.register("demo", DemoBenchmark)
