@@ -97,11 +97,11 @@ class SecretsRegistry:
 
     def _assert_registered(self, scope, key, required: bool) -> None:
         error_message = (
-            f"Before you can access the secret {key} in {scope}, you have to document "
+            f"Before you can access the secret `{key}` in `{scope}`, you have to document "
             "how to obtain the value by calling `register(scope, key, instructions)`."
         )
         if self._values is None:
-            error_message += " You also need to set the values."
+            error_message += " You also need to call set_values somewhere."
         elif scope in self._values and key in self._values[scope]:
             error_message += " Good news is there is a value stored for that key."
         elif required:
@@ -109,12 +109,14 @@ class SecretsRegistry:
         else:
             error_message += " Adding a value for that key is optional."
 
-        if scope not in self._registered:
+        if not self._registered:
+            raise AssertionError(error_message)
+        elif scope not in self._registered:
             error_message += (
-                f" Did you mean one of these scopes? {self._registered.keys()}"
+                f" Did you mean one of these scopes? {set(self._registered.keys())}"
             )
             raise AssertionError(error_message)
-        if key not in self._registered[scope]:
+        elif key not in self._registered[scope]:
             error_message += f" Did you mean one of these keys in {scope}? {self._registered[scope].keys()}"
             raise AssertionError(error_message)
 
