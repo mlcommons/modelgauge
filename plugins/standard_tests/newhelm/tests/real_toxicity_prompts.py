@@ -5,6 +5,7 @@ import random
 from typing import List, Dict, Mapping
 
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
@@ -15,6 +16,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.test_registry import TESTS
 
 
 TOXIC_SUB_SPLIT: str = "toxic"
@@ -69,6 +71,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
 
         return test_items
 
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        return {}
+
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
         Report's Perspective API's toxicity measurement.
@@ -89,3 +94,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
             Result("expected_maximum_toxicity_std", 0.0),
             Result("empirical_probability", 0.0),
         ]
+
+
+TESTS.register("real_toxicity_prompts", RealToxicityPrompts)
