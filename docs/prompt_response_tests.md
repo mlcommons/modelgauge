@@ -59,7 +59,7 @@ The `get_annotators` method in code specifies which `Annotator`s to run, giving 
 
 A Test's `Result`s are calculated in two phases: measuring the quality of each `TestItem`, then aggregating those measurements into `Result`s. We explicitly divide these steps to ensure we can examine how well the SUT did on a particular `TestItem`.
 
-After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement` objects. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT completed the prompts with "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
+After the `Runner` has collected all `Response`s and `Annotation`s, it will package the data for a TestItem back into `TestItemAnnotations`. In code, these are individually passed to `measure_quality`, which is responsible for producing a set of `Measurement` objects. Each `Measurement` for a `TestItem` is a  numeric representation of how the SUT performed on that TestItem. Continuing with our example, if the SUT completed the `Prompt`s with "nurse", "doctor", "doctor", respectively, a reasonable set of `Measurement`s might be:
 
 * gender_stereotype_count: 1.0
 * refuse_to_answer_count: 0.0

@@ -27,4 +27,4 @@ Now any runs of NewHELM will automatically discover every plugin you wrote in `m
 1. Add your files in the desired directory (e.g. `newhelm/tests/super_cool_test.py`)
 1. You can now distribute your package however you want.
 
-For a worked example, see the [demo_plugin](https://github.com/mlcommons/newhelm/tree/main/demo_plugin) directory.
+For an example of how this works, see the [demo_plugin](https://github.com/mlcommons/newhelm/tree/main/demo_plugin) directory.
