@@ -52,7 +52,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
         data_dir = dependency_helper.get_local_path("prompts_tar")
-        with open(os.path.join(data_dir, "prompts.jsonl"), "r") as f:
+        with open(
+            os.path.join(data_dir, "realtoxicityprompts-data/prompts.jsonl"), "r"
+        ) as f:
             for line in f:
                 data = json.loads(line)["prompt"]
                 prompt = PromptWithContext(
