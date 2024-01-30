@@ -1,5 +1,31 @@
 import threading
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
+
+
+class SecretsRegistryMissingValue(AssertionError):
+    """Raised if no value was provided for a required secret."""
+
+    def __init__(
+        self,
+        scope: str,
+        key: str,
+        instructions: str,
+        known_scopes: Set,
+        known_keys_in_scope: Set,
+    ):
+        self.scope = scope
+        self.key = key
+        self.instructions = instructions
+        self.known_scopes = known_scopes
+        self.known_keys_in_scope = known_keys_in_scope
+
+    def __str__(self):
+        return (
+            f"Missing value for secret `{self.key}` in scope `{self.scope}`. "
+            f"Known scopes: {self.known_scopes}. "
+            f"Known keys in `{self.scope}`: {self.known_keys_in_scope}. "
+            f"Instructions for obtaining that value: {self.instructions}"
+        )
 
 
 class SecretsRegistry:
@@ -10,7 +36,7 @@ class SecretsRegistry:
         self._values: Optional[Dict[str, Dict[str, str]]] = None
         self.lock = threading.Lock()
 
-    def register(self, scope: str, key: str, instructions: str):
+    def register(self, scope: str, key: str, instructions: str) -> None:
         """Record the instructions for obtaining the key."""
         with self.lock:
             if scope not in self._registered:
@@ -24,28 +50,37 @@ class SecretsRegistry:
             else:
                 self._registered[scope][key] = instructions
 
-    def set_values(self, values: Dict[str, Dict[str, str]]):
+    def set_values(self, values: Dict[str, Dict[str, str]]) -> None:
         """Set all secret values, like from a file."""
         with self.lock:
             self._values = values
 
-    def get_required(self, scope, key) -> str:
+    def get_required(self, scope: str, key: str) -> str:
         """Retrieve the secret, failing if it isn't available."""
         with self.lock:
             assert (
                 self._values is not None
             ), "Must set values before trying to get values."
             self._assert_registered(scope, key, required=True)
-            assert self._values, "The values list is empty"
-            assert (
-                scope in self._values
-            ), f"No values stored for {scope}, did you mean {self._values.keys()}?"
-            assert (
-                key in self._values[scope]
-            ), f"Scope {scope} had no value for {key}, did you mean {self._values[scope].keys()}."
+            if scope not in self._values:
+                raise SecretsRegistryMissingValue(
+                    scope,
+                    key,
+                    self._registered[scope][key],
+                    set(self._values.keys()),
+                    set(),
+                )
+            if key not in self._values[scope]:
+                raise SecretsRegistryMissingValue(
+                    scope,
+                    key,
+                    self._registered[scope][key],
+                    set(self._values.keys()),
+                    set(self._values[scope].keys()),
+                )
             return self._values[scope][key]
 
-    def get_optional(self, scope, key) -> Optional[str]:
+    def get_optional(self, scope: str, key: str) -> Optional[str]:
         """Retrieve the secret or None if it isn't available.
 
         Can still fail if the secret isn't probably documented.
