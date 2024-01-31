@@ -60,7 +60,7 @@ jobs:
     - name: Install with plugins
       run: poetry install --no-interaction --extras all_plugins
 
-    - name: Rum mypy
+    - name: Run mypy
       run: poetry run mypy .
 
     - name: Test with plugin
