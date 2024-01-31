@@ -1,3 +1,5 @@
+import click
+
 from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import newhelm_cli
 
@@ -8,15 +10,18 @@ from newhelm.test_registry import TESTS
 
 @newhelm_cli.command()
 def list():
-    print("SUTS:")
+    click.echo(click.style("SUTS:", bold=True))
     for sut, entry in SUTS.items():
-        print("\t", sut, entry)
-    print("Tests:")
+        click.echo("\t", nl=False)
+        click.echo(f"{sut} {entry.cls.__name__}")
+    click.echo(click.style("Tests:", bold=True))
     for test, entry in TESTS.items():
-        print("\t", test, entry)
-    print("Benchmarks:")
+        click.echo("\t", nl=False)
+        click.echo(f"{test} {entry.cls.__name__}")
+    click.echo(click.style("Benchmarks:", bold=True))
     for benchmark, entry in BENCHMARKS.items():
-        print("\t", benchmark, entry)
+        click.echo("\t", nl=False)
+        click.echo(f"{benchmark} {entry.cls.__name__}")
 
 
 if __name__ == "__main__":

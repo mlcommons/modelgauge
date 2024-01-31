@@ -9,6 +9,7 @@ import time
 from typing import Any, Dict, List, Set, Type, TypeVar
 import uuid
 
+import click
 import dacite
 
 # Type vars helpful in defining templates.
@@ -81,10 +82,10 @@ def get_or_create_json_file(*path_pieces):
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
-    print(f"Executing: {cmd}")
+    click.echo(f"Executing: {cmd}")
     exit_code = subprocess.call(args)
     if exit_code != 0:
-        print(f"Failed with exit code {exit_code}: {cmd}")
+        click.echo(f"Failed with exit code {exit_code}: {cmd}", err=True)
 
 
 def hash_file(filename, block_size=65536):

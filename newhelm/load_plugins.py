@@ -16,6 +16,8 @@ import pkgutil
 from types import ModuleType
 from typing import Iterator
 
+import click
+
 import newhelm
 import newhelm.annotators
 import newhelm.benchmarks
@@ -31,14 +33,14 @@ def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 def load_plugins() -> None:
     for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
         for _, name, _ in iter_namespace(getattr(newhelm, ns)):
-            print(f"Importing: {name}")
+            click.echo(f"Importing: {name}")
             importlib.import_module(name)
 
 
 if __name__ == "__main__":
     load_plugins()
     for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
-        print(f"These are the {ns} modules I know about:")
+        click.echo(click.style(f"These are the {ns} modules I know about:", bold=True))
         for plugin in list(pkgutil.iter_modules(getattr(newhelm, ns).__path__)):
-            print(plugin.name)
-        print("\n")
+            click.echo(plugin.name)
+        click.echo("\n")
