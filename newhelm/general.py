@@ -2,6 +2,7 @@ from dataclasses import asdict, is_dataclass
 import inspect
 import hashlib
 import json
+import logging
 import os
 import shlex
 import subprocess
@@ -9,7 +10,6 @@ import time
 from typing import Any, Dict, List, Set, Type, TypeVar
 import uuid
 
-import click
 import dacite
 
 # Type vars helpful in defining templates.
@@ -82,10 +82,10 @@ def get_or_create_json_file(*path_pieces):
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
-    click.echo(f"Executing: {cmd}")
+    logging.info(f"Executing: {cmd}")
     exit_code = subprocess.call(args)
     if exit_code != 0:
-        click.echo(f"Failed with exit code {exit_code}: {cmd}", err=True)
+        logging.error(f"Failed with exit code {exit_code}: {cmd}")
 
 
 def hash_file(filename, block_size=65536):

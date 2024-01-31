@@ -12,6 +12,7 @@ To see this in action:
 The demo plugin modules will only print on the second run.
 """
 import importlib
+import logging
 import pkgutil
 from types import ModuleType
 from typing import Iterator
@@ -33,7 +34,7 @@ def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
 def load_plugins() -> None:
     for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
         for _, name, _ in iter_namespace(getattr(newhelm, ns)):
-            click.echo(f"Importing: {name}")
+            logging.info(f"Importing: {name}")
             importlib.import_module(name)
 
 
@@ -42,5 +43,5 @@ if __name__ == "__main__":
     for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
         click.echo(click.style(f"These are the {ns} modules I know about:", bold=True))
         for plugin in list(pkgutil.iter_modules(getattr(newhelm, ns).__path__)):
-            click.echo(plugin.name)
+            click.echo("\t" + plugin.name)
         click.echo("\n")
