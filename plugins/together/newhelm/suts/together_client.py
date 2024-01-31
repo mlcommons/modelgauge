@@ -4,7 +4,7 @@ import requests
 from together.utils import response_status_exception  # type: ignore
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
-from newhelm.sut import PromptResponseSUT, SUTResponse
+from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 from newhelm.sut_registry import SUTS
 
@@ -80,7 +80,11 @@ class TogetherCompletionsSUT(
     def translate_response(
         self, prompt: Prompt, response: TogetherCompletionsResponse
     ) -> SUTResponse:
-        return SUTResponse(response.choices[0].text)
+        sut_completions = []
+        for choice in response.choices:
+            assert choice.text is not None
+            sut_completions.append(SUTCompletion(choice.text))
+        return SUTResponse(sut_completions)
 
 
 class TogetherChatRequest(BaseModel):
@@ -154,7 +158,12 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     def translate_response(
         self, prompt: Prompt, response: TogetherChatResponse
     ) -> SUTResponse:
-        return SUTResponse(response.choices[0].message.content)
+        sut_completions = []
+        for choice in response.choices:
+            text = choice.message.content
+            assert text is not None
+            sut_completions.append(SUTCompletion(text))
+        return SUTResponse(sut_completions)
 
 
 SUTS.register("llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b")
