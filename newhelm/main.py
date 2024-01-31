@@ -8,17 +8,21 @@ from newhelm.test_registry import TESTS
 
 @newhelm_cli.command()
 def list():
-    print("Plugin Modules:")
-    for module_name in list_plugins():
+    plugins = list_plugins()
+    print(f"Plugin Modules: {len(plugins)}")
+    for module_name in plugins:
         print("\t", module_name)
-    print("SUTS:")
-    for sut, entry in SUTS.items():
+    suts = SUTS.items()
+    print(f"SUTS: {len(suts)}")
+    for sut, entry in suts:
         print("\t", sut, entry)
-    print("Tests:")
-    for test, entry in TESTS.items():
+    tests = TESTS.items()
+    print(f"Tests: {len(tests)}")
+    for test, entry in tests:
         print("\t", test, entry)
-    print("Benchmarks:")
-    for benchmark, entry in BENCHMARKS.items():
+    benchmarks = BENCHMARKS.items()
+    print(f"Benchmarks: {len(benchmarks)}")
+    for benchmark, entry in benchmarks:
         print("\t", benchmark, entry)
 
 
