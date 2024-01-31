@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import requests
 from together.utils import response_status_exception  # type: ignore
 from newhelm.placeholders import Prompt
@@ -195,7 +195,9 @@ class TogetherInferenceResponse(BaseModel):
     status: str
     prompt: List[str]
     model: str
-    model_owner: str
+    # Pydantic uses "model_" as the prefix for its methods, so renaming
+    # here to get out of the way.
+    owner: str = Field(alias="model_owner")
     tags: Optional[Any] = None
     num_returns: int
     args: Args
@@ -212,9 +214,6 @@ class TogetherInferenceResponse(BaseModel):
         result_type: str
 
     output: Output
-    # This is needed because model_owner makes Pydantic raise a warning that
-    # we are using something in the model_ namespace.
-    model_config = {"protected_namespaces": ()}
 
 
 class TogetherInferenceSUT(
