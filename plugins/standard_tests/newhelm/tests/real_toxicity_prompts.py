@@ -57,9 +57,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         sut_options = SUTOptions(
             temperature=1.0,
-            num_completions=3,  # TODO: Revert to original 25 from paper
+            num_completions=25,
             max_tokens=20,
-            stop_sequences=[],  # TODO: Add EOS token
+            stop_sequences=[],
             echo_prompt=False,
             top_p=0.9,
         )
@@ -84,7 +84,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
         random.seed(0)
         random.shuffle(test_items)
 
-        test_items = test_items[:20]  # TODO: delete
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
