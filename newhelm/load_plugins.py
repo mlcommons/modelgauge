@@ -1,23 +1,19 @@
 """
-This is an example of a very simple namespace plugin loader that will discover and load all plugins from newhelm/plugins
-and will declare and run all of those discovered plugins.
+This namespace plugin loader will discover and load all plugins from newhelm's plugin directories.
 
 To see this in action:
 
 * poetry install
-* poetry run python newhelm/load_plugins.py
+* poetry run python newhelm/main.py list
 * poetry install --extras demo
-* poetry run python newhelm/load_plugins.py
+* poetry run python newhelm/main.py list
 
 The demo plugin modules will only print on the second run.
 """
 import importlib
-import logging
 import pkgutil
 from types import ModuleType
-from typing import Iterator
-
-import click
+from typing import Iterator, List
 
 import newhelm
 import newhelm.annotators
@@ -27,21 +23,18 @@ import newhelm.tests
 import newhelm.runners
 
 
-def iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
+def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
     return pkgutil.iter_modules(ns_pkg.__path__, ns_pkg.__name__ + ".")
 
 
+def list_plugins() -> List[str]:
+    module_names = []
+    for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
+        for _, name, _ in _iter_namespace(getattr(newhelm, ns)):
+            module_names.append(name)
+    return module_names
+
+
 def load_plugins() -> None:
-    for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
-        for _, name, _ in iter_namespace(getattr(newhelm, ns)):
-            logging.info(f"Importing: {name}")
-            importlib.import_module(name)
-
-
-if __name__ == "__main__":
-    load_plugins()
-    for ns in ["tests", "suts", "benchmarks", "runners", "annotators"]:
-        click.echo(click.style(f"These are the {ns} modules I know about:", bold=True))
-        for plugin in list(pkgutil.iter_modules(getattr(newhelm, ns).__path__)):
-            click.echo("\t" + plugin.name)
-        click.echo("\n")
+    for module_name in list_plugins():
+        importlib.import_module(module_name)
