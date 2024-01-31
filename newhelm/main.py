@@ -3,7 +3,7 @@ from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import SECRETS_FILE_OPTION, SUT_OPTION, newhelm_cli
 from newhelm.general import get_or_create_json_file
 
-from newhelm.load_plugins import load_plugins
+from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT
@@ -13,14 +13,21 @@ from newhelm.test_registry import TESTS
 
 @newhelm_cli.command()
 def list():
-    print("SUTS:")
-    for sut, entry in SUTS.items():
+    plugins = list_plugins()
+    print(f"Plugin Modules: {len(plugins)}")
+    for module_name in plugins:
+        print("\t", module_name)
+    suts = SUTS.items()
+    print(f"SUTS: {len(suts)}")
+    for sut, entry in suts:
         print("\t", sut, entry)
-    print("Tests:")
-    for test, entry in TESTS.items():
+    tests = TESTS.items()
+    print(f"Tests: {len(tests)}")
+    for test, entry in tests:
         print("\t", test, entry)
-    print("Benchmarks:")
-    for benchmark, entry in BENCHMARKS.items():
+    benchmarks = BENCHMARKS.items()
+    print(f"Benchmarks: {len(benchmarks)}")
+    for benchmark, entry in benchmarks:
         print("\t", benchmark, entry)
 
 
