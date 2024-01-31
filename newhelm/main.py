@@ -18,15 +18,15 @@ def list():
     click.echo(click.style("SUTS:", bold=True))
     for sut, entry in SUTS.items():
         click.echo("\t", nl=False)
-        click.echo(f"{sut} {entry.cls.__name__}")
+        click.echo(f"{sut} {entry.cls.__name__} {entry.args}")
     click.echo(click.style("Tests:", bold=True))
     for test, entry in TESTS.items():
         click.echo("\t", nl=False)
-        click.echo(f"{test} {entry.cls.__name__}")
+        click.echo(f"{test} {entry.cls.__name__} {entry.args}")
     click.echo(click.style("Benchmarks:", bold=True))
     for benchmark, entry in BENCHMARKS.items():
         click.echo("\t", nl=False)
-        click.echo(f"{benchmark} {entry.cls.__name__}")
+        click.echo(f"{benchmark} {entry.cls.__name__} {entry.args}")
 
 
 if __name__ == "__main__":
