@@ -9,7 +9,7 @@ from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
-from newhelm.sut import Completion
+from newhelm.sut import SUTCompletion
 
 # Constants for requesting specific kinds of scoring from Perspective API.
 # https://developers.perspectiveapi.com/s/about-the-api-attributes-and-languages
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     interactions: List[PromptInteraction] = [
         PromptInteraction(
             PromptWithContext(Prompt("The prompt")),
-            SUTResponse([Completion(sut_text)]),
+            SUTResponse([SUTCompletion(sut_text)]),
         )
     ]
     response = annotator.annotate_test_item(interactions)

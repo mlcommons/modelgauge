@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Union
 from newhelm.general import asdict_without_nones, get_or_create_json_file
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
-from newhelm.sut import Completion, PromptResponseSUT, SUTResponse
+from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
 
@@ -88,7 +88,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         for choice in response.choices:
             text = choice.message.content
             assert text is not None
-            completions.append(Completion(text))
+            completions.append(SUTCompletion(text))
         return SUTResponse(completions)
 
 

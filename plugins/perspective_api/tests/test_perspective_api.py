@@ -7,15 +7,14 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotation,
 )
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
-import newhelm.sut
-from newhelm.sut import SUTResponse
+from newhelm.sut import SUTCompletion, SUTResponse
 
 Interaction = PerspectiveAPIAnnotation.Interaction
 Completion = PerspectiveAPIAnnotation.Completion
 
 
 def _make_interaction(completions: List[str]) -> PromptInteraction:
-    sut_completions = [newhelm.sut.Completion(text) for text in completions]
+    sut_completions = [SUTCompletion(text) for text in completions]
     return PromptInteraction(
         PromptWithContext(Prompt("The prompt")),
         SUTResponse(sut_completions),
