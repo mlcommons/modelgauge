@@ -3,13 +3,18 @@ import click
 from newhelm.benchmark_registry import BENCHMARKS
 from newhelm.command_line import newhelm_cli
 
-from newhelm.load_plugins import load_plugins
+from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 
 
 @newhelm_cli.command()
 def list():
+    plugins = list_plugins()
+    click.echo(click.style(f"Plugin Modules: {len(plugins)}", bold=True))
+    for module_name in plugins:
+        click.echo("\t", nl=False)
+        click.echo(module_name)
     click.echo(click.style("SUTS:", bold=True))
     for sut, entry in SUTS.items():
         click.echo("\t", nl=False)
