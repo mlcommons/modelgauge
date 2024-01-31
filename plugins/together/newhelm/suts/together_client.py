@@ -75,7 +75,7 @@ class TogetherCompletionsSUT(
         as_json = request.model_dump(exclude_none=True)
         response = requests.post(self._URL, headers=headers, json=as_json)
         response_status_exception(response)
-        return TogetherCompletionsResponse(**response.json())
+        return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
         self, prompt: Prompt, response: TogetherCompletionsResponse
@@ -153,7 +153,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         as_json = request.model_dump(exclude_none=True)
         response = requests.post(self._URL, headers=headers, json=as_json)
         response_status_exception(response)
-        return TogetherChatResponse(**response.json())
+        return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
         self, prompt: Prompt, response: TogetherChatResponse
