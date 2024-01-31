@@ -15,16 +15,19 @@ def list():
     for module_name in plugins:
         click.echo("\t", nl=False)
         click.echo(module_name)
-    click.echo(click.style("SUTS:", bold=True))
-    for sut, entry in SUTS.items():
+    suts = SUTS.items()
+    click.echo(click.style(f"SUTS: {len(suts)}", bold=True))
+    for sut, entry in suts:
         click.echo("\t", nl=False)
         click.echo(f"{sut} {entry.cls.__name__} {entry.args}")
-    click.echo(click.style("Tests:", bold=True))
-    for test, entry in TESTS.items():
+    tests = TESTS.items()
+    click.echo(click.style(f"Tests: {len(tests)}", bold=True))
+    for test, entry in tests:
         click.echo("\t", nl=False)
         click.echo(f"{test} {entry.cls.__name__} {entry.args}")
-    click.echo(click.style("Benchmarks:", bold=True))
-    for benchmark, entry in BENCHMARKS.items():
+    benchmarks = BENCHMARKS.items()
+    click.echo(click.style(f"Benchmarks: {len(benchmarks)}", bold=True))
+    for benchmark, entry in benchmarks:
         click.echo("\t", nl=False)
         click.echo(f"{benchmark} {entry.cls.__name__} {entry.args}")
 
