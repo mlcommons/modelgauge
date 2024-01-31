@@ -171,8 +171,8 @@ class TogetherInferenceRequest(BaseModel):
     model: str
     # prompt is documented as required, but you can pass messages instead,
     # which is not documented.
-    prompt: Optional[str]=None
-    messages: Optional[List[TogetherChatRequest.Message]]=None
+    prompt: Optional[str] = None
+    messages: Optional[List[TogetherChatRequest.Message]] = None
     max_tokens: int
     stop: Optional[List[str]] = None
     temperature: Optional[float] = None
@@ -186,7 +186,7 @@ class TogetherInferenceRequest(BaseModel):
 class TogetherInferenceResponse(BaseModel):
     class Args(BaseModel):
         model: str
-        prompt: Optional[str]=None
+        prompt: Optional[str] = None
         temperature: float
         top_p: float
         top_k: float
@@ -196,7 +196,7 @@ class TogetherInferenceResponse(BaseModel):
     prompt: List[str]
     model: str
     model_owner: str
-    tags: Optional[Any]=None
+    tags: Optional[Any] = None
     num_returns: int
     args: Args
     subjobs: List
@@ -204,17 +204,18 @@ class TogetherInferenceResponse(BaseModel):
     class Output(BaseModel):
         class Choice(BaseModel):
             finish_reason: str
-            index: Optional[int]=None
+            index: Optional[int] = None
             text: str
 
         choices: List[Choice]
-        raw_compute_time: Optional[float]=None
+        raw_compute_time: Optional[float] = None
         result_type: str
 
     output: Output
     # This is needed because model_owner makes Pydantic raise a warning that
     # we are using something in the model_ namespace.
-    model_config = {'protected_namespaces': ()}
+    model_config = {"protected_namespaces": ()}
+
 
 class TogetherInferenceSUT(
     PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
