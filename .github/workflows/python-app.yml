@@ -50,7 +50,7 @@ jobs:
       run: poetry install --no-interaction
 
     - name: Lint formatting
-      run: poetry run black .
+      run: poetry run black --check .
 
     - name: Test with pytest
       run: |
