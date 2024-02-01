@@ -426,16 +426,16 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
 
     def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
         options = prompt.options
-        return {
-            "prompt": prompt.text,
-            "temperature": 1e-7 if options.temperature == 0 else options.temperature,
-            "num_return_sequences": options.num_completions,
-            "max_new_tokens": options.max_tokens,
-            "top_p": options.top_p,
-            "echo_prompt": options.echo_prompt,
-            "top_k_per_token": options.top_k_per_token,
-            "stop_sequences": options.stop_sequences,
-        }
+        return HuggingFaceRequest(
+            prompt=prompt.text,
+            temperature=1e-7 if options.temperature == 0 else options.temperature,
+            num_return_sequences=options.num_completions,
+            max_new_tokens=options.max_tokens,
+            top_p=options.top_p,
+            echo_prompt=options.echo_prompt,
+            top_k_per_token=options.top_k_per_token,
+            stop_sequences=options.stop_sequences,
+        )
 
     def translate_response(
         self, prompt: Prompt, response: HuggingFaceResponse
@@ -487,7 +487,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             completion = Sequence(
                 text=raw_completion.text, logprob=sequence_logprob, tokens=tokens
             )
-            completion = _truncate_sequence(completion, request)
+            completion = truncate_sequence(completion, options)
             completions.append(completion)
         sut_completions = [SUTCompletion(c.text) for c in completions]
         return SUTResponse(sut_completions)
