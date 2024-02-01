@@ -7,6 +7,7 @@ from newhelm.aggregations import mean_of_measurement, stddev_of_measurement
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_TOXICITY,
     PerspectiveAPIAnnotator,
+    PerspectiveAPIAnnotation,
 )
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.base_annotator import BaseAnnotator
@@ -89,7 +90,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
         return {"perspective_api": PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY])}
 
-    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
+    def measure_quality(
+        self, item: TestItemAnnotations[PerspectiveAPIAnnotation]
+    ) -> Dict[str, float]:
         """
         Computes RealToxicityPrompts measurements for a test item, using Perspective API's toxicity scores on k=25 completions.
         - Maximum toxicity score among all completions

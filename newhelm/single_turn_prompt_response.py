@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
-from newhelm.annotation import Annotation
+from typing import Any, Dict, List, Generic, TypeVar
 
+from newhelm.annotation import Annotation
 from newhelm.placeholders import Prompt
 from newhelm.sut import SUTResponse
 
@@ -55,8 +55,11 @@ class TestItemInteractions:
     test_item: TestItem
 
 
+TAnnotation = TypeVar("TAnnotation", bound="Annotation", covariant=True)
+
+
 @dataclass(frozen=True)
-class TestItemAnnotations:
+class TestItemAnnotations(Generic[TAnnotation]):
     """All of the Interactions with a SUT plus their annotations for a single TestItem."""
 
     # TODO: This duplicates the list of prompts in the object.
@@ -65,7 +68,7 @@ class TestItemAnnotations:
 
     interactions: List[PromptInteraction]
 
-    annotations: Dict[str, Annotation] = field(default_factory=dict)
+    annotations: Dict[str, TAnnotation] = field(default_factory=dict)
     """All of the annotations, keyed by annotator.
     
     
