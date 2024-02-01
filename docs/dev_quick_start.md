@@ -6,7 +6,7 @@ To get started run the following at the top level directory of the checked out r
 poetry install
 ```
 
-This will instruct [poetry](https://python-poetry.org/) to install the default dependencies into this project's environment, located at `.venv`. After you install, future `poetry run` commands will use that environment. You can also configure your editor to use that environment.
+This will instruct [poetry](https://python-poetry.org/) to install the default dependencies into this project's environment. After you install, future `poetry run` commands will use that environment.
 
 For example, you can run our command line tool with:
 
