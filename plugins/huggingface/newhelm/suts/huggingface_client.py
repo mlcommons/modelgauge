@@ -449,7 +449,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             if options.echo_prompt:
                 # Add prompt to list of generated tokens.
                 generated_tokens = raw_completion.tokens[response.input_length :]
-                if True: # TODO Remove this nesting once refactor is done.
+                if True:  # TODO Remove this nesting once refactor is done.
                     for token_text, logprob, top_logprobs_dict in zip(
                         raw_completion.tokens[: response.input_length],
                         raw_completion.prompt_logprobs[: response.input_length],
