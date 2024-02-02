@@ -15,6 +15,7 @@ DATA_DIR_OPTION = click.option(
 )
 
 MAX_TEST_ITEMS_OPTION = click.option(
+    "-m",
     "--max-test-items",
     default=None,
     type=click.IntRange(1),  # Must be a postive integer
