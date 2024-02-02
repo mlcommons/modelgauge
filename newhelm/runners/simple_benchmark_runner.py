@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+from typing import Dict, List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
@@ -19,7 +19,7 @@ from newhelm.sut import SUT, PromptResponseSUT
 class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     """Demonstration of running a whole benchmark on a SUT, all calls serial."""
 
-    def __init__(self, data_dir: str, max_test_items: int = None):
+    def __init__(self, data_dir: str, max_test_items: Optional[int] = None):
         self.data_dir = data_dir
         self.max_test_items = max_test_items
 
@@ -68,7 +68,7 @@ def run_prompt_response_test(
     test: BasePromptResponseTest,
     sut: PromptResponseSUT,
     data_dir: str,
-    max_test_items: int = None,
+    max_test_items: Optional[int] = None,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
     # This runner just records versions, it doesn't specify a required version.
