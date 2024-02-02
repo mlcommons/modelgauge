@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Dict, List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
@@ -79,8 +80,9 @@ def run_prompt_response_test(
     )
 
     test_items = test.make_test_items(dependency_helper)
-    if max_test_items:
-        test_items = test_items[:max_test_items]
+    if max_test_items and max_test_items < len(test_items):
+        random.seed(0)
+        test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
     for item in tqdm(test_items, desc=desc):
