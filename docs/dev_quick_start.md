@@ -6,7 +6,7 @@ To get started run the following at the top level directory of the checked out r
 poetry install
 ```
 
-This will instruct [poetry](https://python-poetry.org/) to install the default dependencies into this project's environment. After you install, future `poetry run` commands will use that environment.
+This will instruct [poetry](https://python-poetry.org/docs/) to install the default dependencies into this project's environment. After you install, future `poetry run` commands will use that environment.
 
 For example, you can run our command line tool with:
 
@@ -36,3 +36,7 @@ Here is an example of running a Test, using the `demo` plugin:
 ```
 poetry run python newhelm/main.py run-test --sut DemoMultipleChoiceSUT --test demo_01
 ```
+
+# Further Questions
+
+If you have any further questions, please feel free to ask them in the #engineering discord / file a github issue. Also if you see a way to make our documentation better, please submit a pull request. We'd love your help!
