@@ -37,7 +37,7 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
         formatter: Optional[Callable[[str, str], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
     ):
-        self.client = TogetherCompletionsSUT(_MODEL_NAME)
+        self.model = TogetherCompletionsSUT(_MODEL_NAME)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -57,7 +57,7 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
                     max_tokens=20,
                     n=1,
                 )
-                response = self.client.evaluate(request)
+                response = self.model.evaluate(request)
                 llama_completions.append(self._process_response(response))
             llama_interactions.append(
                 LlamaGuardAnnotation.Interaction(completions=llama_completions)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     import sys
 
     SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
-    text = " ".join(sys.argv[1:])
+    text = sys.argv[1]
     annotator = LlamaGuardAnnotator()
     annotation = annotator.annotate_test_item(
         [

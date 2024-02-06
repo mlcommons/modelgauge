@@ -52,7 +52,7 @@ def test_safe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("safe")]
     annotator = LlamaGuardAnnotator()
-    annotator.client = MockTogetherSUT(responses)
+    annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
 
@@ -67,7 +67,7 @@ def test_unsafe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1")]
     annotator = LlamaGuardAnnotator()
-    annotator.client = MockTogetherSUT(responses)
+    annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
 
@@ -88,7 +88,7 @@ def test_unsafe_multiple_categories():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1,O2")]
     annotator = LlamaGuardAnnotator()
-    annotator.client = MockTogetherSUT(responses)
+    annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
 
@@ -114,7 +114,7 @@ def test_custom_prompt_decoder():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nfoo")]
     annotator = LlamaGuardAnnotator(prompt_formatter, decoder)
-    annotator.client = MockTogetherSUT(responses)
+    annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
 
@@ -131,6 +131,6 @@ def test_custom_prompt_decoder():
         ]
     )
     assert (
-        annotator.client.requests_received[0].prompt
+        annotator.model.requests_received[0].prompt
         == "Is assistant saying bad things? assistant: first"
     )
