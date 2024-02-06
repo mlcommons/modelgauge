@@ -1,5 +1,6 @@
 import os
-from typing import Dict, List
+import random
+from typing import Dict, List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
@@ -19,8 +20,9 @@ from newhelm.sut import SUT, PromptResponseSUT
 class SimpleBenchmarkRunner(BaseBenchmarkRunner):
     """Demonstration of running a whole benchmark on a SUT, all calls serial."""
 
-    def __init__(self, data_dir: str):
+    def __init__(self, data_dir: str, max_test_items: Optional[int] = None):
         self.data_dir = data_dir
+        self.max_test_items = max_test_items
 
     def run(self, benchmark: BaseBenchmark, suts: List[SUT]) -> List[BenchmarkRecord]:
         # Not all runners can run all Test types, so validate up front
@@ -44,16 +46,20 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
                 assert isinstance(
                     sut, PromptResponseSUT
                 )  # Redo the assert to make type checking happy.
-                test_records.append(run_prompt_response_test(test, sut, self.data_dir))
+                test_records.append(
+                    run_prompt_response_test(
+                        test, sut, self.data_dir, self.max_test_items
+                    )
+                )
             # Run other kinds of tests on the SUT here
             test_results = {record.test_name: record.results for record in test_records}
             score = benchmark.summarize(test_results)
             benchmark_records.append(
                 BenchmarkRecord(
-                    benchmark.__class__.__name__,
-                    sut.__class__.__name__,
-                    test_records,
-                    score,
+                    benchmark_name=benchmark.__class__.__name__,
+                    sut_name=sut.__class__.__name__,
+                    test_records=test_records,
+                    score=score,
                 )
             )
         return benchmark_records
@@ -63,6 +69,7 @@ def run_prompt_response_test(
     test: BasePromptResponseTest,
     sut: PromptResponseSUT,
     data_dir: str,
+    max_test_items: Optional[int] = None,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
     # This runner just records versions, it doesn't specify a required version.
@@ -73,6 +80,9 @@ def run_prompt_response_test(
     )
 
     test_items = test.make_test_items(dependency_helper)
+    if max_test_items and max_test_items < len(test_items):
+        random.seed(0)
+        test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
     for item in tqdm(test_items, desc=desc):
@@ -112,18 +122,18 @@ def run_prompt_response_test(
         measurements = test.measure_quality(annotated)
         test_item_records.append(
             TestItemRecord(
-                annotated.test_item,
-                annotated.interactions,
-                annotated.annotations,
-                measurements,
+                test_item=annotated.test_item,
+                interactions=annotated.interactions,
+                annotations=annotated.annotations,
+                measurements=measurements,
             )
         )
         measured_test_items.append(MeasuredTestItem(annotated.test_item, measurements))
     results = test.aggregate_measurements(measured_test_items)
     return TestRecord(
-        test.__class__.__name__,
-        dependency_helper.versions_used(),
-        sut.__class__.__name__,
-        test_item_records,
-        results,
+        test_name=test.__class__.__name__,
+        dependency_versions=dependency_helper.versions_used(),
+        sut_name=sut.__class__.__name__,
+        test_item_records=test_item_records,
+        results=results,
     )

@@ -1,5 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
+from pydantic import BaseModel
 import torch
 from transformers import AutoModelForCausalLM  # type: ignore
 from transformers.generation.stopping_criteria import (  # type: ignore
@@ -12,6 +13,7 @@ import os
 from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
+from newhelm.general import value_or_default
 from newhelm.placeholders import Prompt, SUTOptions
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
@@ -85,7 +87,7 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
         return bool(torch.all(current_sequence == stop_sequence_tensor).item())
 
 
-class HuggingFaceRequest(TypedDict):
+class HuggingFaceRequest(BaseModel):
     """Data passed between make_request and serve_request. Used as the cache key."""
 
     prompt: str
@@ -98,7 +100,7 @@ class HuggingFaceRequest(TypedDict):
     stop_sequences: List
 
 
-class HuggingFaceCompletion(TypedDict):
+class HuggingFaceCompletion(BaseModel):
     text: str
     tokens: List[str]
     logprobs: List[float]
@@ -107,7 +109,7 @@ class HuggingFaceCompletion(TypedDict):
     prompt_top_logprobs_dicts: List[Dict[str, float]]
 
 
-class HuggingFaceResponse(TypedDict):
+class HuggingFaceResponse(BaseModel):
     completions: List[HuggingFaceCompletion]
     input_length: int
 
@@ -166,8 +168,8 @@ class RequestResult:
     """If `success` is false, what was the error?"""
 
 
-def truncate_sequence(
-    sequence: Sequence, options: SUTOptions, print_warning: bool = True
+def _truncate_sequence(
+    sequence: Sequence, request: HuggingFaceRequest, print_warning: bool = True
 ) -> Sequence:
     """
     Certain providers have bugs where they aren't respecting max_tokens,
@@ -178,11 +180,11 @@ def truncate_sequence(
     # know how many tokens the prompt takes up.
     # In the benchmark, usually echo_prompt is only used for language modeling,
     # where max_tokens = 0, so there's nothing to truncate.
-    if options.echo_prompt:
-        if options.max_tokens != 0:
+    if request.echo_prompt:
+        if request.max_new_tokens != 0:
             return sequence
 
-    for stop in options.stop_sequences:
+    for stop in request.stop_sequences:
         # Find `stop` in the text
         try:
             new_text = sequence.text[: sequence.text.index(stop)]
@@ -204,8 +206,8 @@ def truncate_sequence(
         sequence = Sequence(text=new_text, logprob=new_logprob, tokens=new_tokens)
 
     # Truncate based on the max number of tokens.
-    if len(sequence.tokens) > options.max_tokens:
-        new_tokens = sequence.tokens[: options.max_tokens]
+    if len(sequence.tokens) > request.max_new_tokens:
+        new_tokens = sequence.tokens[: request.max_new_tokens]
 
         # This is imperfect stitching together of tokens, so just to make sure this is okay
         # TODO: should use the proper detokenizer since T5-style models.
@@ -267,15 +269,15 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
     def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
-                raw_request["prompt"], return_tensors="pt", return_token_type_ids=False
+                raw_request.prompt, return_tensors="pt", return_token_type_ids=False
             ).to(self.device)
-        top_k_per_token: int = raw_request["top_k_per_token"]
+        top_k_per_token: int = raw_request.top_k_per_token
         stopping_criteria: Optional[StoppingCriteriaList] = None
         optional_args = {}
-        if len(raw_request["stop_sequences"]) > 0:
+        if len(raw_request.stop_sequences) > 0:
             with self.wrapped_tokenizer as tokenizer:
                 stop_sequence_ids = tokenizer(
-                    raw_request["stop_sequences"],
+                    raw_request.stop_sequences,
                     return_token_type_ids=False,
                     add_special_tokens=False,
                 )
@@ -295,9 +297,9 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
 
         # Check if we need to compute the perplexity of the prompt (#1497)
         compute_logprobs_only = (
-            raw_request["max_new_tokens"] == 0
-            and raw_request["num_return_sequences"] == 1
-            and raw_request["echo_prompt"]
+            raw_request.max_new_tokens == 0
+            and raw_request.num_return_sequences == 1
+            and raw_request.echo_prompt
         )
 
         # Use HuggingFace's `generate` method.
@@ -309,10 +311,10 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         else:
             output = self.model.generate(
                 **encoded_input,
-                temperature=raw_request["temperature"],
-                num_return_sequences=raw_request["num_return_sequences"],
-                max_new_tokens=raw_request["max_new_tokens"],
-                top_p=raw_request["top_p"],
+                temperature=raw_request.temperature,
+                num_return_sequences=raw_request.num_return_sequences,
+                max_new_tokens=raw_request.max_new_tokens,
+                top_p=raw_request.top_p,
                 do_sample=True,
                 return_dict_in_generate=True,
                 output_scores=True,
@@ -330,7 +332,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             prompt_tokens_top_logprobs_dicts.append({})
 
             # Compute logprobs of prompt tokens.
-            for completion_id in range(raw_request["num_return_sequences"]):
+            for completion_id in range(raw_request.num_return_sequences):
                 for i in range(len(sequences[completion_id]) - 1):
                     logprobs = torch.nn.functional.log_softmax(
                         scores[completion_id][i], dim=0
@@ -352,7 +354,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         # Compute logprobs of generated tokens for each completed sequence.
         all_generated_tokens_logprobs = []
         all_generated_tokens_top_logprobs_dicts = []
-        for completion_id in range(raw_request["num_return_sequences"]):
+        for completion_id in range(raw_request.num_return_sequences):
             generated_tokens_logprobs = []
             generated_tokens_top_logprobs_dicts = []
             for i in range(
@@ -383,7 +385,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             )
 
         # Remove prompt from the start of each sequence if echo_prompt is False.
-        if not raw_request["echo_prompt"]:
+        if not raw_request.echo_prompt:
             sequences = [
                 sequence[len(encoded_input.input_ids[0]) :] for sequence in sequences
             ]
@@ -408,54 +410,59 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             all_generated_tokens_top_logprobs_dicts,
         ):
             completions.append(
-                {
-                    "text": decoded_text,
-                    "tokens": tokens,
-                    "logprobs": generated_tokens_logprobs,
-                    "top_logprobs_dicts": generated_tokens_top_logprobs_dicts,
-                    "prompt_logprobs": prompt_tokens_logprobs,
-                    "prompt_top_logprobs_dicts": prompt_tokens_top_logprobs_dicts,
-                }
+                HuggingFaceCompletion(
+                    text=decoded_text,
+                    tokens=tokens,
+                    logprobs=generated_tokens_logprobs,
+                    top_logprobs_dicts=generated_tokens_top_logprobs_dicts,
+                    prompt_logprobs=prompt_tokens_logprobs,
+                    prompt_top_logprobs_dicts=prompt_tokens_top_logprobs_dicts,
+                )
             )
 
-        return {
-            "completions": completions,
-            "input_length": len(encoded_input.input_ids[0]),
-        }
+        return HuggingFaceResponse(
+            completions=completions,
+            input_length=len(encoded_input.input_ids[0]),
+        )
 
     def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
         options = prompt.options
-        return {
+        request = {
             "prompt": prompt.text,
-            "temperature": 1e-7 if options.temperature == 0 else options.temperature,
-            "num_return_sequences": options.num_completions,
             "max_new_tokens": options.max_tokens,
-            "top_p": options.top_p,
-            "echo_prompt": options.echo_prompt,
-            "top_k_per_token": options.top_k_per_token,
-            "stop_sequences": options.stop_sequences,
+            "num_return_sequences": options.num_completions,
         }
+        # Handle defaulting
+        temperature = value_or_default(options.temperature, 1.0)
+        if temperature == 0:
+            temperature = 1e-7
+        request["temperature"] = temperature
+        request["top_p"] = value_or_default(options.top_p, 1)
+        request["echo_prompt"] = value_or_default(options.echo_prompt, False)
+        request["top_k_per_token"] = value_or_default(options.top_k_per_token, 1)
+        request["stop_sequences"] = value_or_default(options.stop_sequences, [])
+        return HuggingFaceRequest.model_validate(request)
 
     def translate_response(
         self, prompt: Prompt, response: HuggingFaceResponse
     ) -> SUTResponse:
-        options = prompt.options
+        # Recreating the request is probably a hack, and we should consider cleaning this up.
+        # This is just to get the same defaults as the Request.
+        request = self.translate_request(prompt)
         completions = []
-        for raw_completion in response["completions"]:
+        for raw_completion in response.completions:
             sequence_logprob: float = 0
             tokens: List[Token] = []
 
-            if options.echo_prompt:
+            if request.echo_prompt:
                 # Add prompt to list of generated tokens.
-                generated_tokens = raw_completion["tokens"][response["input_length"] :]
-                if raw_completion.get("prompt_logprobs") and raw_completion.get(
-                    "prompt_top_logprobs_dicts"
-                ):
+                generated_tokens = raw_completion.tokens[response.input_length :]
+                if True:  # TODO Remove this nesting once refactor is done.
                     for token_text, logprob, top_logprobs_dict in zip(
-                        raw_completion["tokens"][: response["input_length"]],
-                        raw_completion["prompt_logprobs"][: response["input_length"]],
-                        raw_completion["prompt_top_logprobs_dicts"][
-                            : response["input_length"]
+                        raw_completion.tokens[: response.input_length],
+                        raw_completion.prompt_logprobs[: response.input_length],
+                        raw_completion.prompt_top_logprobs_dicts[
+                            : response.input_length
                         ],
                     ):
                         tokens.append(
@@ -467,21 +474,19 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
                         )
                         sequence_logprob += logprob
                 else:
-                    for token_text in raw_completion["tokens"][
-                        : response["input_length"]
-                    ]:
+                    for token_text in raw_completion.tokens[: response.input_length]:
                         tokens.append(
                             Token(text=token_text, logprob=0.0, top_logprobs={})
                         )
 
             else:
-                generated_tokens = raw_completion["tokens"]
+                generated_tokens = raw_completion.tokens
 
             # Compute logprob for the entire sequence.
             for token_text, logprob, top_logprobs_dict in zip(
                 generated_tokens,
-                raw_completion["logprobs"],
-                raw_completion["top_logprobs_dicts"],
+                raw_completion.logprobs,
+                raw_completion.top_logprobs_dicts,
             ):
                 tokens.append(
                     Token(
@@ -491,9 +496,9 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
                 sequence_logprob += logprob
 
             completion = Sequence(
-                text=raw_completion["text"], logprob=sequence_logprob, tokens=tokens
+                text=raw_completion.text, logprob=sequence_logprob, tokens=tokens
             )
-            completion = truncate_sequence(completion, options)
+            completion = _truncate_sequence(completion, request)
             completions.append(completion)
         sut_completions = [SUTCompletion(c.text) for c in completions]
         return SUTResponse(sut_completions)

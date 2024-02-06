@@ -14,6 +14,8 @@ def test_openai_chat_translate_request():
     assert request == OpenAIChatRequest(
         model="some-model",
         messages=[OpenAIChatMessage(content="some-text", role="user")],
+        max_tokens=100,
+        n=1,
     )
 
 
