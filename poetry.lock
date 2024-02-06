@@ -430,20 +430,6 @@ files = [
 ]
 
 [[package]]
-name = "dacite"
-version = "1.6.0"
-description = "Simple creation of data classes from dictionaries."
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "dacite-1.6.0-py3-none-any.whl", hash = "sha256:4331535f7aabb505c732fa4c3c094313fc0a1d5ea19907bf4726a7819a68b93f"},
-    {file = "dacite-1.6.0.tar.gz", hash = "sha256:d48125ed0a0352d3de9f493bf980038088f45f3f9d7498f090b50a847daaa6df"},
-]
-
-[package.extras]
-dev = ["black", "coveralls", "mypy", "pylint", "pytest (>=5)", "pytest-cov"]
-
-[[package]]
 name = "demo-plugin"
 version = "0.1.0"
 description = ""
@@ -2566,4 +2552,4 @@ together = ["newhelm_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "d620d8af359601f2b7bbdcf6673f05f35061d2eb587ed907a185361a9b020864"
+content-hash = "40f4ddad00ee60d785b586e04b148cbb666502454e817f6c45789e7120f89e2c"
