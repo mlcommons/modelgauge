@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "standard_tests"
+name = "newhelm-together"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
@@ -8,8 +8,9 @@ packages = [{include = "newhelm"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-# TODO: This probably shouldn't be here.
-perspective_api = {path = "../perspective_api", develop = true}
+together = "^0.2.11"
+types-requests = "^2.31.0.20240125"
+
 
 [build-system]
 requires = ["poetry-core"]
