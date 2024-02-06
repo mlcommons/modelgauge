@@ -132,6 +132,10 @@ class FromSourceDependencyHelper(DependencyHelper):
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmp_location = os.path.join(tmpdirname, dependency_key)
             external_data.download(tmp_location)
+            if os.path.getsize(tmp_location) == 0:
+                raise RuntimeError(
+                    f"Downloaded file for {dependency_key} is empty. Check the source URL."
+                )
             version = hash_file(tmp_location)
             final_path = self._get_version_path(dependency_key, version)
             if os.path.exists(final_path):
