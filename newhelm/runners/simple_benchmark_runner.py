@@ -1,11 +1,12 @@
 import os
 import random
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, get_args
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
+from newhelm.cache_helper import SUTResponseCacheHelper
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.records import BenchmarkRecord, TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -72,9 +73,10 @@ def run_prompt_response_test(
     max_test_items: Optional[int] = None,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
+    test_data_path = os.path.join(data_dir, test.get_metadata().name)
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
-        os.path.join(data_dir, test.get_metadata().name),
+        test_data_path,
         test.get_dependencies(),
         required_versions={},
     )
@@ -83,16 +85,25 @@ def run_prompt_response_test(
     if max_test_items and max_test_items < len(test_items):
         random.seed(0)
         test_items = random.sample(test_items, max_test_items)
+    # Explicitly specify cache helper's generic types (RequestType, ResponseType), which are based on the SUT's generic type values
+    cache_helper = SUTResponseCacheHelper[get_args(sut.__orig_bases__[0])](
+        os.path.join(test_data_path, "cached_responses"),
+        sut.__class__.__name__,
+    )
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
             sut_request = sut.translate_request(prompt.prompt)
-            sut_response = sut.evaluate(sut_request)
+            sut_response = cache_helper.get_cached_response(sut_request)
+            if sut_response is None:
+                sut_response = sut.evaluate(sut_request)
+                cache_helper.update_cache(sut_request, sut_response)
             response = sut.translate_response(prompt.prompt, sut_response)
             interactions.append(PromptInteraction(prompt, response))
         item_interactions.append(TestItemInteractions(interactions, item))
+    cache_helper.save_cache()
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:

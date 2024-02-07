@@ -34,7 +34,7 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: i
     assert isinstance(test_obj, BasePromptResponseTest)
 
     test_journal = run_prompt_response_test(test_obj, sut_obj, data_dir, max_test_items)
-    print(to_json(test_journal, indent=4))
+    # print(to_json(test_journal, indent=4))
 
 
 @newhelm_cli.command()
