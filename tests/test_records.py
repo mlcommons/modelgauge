@@ -145,4 +145,4 @@ def test_round_trip_prompt_with_context():
     returned = PromptWithContext.model_validate_json(as_json)
     # TODO Make this `assert prompt == returned`
     # This assertion is just demonstrating that we can't.
-    assert type(returned.context) == dict
+    assert type(returned.context) is dict

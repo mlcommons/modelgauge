@@ -40,7 +40,7 @@ def test_pydantic_lack_of_polymorphism_deserialize():
         strict=True,
     )
     # These should be Derived1 and Derived2
-    assert type(from_json.elements[0]) == SomeBase
-    assert type(from_json.elements[1]) == SomeBase
+    assert type(from_json.elements[0]) is SomeBase
+    assert type(from_json.elements[1]) is SomeBase
     # This should be Derived1
-    assert type(from_json.any_union) == dict
+    assert type(from_json.any_union) is dict
