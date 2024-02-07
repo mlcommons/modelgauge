@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, List
+from typing import Any, List, Generic, TypeVar
 from pydantic import BaseModel
 
 
@@ -15,20 +15,23 @@ class Derived2(SomeBase):
     field_2: int
 
 
-class Wrapper(BaseModel):
-    elements: List[SomeBase]
+TSomeBase = TypeVar("TSomeBase", bound="SomeBase", covariant=True)
+
+
+class Wrapper(BaseModel, Generic[TSomeBase]):
+    elements: List[TSomeBase]
     any_union: Any
 
 
 def test_pydantic_lack_of_polymorphism_serialize():
     """This test is showing that Pydantic doesn't serialize like we want."""
-    wrapper = Wrapper(
+    wrapper = Wrapper[Derived1 | Derived2](
         elements=[Derived1(all_have=20, field_1=1), Derived2(all_have=20, field_2=2)],
         any_union=Derived1(all_have=30, field_1=3),
     )
-    # This is missing field_1 and field_2 in elements
+    # This is no longer missing field_1 and field_2 in elements
     assert wrapper.model_dump_json() == (
-        """{"elements":[{"all_have":20},{"all_have":20}],"any_union":{"all_have":30,"field_1":3}}"""
+        """{"elements":[{"all_have":20,"field_1":1},{"all_have":20,"field_2":2}],"any_union":{"all_have":30,"field_1":3}}"""
     )
 
 
