@@ -15,7 +15,6 @@ class Derived2(SomeBase):
     field_2: int
 
 
-
 class Wrapper(BaseModel):
     elements: List[Derived1 | Derived2]
     any_union: Derived1 | Derived2
