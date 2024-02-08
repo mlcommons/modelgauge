@@ -10,7 +10,7 @@ import time
 from typing import Any, Dict, List, Optional, Set, Type, TypeVar
 import uuid
 
-import dacite
+from tqdm import tqdm
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
@@ -28,20 +28,6 @@ def asdict_without_nones(obj: Any) -> Dict[str, Any]:
     if not is_dataclass(obj):
         raise ValueError(f"Expected dataclass, got '{obj}'")
     return asdict(obj, dict_factory=lambda x: {k: v for (k, v) in x if v is not None})
-
-
-def to_json(obj, indent=None) -> str:
-    if not is_dataclass(obj):
-        raise ValueError(f"Expected dataclass, got '{obj}'")
-    return json.dumps(asdict_without_nones(obj), indent=indent)
-
-
-def from_dict(cls: type[_InT], dict: Dict) -> _InT:
-    return dacite.from_dict(cls, dict, config=dacite.Config(strict=True))
-
-
-def from_json(cls: type[_InT], value: str) -> _InT:
-    return from_dict(cls, json.loads(value))
 
 
 def get_concrete_subclasses(cls: Type[_InT]) -> Set[Type[_InT]]:
@@ -105,3 +91,17 @@ def hash_file(filename, block_size=65536):
             file_hash.update(block)
 
     return file_hash.hexdigest()
+
+
+class UrlRetrieveProgressBar:
+    """Progress bar compatable with urllib.request.urlretrieve."""
+
+    def __init__(self, url: str):
+        self.bar = None
+        self.url = url
+
+    def __call__(self, block_num, block_size, total_size):
+        if not self.bar:
+            self.bar = tqdm(total=total_size, unit="B", unit_scale=True)
+            self.bar.set_description(f"Downloading {self.url}")
+        self.bar.update(block_size)
