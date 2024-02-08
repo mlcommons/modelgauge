@@ -85,13 +85,13 @@ def run_prompt_response_test(
     if max_test_items and max_test_items < len(test_items):
         random.seed(0)
         test_items = random.sample(test_items, max_test_items)
+    item_interactions: List[TestItemInteractions] = []
+    desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
     # Explicitly specify cache helper's generic types (RequestType, ResponseType), which are based on the SUT's generic type values
     cache_helper = SUTResponseCacheHelper[get_args(sut.__orig_bases__[0])](
         os.path.join(test_data_path, "cached_responses"),
         sut.__class__.__name__,
     )
-    item_interactions: List[TestItemInteractions] = []
-    desc = f"Collecting responses to {test.__class__.__name__} from {sut.__class__.__name__}"
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
@@ -105,6 +105,7 @@ def run_prompt_response_test(
         item_interactions.append(
             TestItemInteractions(interactions=interactions, test_item=item)
         )
+    cache_helper.close()
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
