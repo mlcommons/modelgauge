@@ -21,12 +21,14 @@ class TypedData(BaseModel):
         """Convert the object into a TypedData instance."""
         return cls(type=TypedData._get_type(obj.__class__), data=obj.model_dump())
 
-    def to_instance(self, cls: Type[_BaseModelType]) -> _BaseModelType:
+    def to_instance(self, instance_cls: Type[_BaseModelType]) -> _BaseModelType:
         """Convert this data back into its original type."""
-        cls_type = TypedData._get_type(cls)
-        assert cls_type == self.type, f"Cannot convert {self.type} to {cls_type}."
-        return cls.model_validate(self.data)
+        instance_cls_type = TypedData._get_type(instance_cls)
+        assert (
+            instance_cls_type == self.type
+        ), f"Cannot convert {self.type} to {instance_cls_type}."
+        return instance_cls.model_validate(self.data)
 
     @staticmethod
-    def _get_type(cls):
-        return f"{cls.__module__}.{cls.__qualname__}"
+    def _get_type(instance_cls):
+        return f"{instance_cls.__module__}.{instance_cls.__qualname__}"

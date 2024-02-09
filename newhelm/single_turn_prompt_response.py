@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union
+from typing import Dict, List, Mapping, Type, TypeVar
 
 from pydantic import BaseModel, Field
 from newhelm.annotation import Annotation
@@ -11,7 +11,7 @@ from newhelm.typed_data import TypedData
 # more complicated, or make parallel structures for multi-turn.
 
 _BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
-_Context = Optional[Union[TypedData, str, Mapping]]
+_Context = TypedData | str | Mapping | None
 
 
 def resolve_context_type(context: _Context, cls):
