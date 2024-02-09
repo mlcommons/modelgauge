@@ -17,7 +17,7 @@ class TypedData(BaseModel):
     data: Dict[str, Any]
 
     @classmethod
-    def from_instance(cls, obj: _BaseModelType) -> Self:
+    def from_instance(cls, obj: BaseModel) -> Self:
         """Convert the object into a TypedData instance."""
         return cls(type=TypedData._get_type(obj.__class__), data=obj.model_dump())
 
