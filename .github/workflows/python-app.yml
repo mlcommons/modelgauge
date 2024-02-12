@@ -67,3 +67,8 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest
+
+    - name: Test cli
+      run: |
+        source .venv/bin/activate
+        ./tests/test_cli.sh
