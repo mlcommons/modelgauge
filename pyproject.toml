@@ -32,6 +32,12 @@ pytest-mock = "^3.12.0"
 explicit_package_bases = true
 mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, plugins/together"
 
+[tool.pytest.ini_options]
+markers = [
+    "requires_plugins: mark a test as requiring plugins to be installed"
+]
+addopts = "-m 'not requires_plugins'"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

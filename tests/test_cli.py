@@ -17,6 +17,7 @@ def test_list_plugins(cmd):
     assert os.system(f"python {cmd} list") == 0
 
 
+@pytest.mark.requires_plugins
 @pytest.mark.parametrize("sut", ["DemoMultipleChoiceSUT"])
 @pytest.mark.parametrize("test", ["demo_01", "demo_02"])
 def test_test_sut_combinations(cmd, test, sut):

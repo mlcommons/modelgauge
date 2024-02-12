@@ -67,3 +67,4 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest
+        pytest -m "requires_plugins"
