@@ -30,5 +30,5 @@ class TypedData(BaseModel):
         return instance_cls.model_validate(self.data)
 
     @staticmethod
-    def _get_type(instance_cls):
+    def _get_type(instance_cls: Type[BaseModel]) -> str:
         return f"{instance_cls.__module__}.{instance_cls.__qualname__}"
