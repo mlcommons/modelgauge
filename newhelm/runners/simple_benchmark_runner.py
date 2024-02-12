@@ -33,7 +33,9 @@ class SimpleBenchmarkRunner(BaseBenchmarkRunner):
             if isinstance(test, BasePromptResponseTest):
                 prompt_response_tests[test_name] = test
             else:
-                raise Exception("Runner can't handle test:", test_name)
+                raise Exception(
+                    f"Runner can't handle test: {test_name} of type {test.__class__}"
+                )
 
         # Validate all SUTs can do the requested test types
         if prompt_response_tests:
