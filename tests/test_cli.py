@@ -3,7 +3,7 @@ import pathlib
 
 import pytest
 
-expensive_tests = pytest.mark.skipif("not config.getoption('expensive-tests')")
+from tests.utilities import expensive_tests
 
 
 @pytest.fixture
