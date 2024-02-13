@@ -61,7 +61,7 @@ jobs:
       run: poetry install --no-interaction --extras all_plugins
 
     - name: Run mypy
-      run: poetry run mypy -v .
+      run: poetry run mypy -v --no-incremental
 
     - name: Test with plugin
       run: |
