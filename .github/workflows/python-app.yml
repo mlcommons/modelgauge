@@ -20,13 +20,6 @@ jobs:
       with:
         python-version: "3.10"
         
-    - name: cache poetry install
-      uses: actions/cache@v3
-      id: cache-poetry
-      with:
-        path: ~/.local
-        key: poetry-1.7.1-0
-        
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
@@ -34,18 +27,6 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         
-    - name: cache deps
-      id: cache-deps  
-      uses: actions/cache@v3
-      with:
-        path: .venv
-        key: pydeps-${{ hashFiles('**/poetry.lock') }}
-
-    
-    - name: Install dependencies with caching
-      run: poetry install --no-interaction --no-root
-      if: steps.cache-deps.outputs.cache-hit != 'true'
-
     - name: Install the project
       run: poetry install --no-interaction
 
