@@ -27,9 +27,6 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         
-    - name: Install the project
-      run: poetry install --no-interaction
-
     - name: Lint formatting
       run: poetry run black --check .
 
