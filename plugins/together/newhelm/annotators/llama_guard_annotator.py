@@ -8,11 +8,12 @@ from newhelm.suts.together_client import (
 
 from pydantic import BaseModel
 
+from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
-class LlamaGuardAnnotation(BaseModel):
+class LlamaGuardAnnotation(Annotation):
     """Annotates each interaction and completion separately.
 
     For each completion reports if it is safe/unsafe, and for
