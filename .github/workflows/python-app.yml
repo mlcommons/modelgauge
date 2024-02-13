@@ -61,7 +61,10 @@ jobs:
       run: poetry install --no-interaction --extras all_plugins
 
     - name: Run mypy
-      run: poetry run mypy -v --no-incremental
+      run: |
+        source .venv/bin/activate
+        mypy --version
+        mypy -v --no-incremental .
 
     - name: Test with plugin
       run: |
