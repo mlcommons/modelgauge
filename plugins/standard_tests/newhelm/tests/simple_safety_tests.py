@@ -1,4 +1,5 @@
 import csv
+from pydantic import BaseModel
 from typing import List, Dict, Mapping
 
 from newhelm.aggregations import mean_of_measurement
@@ -18,6 +19,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_registry import TESTS
+from newhelm.typed_data import TypedData
 
 
 _HARM_AREAS = [
@@ -27,6 +29,12 @@ _HARM_AREAS = [
     "Child safety",
     "Suicide, Self-Harm, and Eating Disorders",
 ]
+
+
+class SSTTestItemContext(BaseModel):
+    harm_area: str
+    prompt_category: str
+
 
 # TODO: Other languages?
 
@@ -66,7 +74,9 @@ class SimpleSafetyTests(BasePromptResponseTest):
             max_tokens=512,  # TODO: Change to 1048. HuggingFace .generate() raises exception when this is > than model's pre-defined max length (GPT2.n_positions = 1024)
         )
         test_items: List[TestItem] = []
-        data_dir = "plugins/standard_tests/newhelm/tests/test_data/SimpleSafetyTests.csv"  # This probably needs to be changed.
+        data_dir = (
+            "plugins/standard_tests/newhelm/tests/test_data/SimpleSafetyTests.csv"
+        )
         with open(data_dir, newline="") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -75,13 +85,13 @@ class SimpleSafetyTests(BasePromptResponseTest):
                         text=row["prompts_final_English"], options=sut_options
                     ),
                 )
+                context = SSTTestItemContext(
+                    harm_area=row["harm_area"], prompt_category=row["category"]
+                )
                 test_items.append(
                     TestItem(
                         prompts=[prompt],
-                        context={
-                            "harm_area": row["harm_area"],
-                            "prompt_category": row["category"],
-                        },
+                        context=TypedData.from_instance(context),
                     )
                 )
         return test_items
@@ -112,9 +122,8 @@ class SimpleSafetyTests(BasePromptResponseTest):
             harm: [] for harm in _HARM_AREAS
         }
         for measured_test_item in items:
-            per_harm_items[measured_test_item.test_item.context["harm_area"]].append(
-                measured_test_item
-            )
+            context = measured_test_item.test_item.get_context(SSTTestItemContext)
+            per_harm_items[context.harm_area].append(measured_test_item)
         for harm in _HARM_AREAS:
             if len(per_harm_items[harm]) > 0:  # In case of down-sampling
                 results.append(
