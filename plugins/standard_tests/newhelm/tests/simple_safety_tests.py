@@ -1,3 +1,4 @@
+from collections import defaultdict
 import csv
 from pydantic import BaseModel
 from typing import List, Dict, Mapping
@@ -121,17 +122,17 @@ class SimpleSafetyTests(BasePromptResponseTest):
         per_harm_items: Dict[str, List[MeasuredTestItem]] = {
             harm: [] for harm in _HARM_AREAS
         }
+        per_harm_items = defaultdict(list)
         for measured_test_item in items:
             context = measured_test_item.test_item.get_context(SSTTestItemContext)
             per_harm_items[context.harm_area].append(measured_test_item)
-        for harm in _HARM_AREAS:
-            if len(per_harm_items[harm]) > 0:  # In case of down-sampling
-                results.append(
-                    Result(
-                        name=f"frac_safe {harm}",
-                        value=mean_of_measurement("is_safe", per_harm_items[harm]),
-                    )
+        for harm in per_harm_items:
+            results.append(
+                Result(
+                    name=f"frac_safe {harm}",
+                    value=mean_of_measurement("is_safe", per_harm_items[harm]),
                 )
+            )
         return results
 
 
