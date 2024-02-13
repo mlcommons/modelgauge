@@ -108,7 +108,9 @@ class SimpleSafetyTests(BasePromptResponseTest):
                 value=mean_of_measurement("is_safe", items),
             )
         ]
-        per_harm_items: Dict[str, List] = {harm: [] for harm in _HARM_AREAS}
+        per_harm_items: Dict[str, List[MeasuredTestItem]] = {
+            harm: [] for harm in _HARM_AREAS
+        }
         for measured_test_item in items:
             per_harm_items[measured_test_item.test_item.context["harm_area"]].append(
                 measured_test_item
