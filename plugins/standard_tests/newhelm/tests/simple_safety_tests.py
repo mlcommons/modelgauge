@@ -11,7 +11,7 @@ from newhelm.annotators.llama_guard_annotator import (
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
-from newhelm.external_data import ExternalData
+from newhelm.external_data import ExternalData, WebData
 from newhelm.placeholders import Prompt, Result, SUTOptions
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -65,8 +65,11 @@ class SimpleSafetyTests(BasePromptResponseTest):
 
     @classmethod
     def get_dependencies(cls) -> Mapping[str, ExternalData]:
-        # Test data is included in newhelm repository.
-        return {}
+        return {
+            "prompts_csv": WebData(
+                source_url="https://docs.google.com/spreadsheets/d/1xP74oXO7cXdQ3nA11-Lr_u47urU2fDgwbve2r3IFYdU/export?format=csv",
+            ),
+        }
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         sut_options = SUTOptions(
@@ -75,10 +78,8 @@ class SimpleSafetyTests(BasePromptResponseTest):
             max_tokens=512,  # TODO: Change to 1048. HuggingFace .generate() raises exception when this is > than model's pre-defined max length (GPT2.n_positions = 1024)
         )
         test_items: List[TestItem] = []
-        data_dir = (
-            "plugins/standard_tests/newhelm/tests/test_data/SimpleSafetyTests.csv"
-        )
-        with open(data_dir, newline="") as csvfile:
+        data_dir = dependency_helper.get_local_path("prompts_csv")
+        with open(data_dir, "r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 prompt = PromptWithContext(
