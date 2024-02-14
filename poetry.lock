@@ -835,13 +835,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "httpcore"
-version = "1.0.2"
+version = "1.0.3"
 description = "A minimal low-level HTTP client."
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "httpcore-1.0.2-py3-none-any.whl", hash = "sha256:096cc05bca73b8e459a1fc3dcf585148f63e534eae4339559c9b8a8d6399acc7"},
-    {file = "httpcore-1.0.2.tar.gz", hash = "sha256:9fc092e4799b26174648e54b74ed5f683132a464e95643b226e00c2ed2fa6535"},
+    {file = "httpcore-1.0.3-py3-none-any.whl", hash = "sha256:9a6a501c3099307d9fd76ac244e08503427679b1e81ceb1d922485e2f2462ad2"},
+    {file = "httpcore-1.0.3.tar.gz", hash = "sha256:5c0f9546ad17dac4d0772b0808856eb616eb8b48ce94f49ed819fd6982a8a544"},
 ]
 
 [package.dependencies]
@@ -852,7 +852,7 @@ h11 = ">=0.13,<0.15"
 asyncio = ["anyio (>=4.0,<5.0)"]
 http2 = ["h2 (>=3,<5)"]
 socks = ["socksio (==1.*)"]
-trio = ["trio (>=0.22.0,<0.23.0)"]
+trio = ["trio (>=0.22.0,<0.24.0)"]
 
 [package.source]
 type = "legacy"
@@ -1291,13 +1291,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-huggingface"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 optional = true
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_huggingface-0.1.0-py3-none-any.whl", hash = "sha256:853084dd6165e2c3de9c26b00f7f5577ae5ad4e7babdb40c92b30a054aac33df"},
-    {file = "newhelm_huggingface-0.1.0.tar.gz", hash = "sha256:4b4d2aa488cdb1300eedf1e51f10308707f96724f72dd95cb95257798b6da456"},
+    {file = "newhelm_huggingface-0.1.1-py3-none-any.whl", hash = "sha256:e5075db27ea978962ea918b8777883d79f453811ca528e8bb300e13bee13592e"},
+    {file = "newhelm_huggingface-0.1.1.tar.gz", hash = "sha256:76168141d25d372f9c65a2712e9e1c2e98eb4ee8c5710d831cec29874085e3de"},
 ]
 
 [package.dependencies]
@@ -1311,13 +1311,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "newhelm-openai"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 optional = true
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "newhelm_openai-0.1.0-py3-none-any.whl", hash = "sha256:e15193e183f0c787d770cc30657a60a56b711d3094f215dcdf1af34084140e0e"},
-    {file = "newhelm_openai-0.1.0.tar.gz", hash = "sha256:d3156e9c231dbd6ff684c08c49ae9f59ef02edc8fb8c67ae85e4e0927f446cb8"},
+    {file = "newhelm_openai-0.1.1-py3-none-any.whl", hash = "sha256:146756bc2aab5727b04db1eb7db80f0730396dc63bbf025cc5b40b07d05af8b7"},
+    {file = "newhelm_openai-0.1.1.tar.gz", hash = "sha256:6df97f152bacfe24bb34ae4116fef03aa505084cabaf61e2d8af610d004cbdfe"},
 ]
 
 [package.dependencies]
@@ -2389,13 +2389,13 @@ reference = "mlcommons"
 
 [[package]]
 name = "standard-tests"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 optional = true
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "standard_tests-0.1.1-py3-none-any.whl", hash = "sha256:2d44ad03ead85e0e8c3e1160a317354756b0ce660e021778b6353e2d1dab403d"},
-    {file = "standard_tests-0.1.1.tar.gz", hash = "sha256:bef67a35c6ed2e69c4daa5a2f828d104c7649ac0d17dd452cbd267e137a6ef46"},
+    {file = "standard_tests-0.1.2-py3-none-any.whl", hash = "sha256:e06b738ca9047d1c3031fde338c0ed2fc2739b7710b6d424dbdace769b3ac77e"},
+    {file = "standard_tests-0.1.2.tar.gz", hash = "sha256:7383ec6930f06f516134a99b552daf524a475aafac73d7a36acf414d18fe2db0"},
 ]
 
 [package.dependencies]
@@ -3033,4 +3033,4 @@ together = ["newhelm_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.11"
-content-hash = "8125013fd116c51528d408c35f7caa165ecd866d1be5ae8fc8094ca8d934a027"
+content-hash = "a5426f3fe7ba310f01f8dfdab6a8b17a80b0b8fc2a48756d14237e35fdf72135"
