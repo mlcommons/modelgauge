@@ -1,7 +1,6 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
-from newhelm.general import asdict_without_nones
 from newhelm.placeholders import Prompt
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -87,7 +86,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         if self.client is None:
             # Handle lazy init.
             self.client = self._load_client()
-        request_dict = asdict_without_nones(request)
+        request_dict = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(
