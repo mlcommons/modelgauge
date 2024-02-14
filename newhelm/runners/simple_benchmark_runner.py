@@ -98,15 +98,9 @@ def run_prompt_response_test(
         test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"
-    # Explicitly specify cache helper's generic types (RequestType, ResponseType), which are based on the SUT's generic type values
-    cache_helper = SUTResponseCacheHelper[get_args(sut.__orig_bases__[0])](
-        os.path.join(test_data_path, "cached_responses"),
-        sut.__class__.__name__,
-    )
-    # cache_helper = SUTResponseCacheHelper(
-    #     os.path.join(test_data_path, "cached_responses"),
-    #     sut_name,
-    # )
+    cache_helper = SUTResponseCacheHelper(
+        os.path.join(test_data_path, "cached_responses"), sut
+    )  # type: ignore
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
