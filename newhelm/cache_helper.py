@@ -5,6 +5,7 @@ from sqlitedict import SqliteDict
 from typing import Any, Dict, Generic, Mapping, Optional, get_args
 
 from newhelm.sut import RequestType, ResponseType
+from newhelm.typed_data import TypedData
 
 
 class CacheHelper(ABC, Generic[RequestType, ResponseType]):
@@ -38,18 +39,26 @@ class SUTResponseCacheHelper(CacheHelper, Generic[RequestType, ResponseType]):
     ):
         self.data_dir = data_dir
         self.fname = f"{sut_name}.sqlite"
-        self.cached_responses: Optional[
-            SqliteDict
-        ] = None  # self._load_cached_responses()
+        self.cached_responses: Optional[SqliteDict] = (
+            None  # self._load_cached_responses()
+        )
 
     def get_cached_response(self, request: RequestType) -> Optional[ResponseType]:
         # Load cache if hasn't already been loaded (Can't do it in constructor because decoding depends on __orig_class__)
         if not self.cached_responses:
             self.cached_responses = self._load_cached_responses()
-        return self.cached_responses.get(request)
+        encoded_request = self._encode_request(request)
+        encoded_response = self.cached_responses.get(encoded_request)
+        if encoded_response:
+            response_type = get_args(self.__orig_class__)[1]
+            return encoded_response.to_instance(response_type)
+        else:
+            return None
 
     def update_cache(self, request: RequestType, response: ResponseType):
-        self.cached_responses[request] = response
+        encoded_request = self._encode_request(request)
+        encoded_response = self._encode_response(response)
+        self.cached_responses[encoded_request] = encoded_response
         self.cached_responses.commit()
         return
 
@@ -61,31 +70,26 @@ class SUTResponseCacheHelper(CacheHelper, Generic[RequestType, ResponseType]):
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
         path = os.path.join(self.data_dir, self.fname)
-        cache = SqliteDict(
-            path,
-            encode=self.encoder,
-            decode=self.decoder,
-            encode_key=self._serialize_request,
-            decode_key=self._deserialize_request,
-        )
-        return cache
+        return SqliteDict(path)
 
-    def encoder(self, response: ResponseType) -> str:
+    def _encode_response(self, response: ResponseType) -> str:
         """Encode responses"""
-        encoded_response = response.model_dump()
-        return json.dumps(encoded_response)
+        return TypedData.from_instance(response)
+        # encoded_response = response.model_dump()
+        # return json.dumps(encoded_response)
 
-    def decoder(self, encoded_response: str) -> ResponseType:
+    def _decode_response(self, encoded_response: str) -> ResponseType:
         """Decode responses"""
         response_type = get_args(self.__orig_class__)[1]
-        json_response = json.loads(encoded_response)
-        return response_type.model_validate(json_response)
+        return encoded_response.to_instance(response_type)
+        # json_response = json.loads(encoded_response)
+        # return ResponseType.model_validate(json_response)
 
-    def _serialize_request(self, request: RequestType) -> str:
+    def _encode_request(self, request: RequestType) -> str:
         """Encode requests.Use pydantic to serialize request. Returns JSON-encoded string"""
-        return request.model_dump_json()
+        return TypedData.from_instance(request).model_dump_json()
 
-    def _deserialize_request(self, request_key: str) -> RequestType:
+    def _decode_request(self, request_key: str) -> RequestType:
         """Decode request keys"""
         request_type = get_args(self.__orig_class__)[0]
-        return request_type.model_validate_json(request_key)
+        return TypedData.model_validate_json(request_key).to_instance(request_type)
