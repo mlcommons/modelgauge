@@ -5,6 +5,7 @@ __pycache__
 .mypy_cache
 pip-wheel-metadata/
 
+**/dist/*
 build
 prod_env
 benchmark_output
@@ -45,4 +46,5 @@ notes.otl
 *.swp
 
 # Miscellaneous
-.nfs*
+.nfs*!/dist/
+.tool-versions
