@@ -1,3 +1,4 @@
+from functools import wraps
 import importlib
 from typing import Any, List, Mapping
 from pydantic import BaseModel
@@ -20,6 +21,7 @@ class InitializationRecord(BaseModel):
 def record_init(init):
     """Decorator for the __init__ function to store what arguments were passed."""
 
+    @wraps(init)
     def wrapped_init(*args, **kwargs):
         self, real_args = args[0], args[1:]
         self._initialization_record = InitializationRecord(
