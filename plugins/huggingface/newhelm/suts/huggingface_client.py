@@ -90,7 +90,7 @@ class HuggingFaceRequest(BaseModel):
     """Data passed between make_request and serve_request. Used as the cache key."""
 
     prompt: str
-    model: str # Included to help uniquely identify the request, for example in caching.
+    model: str  # Included to help uniquely identify the request, for example in caching.
     temperature: float
     num_return_sequences: int
     max_new_tokens: int
