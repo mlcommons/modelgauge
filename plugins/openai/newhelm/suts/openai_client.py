@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Union
 from pydantic import BaseModel
 from newhelm.general import asdict_without_nones
 from newhelm.placeholders import Prompt
+from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI
@@ -57,6 +58,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
+    @record_init
     def __init__(self, model: str):
         self.model = model
         self.client: Optional[OpenAI] = None
