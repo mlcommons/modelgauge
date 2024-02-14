@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "newhelm"
-version = "0.1.2"
+version = "0.1.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -12,10 +12,10 @@ tqdm = ">=4.66.1"
 types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
 demo_plugin = {version = "0.1.0", optional = true}
-standard_tests = {version = "0.1.1", optional = true}
-newhelm_openai = {version = "0.1.0", optional = true}
+standard_tests = {version = "0.1.2", optional = true}
+newhelm_openai = {version = "0.1.1", optional = true}
 newhelm_together = {version = "0.1.0", optional = true}
-newhelm_huggingface = {version = "0.1.0", optional = true}
+newhelm_huggingface = {version = "0.1.1", optional = true}
 perspective_api = {version = "0.1.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
