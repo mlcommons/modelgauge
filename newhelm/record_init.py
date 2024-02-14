@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 
 class InitializationRecord(BaseModel):
+    """Holds data sufficient to reconstruct an object."""
+
     module: str
     qual_name: str
     args: List[Any]
@@ -16,6 +18,8 @@ class InitializationRecord(BaseModel):
 
 
 def record_init(init):
+    """Decorator for the __init__ function to store what arguments were passed."""
+
     def wrapped_init(*args, **kwargs):
         self, real_args = args[0], args[1:]
         self._initialization_record = InitializationRecord(
@@ -30,6 +34,7 @@ def record_init(init):
 
 
 def get_initialization_record(obj) -> InitializationRecord:
+    """Get the initialization record from an object."""
     try:
         return obj._initialization_record
     except AttributeError:
