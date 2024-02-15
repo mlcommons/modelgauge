@@ -8,7 +8,7 @@ from newhelm.command_line import (
     newhelm_cli,
 )
 from newhelm.general import get_or_create_json_file
-from newhelm.runners.simple_benchmark_runner import (
+from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
 from newhelm.secrets_registry import SECRETS
