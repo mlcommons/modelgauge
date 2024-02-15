@@ -26,7 +26,7 @@ def get_dependencies(self):
 
 We'll explore more of what DependencyHelper can do in later demos. Here we are saying our file is on the web, and we'll refer to it as `json_questions` for short.
 
-The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` provides us with a downloaded path to the file:
+The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` provides us with a path to the downloaded file:
 
 ```
 with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
@@ -48,7 +48,7 @@ Finally, to make our new Test discoverable, we can add it to the registry, givin
 TESTS.register("demo_01", DemoSimpleQATest)
 ```
 
-With your Test [installed](plugins.md) you should now be able to run your Test against any SUT in NewHELM!
+With our Test [installed](plugins.md), we should now be able to run our Test against any SUT in NewHELM!
 
 ```
 poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
