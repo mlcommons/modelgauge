@@ -31,7 +31,7 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
         sut: SUT,
     ):
         self.data_dir = data_dir
-        self.fname = f"{sut.__class__.__name__,}.sqlite"
+        self.fname = f"{sut.__class__.__name__}.sqlite"
         sut_bases = get_args(sut.__orig_bases__[0])
         self._type_request: RequestType = sut_bases[0]
         self._type_response: ResponseType = sut_bases[1]
