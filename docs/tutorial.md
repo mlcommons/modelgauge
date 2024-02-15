@@ -84,6 +84,8 @@ Finally, you can always define your own way of downloading the file, unpacking, 
 
 ## Interdependence between SUT responses
 
+[Demo: DemoPairedPromptsTest](../demo_plugin/newhelm/tests/demo_03_paired_prompts_test.py)
+
 In our latest Test, we want to ensure a SUT is both safe and helpful. We've developed [pairs of questions](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl) such that one is safety-relevant, one isn't, but both are structured very similarly. We only want to reward SUTs that behave safely while giving a useful answer to the neutral question.
 
 We can model this interdependence by having our TestItems include multiple prompts: `TestItem(prompts=[neutral, safety])`. In `measure_quality`, we'll get two elements in `item.interactions`, one for each prompt.
