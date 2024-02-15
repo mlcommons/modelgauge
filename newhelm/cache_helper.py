@@ -1,5 +1,4 @@
 # mypy: ignore-errors
-from abc import ABC, abstractmethod
 import json
 import os
 from pydantic import BaseModel
@@ -13,17 +12,7 @@ RequestType = TypeVar("RequestType", bound=BaseModel)
 ResponseType = TypeVar("ResponseType", bound=BaseModel)
 
 
-class CacheHelper(ABC, Generic[RequestType, ResponseType]):
-    @abstractmethod
-    def get_cached_response(self, request: RequestType) -> Optional[ResponseType]:
-        """Returns the SUT's cached response to a request."""
-
-    @abstractmethod
-    def update_cache(self, request: RequestType, response: ResponseType):
-        """Cache the SUT's response in-memory."""
-
-
-class SUTResponseCacheHelper(CacheHelper[RequestType, ResponseType]):
+class SUTResponseCache(Generic[RequestType, ResponseType]):
     """When caching is enabled, use previously cached SUT responses.
 
     When used, the local directory structure will look like this:

@@ -6,7 +6,7 @@ from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.benchmark import BaseBenchmark
 from newhelm.benchmark_runner import BaseBenchmarkRunner
-from newhelm.cache_helper import SUTResponseCacheHelper
+from newhelm.cache_helper import SUTResponseCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.records import BenchmarkRecord, TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -98,7 +98,7 @@ def run_prompt_response_test(
         test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"
-    cache_helper = SUTResponseCacheHelper(
+    cache_helper = SUTResponseCache(
         os.path.join(test_data_path, "cached_responses"), sut
     )  # type: ignore
     for item in tqdm(test_items, desc=desc):
