@@ -3,7 +3,7 @@ import json
 import os
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
-from typing import Any, Dict, Generic, Mapping, TypeVar, Optional, get_args
+from typing import Any, Dict, Generic, TypeVar, Optional, get_args
 
 from newhelm.sut import SUT
 from newhelm.typed_data import TypedData
@@ -19,8 +19,8 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
     data_dir/
         test_1/
             cached_responses/
-                sut_1.jsonl
-                sut_2.jsonl
+                sut_1.sqlite
+                sut_2.sqlite
         ...
       ...
     """
@@ -35,7 +35,7 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
         sut_bases = get_args(sut.__orig_bases__[0])
         self._type_request: RequestType = sut_bases[0]
         self._type_response: ResponseType = sut_bases[1]
-        self.cached_responses: Mapping[str, TypedData] = self._load_cached_responses()
+        self.cached_responses: SqliteDict = self._load_cached_responses()
 
     def get_cached_response(self, request: RequestType) -> Optional[ResponseType]:
         encoded_request = self._encode_request(request)
@@ -55,7 +55,7 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
         if self.cached_responses is not None:
             self.cached_responses.close()
 
-    def _load_cached_responses(self) -> Mapping[str, TypedData]:
+    def _load_cached_responses(self) -> SqliteDict:
         if not os.path.exists(self.data_dir):
             os.makedirs(self.data_dir)
         path = os.path.join(self.data_dir, self.fname)
