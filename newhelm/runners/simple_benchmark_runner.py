@@ -98,23 +98,22 @@ def run_prompt_response_test(
         test_items = random.sample(test_items, max_test_items)
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"
-    cache_helper = SUTResponseCache(
+    with SUTResponseCache(
         os.path.join(test_data_path, "cached_responses"), sut
-    )  # type: ignore
-    for item in tqdm(test_items, desc=desc):
-        interactions = []
-        for prompt in item.prompts:
-            sut_request = sut.translate_request(prompt.prompt)
-            sut_response = cache_helper.get_cached_response(sut_request)
-            if sut_response is None:
-                sut_response = sut.evaluate(sut_request)
-                cache_helper.update_cache(sut_request, sut_response)
-            response = sut.translate_response(prompt.prompt, sut_response)
-            interactions.append(PromptInteraction(prompt=prompt, response=response))
-        item_interactions.append(
-            TestItemInteractions(interactions=interactions, test_item=item)
-        )
-    cache_helper.close()
+    ) as cache:
+        for item in tqdm(test_items, desc=desc):
+            interactions = []
+            for prompt in item.prompts:
+                sut_request = sut.translate_request(prompt.prompt)
+                sut_response = cache.get_cached_response(sut_request)
+                if sut_response is None:
+                    sut_response = sut.evaluate(sut_request)
+                    cache.update_cache(sut_request, sut_response)
+                response = sut.translate_response(prompt.prompt, sut_response)
+                interactions.append(PromptInteraction(prompt=prompt, response=response))
+            item_interactions.append(
+                TestItemInteractions(interactions=interactions, test_item=item)
+            )
     annotations_per_annotator: Dict[str, List[Annotation]] = {}
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:

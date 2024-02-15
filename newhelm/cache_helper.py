@@ -37,6 +37,13 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
         self._type_response: ResponseType = sut_bases[1]
         self.cached_responses: SqliteDict = self._load_cached_responses()
 
+    def __enter__(self):
+        self.cached_responses.__enter__()
+        return self
+
+    def __exit__(self, *exc_info):
+        self.cached_responses.close()
+
     def get_cached_response(self, request: RequestType) -> Optional[ResponseType]:
         encoded_request = self._encode_request(request)
         encoded_response = self.cached_responses.get(encoded_request)
@@ -50,10 +57,6 @@ class SUTResponseCache(Generic[RequestType, ResponseType]):
         encoded_response = self._encode_response(response)
         self.cached_responses[encoded_request] = encoded_response
         self.cached_responses.commit()
-
-    def close(self):
-        if self.cached_responses is not None:
-            self.cached_responses.close()
 
     def _load_cached_responses(self) -> SqliteDict:
         if not os.path.exists(self.data_dir):
