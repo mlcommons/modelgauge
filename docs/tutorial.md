@@ -11,7 +11,7 @@ To help illustrate the concepts of NewHELM, we provide a series of functional (i
 Let's say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl).
 
 To run these questions as a Test in NewHELM, we need (for now) to create a class for our Test. Let's call our Test `DemoSimpleQATest`.
-Since this fits as a [Prompt Response Tests](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
+Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
 
 The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. NewHELM uses [DependencyHelper](../newhelm/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell NewHELM that we have a dependency on that file by listing it in `get_dependencies`:
 
@@ -26,7 +26,7 @@ def get_dependencies(self):
 
 We'll explore more of what DependencyHelper can do in later demos. Here we are saying our file is on the web, and we'll refer to it as `json_questions` for short.
 
-The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` provides us with a path to the downloaded file:
+The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` manages downloading the file and provides us with a path to it:
 
 ```py
 with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
@@ -63,7 +63,7 @@ In the first demo, the data file was pretty straightforward: download a jsonl an
 `DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
 
 ```py
-def get_dependencies(self)
+def get_dependencies(self):
     return {
         "questions_tar": WebData(
             source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
