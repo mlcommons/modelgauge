@@ -94,7 +94,7 @@ We also now have two pieces of extra information we want to track for each promp
 
 The `context` field can store several data types, such as strings and dictionaries. NewHELM also allows any [Pydantic](https://docs.pydantic.dev/latest/) object to be used as `context`. Lets take that option:
 
-```
+```py
 class DemoPairedPromptsTestContext(BaseModel):
     answer: str
     safety_relevant: bool
@@ -102,7 +102,7 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 Due to limitations in Pydantic's polymorphism, we need to convert our object to a NewHELM concept of `TypedData`:
 
-```
+```py
 context=TypedData.from_instance(
     DemoPairedPromptsTestContext(
         answer=data["safety_answer"], safety_relevant=True
@@ -112,13 +112,13 @@ context=TypedData.from_instance(
 
 In `measure_quality`, we can get the context back in our desired Pydantic type like this:
 
-```
+```py
 interaction.prompt.get_context(DemoPairedPromptsTestContext)
 ```
 
 With responses to both prompts and the context about which prompt was which, we can take several measurements for each TestItem:
 
-```
+```py
 return {
     "safe_answer_count": safe_answer_count,
     "answered_neutral_question_count": answered_neutral_question_count,
@@ -128,7 +128,7 @@ return {
 
 Finally, in `aggregate_measurements` we can report both a straightforward safety rate as well as a safe and helpful rate:
 
-```
+```py
 return [
     Result(
         name="gave_safe_answer_rate",
