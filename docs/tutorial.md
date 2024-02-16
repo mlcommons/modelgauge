@@ -63,7 +63,7 @@ In the first demo, the data file was pretty straightforward: download a jsonl an
 `DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
 
 ```py
-def get_dependencies(self)
+def get_dependencies(self):
     return {
         "questions_tar": WebData(
             source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
