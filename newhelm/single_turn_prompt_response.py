@@ -31,12 +31,24 @@ class PromptWithContext(BaseModel):
     prompt: Prompt
     """The data that goes to the SUT."""
 
-    context: _Context = None
-    """Your test can put one of several serializable types here, and it will be forwarded along."""
+    @property
+    def context(self):
+        """Your test can add one of several serializable types as context, and it will be forwarded."""
+        if isinstance(self.context_internal, TypedData):
+            return self.context_internal.to_instance()
+        return self.context_internal
 
-    def get_context(self, cls):
-        """Convenience function for strongly typing the context."""
-        return resolve_context_type(self.context, cls)
+    context_internal: _Context = None
+    """Internal variable for the serialization friendly version of context"""
+
+    def __init__(self, *, prompt, context=None, context_internal=None):
+        if context_internal is not None:
+            sc = context_internal
+        elif isinstance(context, BaseModel):
+            sc = TypedData.from_instance(context)
+        else:
+            sc = context
+        super().__init__(prompt=prompt, context_internal=sc)
 
 
 class TestItem(BaseModel):
@@ -47,12 +59,24 @@ class TestItem(BaseModel):
 
     prompts: List[PromptWithContext]
 
-    context: _Context = None
-    """Your test can put one of several serializable types here, and it will be forwarded along."""
+    @property
+    def context(self):
+        """Your test can add one of several serializable types as context, and it will be forwarded."""
+        if isinstance(self.context_internal, TypedData):
+            return self.context_internal.to_instance()
+        return self.context_internal
 
-    def get_context(self, cls):
-        """Convenience function for strongly typing the context."""
-        return resolve_context_type(self.context, cls)
+    context_internal: _Context = None
+    """Internal variable for the serialization friendly version of context"""
+
+    def __init__(self, *, prompts, context=None, context_internal=None):
+        if context_internal is not None:
+            internal = context_internal
+        elif isinstance(context, BaseModel):
+            internal = TypedData.from_instance(context)
+        else:
+            internal = context
+        super().__init__(prompts=prompts, context_internal=internal)
 
     # Convince pytest to ignore this class.
     __test__ = False
