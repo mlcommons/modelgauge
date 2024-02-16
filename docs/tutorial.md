@@ -8,14 +8,14 @@ To help illustrate the concepts of NewHELM, we provide a series of functional (i
 
 [Demo: DemoSimpleQATest](../demo_plugin/newhelm/tests/demo_01_simple_qa_test.py)
 
-Lets say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl).
+Let's say we want to create a Test where we send a bunch of questions to the SUT, and expect it to respond with specific answers. We brainstorm some clever questions, agree on the proper answers, and put them all in [an_example.jsonl](https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl).
 
-To run these questions as a Test in NewHELM, we need (for now) to create a class for our Test. Lets call our Test `DemoSimpleQATest`. 
-Since this fits as a [Prompt Response Tests](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
+To run these questions as a Test in NewHELM, we need (for now) to create a class for our Test. Let's call our Test `DemoSimpleQATest`.
+Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
 
 The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. NewHELM uses [DependencyHelper](../newhelm/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell NewHELM that we have a dependency on that file by listing it in `get_dependencies`:
 
-```
+```py
 def get_dependencies(self):
     return {
         "jsonl_questions": WebData(
@@ -26,9 +26,9 @@ def get_dependencies(self):
 
 We'll explore more of what DependencyHelper can do in later demos. Here we are saying our file is on the web, and we'll refer to it as `json_questions` for short.
 
-The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` provides us with a path to the downloaded file:
+The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` manages downloading the file and provides us with a path to it:
 
-```
+```py
 with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
 ```
 
@@ -36,7 +36,7 @@ We want each `question` to go to the SUT, so we construct `Prompt(text=data["que
 
 The second phase in a PromptResponseTest is determining how well the SUT did. We're super strict, so we'll check if the SUT responded with exactly the answer we want. In `measure_quality`, we get back each TestItem, but now with data about what the SUT did:
 
-```
+```py
 interaction.response.completions[0].text == interaction.prompt.context
 ```
 
@@ -44,7 +44,7 @@ We can then use one of the provided [aggregation functions](../newhelm/aggregati
 
 Finally, to make our new Test discoverable, we can add it to the registry, giving it a unique key:
 
-```
+```py
 TESTS.register("demo_01", DemoSimpleQATest)
 ```
 
@@ -62,8 +62,8 @@ In the first demo, the data file was pretty straightforward: download a jsonl an
 
 `DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
 
-```
-def get_dependencies(self)
+```py
+def get_dependencies(self):
     return {
         "questions_tar": WebData(
             source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
@@ -74,7 +74,7 @@ def get_dependencies(self)
 
 Now when calling  `get_local_path("questions_tar")`, `DependencyHelper` will run untar for us and return the top level directory of the output. In our case, this tar contained two files: "questions.txt" and "answers.txt". We can access them using normal Python:
 
-```
+```py
 with open(os.path.join(data_dir, "questions.txt"), "r") as f:
 ```
 
@@ -94,7 +94,7 @@ We also now have two pieces of extra information we want to track for each promp
 
 The `context` field can store several data types, such as strings and dictionaries. NewHELM also allows any [Pydantic](https://docs.pydantic.dev/latest/) object to be used as `context`. Lets take that option:
 
-```
+```py
 class DemoPairedPromptsTestContext(BaseModel):
     answer: str
     safety_relevant: bool
@@ -102,7 +102,7 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 Due to limitations in Pydantic's polymorphism, we need to convert our object to a NewHELM concept of `TypedData`:
 
-```
+```py
 context=TypedData.from_instance(
     DemoPairedPromptsTestContext(
         answer=data["safety_answer"], safety_relevant=True
@@ -112,13 +112,13 @@ context=TypedData.from_instance(
 
 In `measure_quality`, we can get the context back in our desired Pydantic type like this:
 
-```
+```py
 interaction.prompt.get_context(DemoPairedPromptsTestContext)
 ```
 
 With responses to both prompts and the context about which prompt was which, we can take several measurements for each TestItem:
 
-```
+```py
 return {
     "safe_answer_count": safe_answer_count,
     "answered_neutral_question_count": answered_neutral_question_count,
@@ -128,7 +128,7 @@ return {
 
 Finally, in `aggregate_measurements` we can report both a straightforward safety rate as well as a safe and helpful rate:
 
-```
+```py
 return [
     Result(
         name="gave_safe_answer_rate",
