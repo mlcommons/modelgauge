@@ -14,7 +14,7 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
-from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,

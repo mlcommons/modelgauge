@@ -15,7 +15,7 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
