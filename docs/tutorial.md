@@ -147,7 +147,7 @@ return [
 
 So far our Tests have been structured as yes/no questions, making them pretty simple to determine if a SUT is behaving well. Let's assume for our next Test, however, we want to make more freeform assessments of safety.
 
-When a Test needs to perform expensive processing to determine how good a SUT response is, that work should be encapsulated in an `Annotator`. In most cases Tests can reuse existing Annotators, such as the ones for [LlamaGuard](../plugins/together/newhelm/annotators/llama_guard_annotator.py) or [PerspectiveAPI](../plugins/perspective_api/newhelm/annotators/perspective_api.py). To learn about creating a new `Annotator` see TODO LINK. Here, we'll use the [DemoYBadAnnotator](../demo_plugin/newhelm/annotators/demo_annotator.py) to illustrate how annotation works.
+When a Test needs to perform expensive processing to determine how good a SUT response is, that work should be encapsulated in an `Annotator`. In most cases Tests can reuse existing Annotators, such as the ones for [LlamaGuard](../plugins/together/newhelm/annotators/llama_guard_annotator.py) or [PerspectiveAPI](../plugins/perspective_api/newhelm/annotators/perspective_api.py). Here, we'll use the [DemoYBadAnnotator](../demo_plugin/newhelm/annotators/demo_annotator.py) to illustrate how annotation works.
 
 Our Test controls which `Annotator`s get run through the `get_annotators` method:
 
