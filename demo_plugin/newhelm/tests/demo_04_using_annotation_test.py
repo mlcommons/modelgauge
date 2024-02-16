@@ -18,15 +18,14 @@ from newhelm.test_registry import TESTS
 
 
 class DemoUsingAnnotationTest(BasePromptResponseTest):
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="DemoUsingAnnotationTest",
             description="This Test requires the use of an Annotator to determine how the SUT performed.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         # This Test generates strings in memory and has no dependencies.
         return {}
 

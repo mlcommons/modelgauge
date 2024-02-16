@@ -140,3 +140,7 @@ return [
     ),
 ]
 ```
+
+## Using Annotators to perform expensive analysis
+
+So far our Tests have been structured as yes/no questions, making them pretty simple to determine if a SUT is behaving well.
