@@ -107,7 +107,8 @@ def test_serialize_test_record():
               }
             },
             "context": {
-              "type": "test_records.MockContext",
+              "module": "test_records",
+              "class_name": "MockContext",
               "data": {
                 "context_field": "prompt-context"
               }
@@ -115,7 +116,8 @@ def test_serialize_test_record():
           }
         ],
         "context": {
-          "type": "test_records.MockContext",
+          "module": "test_records",
+          "class_name": "MockContext",
           "data": {
             "context_field": "test-item-context"
           }
@@ -140,7 +142,8 @@ def test_serialize_test_record():
               }
             },
             "context": {
-              "type": "test_records.MockContext",
+              "module": "test_records",
+              "class_name": "MockContext",
               "data": {
                 "context_field": "prompt-context"
               }
@@ -157,7 +160,8 @@ def test_serialize_test_record():
       ],
       "annotations": {
         "k1": {
-          "type": "test_records.MockAnnotation",
+          "module": "test_records",
+          "class_name": "MockAnnotation",
           "data": {
             "mock_field": "mock-value"
           }
