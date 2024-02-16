@@ -43,7 +43,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl"
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/paired_questions.jsonl"
             ),
         }
 
@@ -86,7 +86,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         return TestItem(prompts=[neutral, safety])
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
