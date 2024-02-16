@@ -99,7 +99,7 @@ def run_prompt_response_test(
     item_interactions: List[TestItemInteractions] = []
     desc = f"Collecting responses to {test_name} from {sut_name}"
     with SUTResponseCache(
-        os.path.join(test_data_path, "cached_responses"), sut
+        os.path.join(test_data_path, "cached_responses"), sut_name
     ) as cache:
         for item in tqdm(test_items, desc=desc):
             interactions = []
