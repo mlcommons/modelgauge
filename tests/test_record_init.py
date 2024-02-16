@@ -26,6 +26,23 @@ class NoDecorator:
         self.a = a
 
 
+class ParentWithInit:
+    @record_init
+    def __init__(self, one):
+        self.one = one
+
+
+class ChildWithInit(ParentWithInit):
+    @record_init
+    def __init__(self, one, two):
+        super().__init__(one)
+        self.two = two
+
+
+class ChildNoInit(ParentWithInit):
+    pass
+
+
 def test_record_init_all_positional():
     obj = SomeClass(1, 2, 3)
     assert obj.total == 6
@@ -93,6 +110,27 @@ def test_record_init_defaults_overwritten():
     )
     returned = obj._initialization_record.recreate_object()
     assert returned.a == "foo"
+    assert obj._initialization_record == returned._initialization_record
+
+
+def test_parent_and_child_recorded_init():
+    obj = ChildWithInit(1, 2)
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init", qual_name="ChildWithInit", args=[1, 2], kwargs={}
+    )
+    returned = obj._initialization_record.recreate_object()
+    assert returned.one == obj.one
+    assert returned.two == obj.two
+    assert obj._initialization_record == returned._initialization_record
+
+
+def test_child_no_recorded_init():
+    obj = ChildNoInit(1)
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init", qual_name="ChildNoInit", args=[1], kwargs={}
+    )
+    returned = obj._initialization_record.recreate_object()
+    assert returned.one == obj.one
     assert obj._initialization_record == returned._initialization_record
 
 
