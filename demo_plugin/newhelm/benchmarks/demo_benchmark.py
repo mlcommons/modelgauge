@@ -11,7 +11,7 @@ from newhelm.aggregations import mean_of_results
 from newhelm.tests.demo_01_simple_qa_test import DemoSimpleQATest
 from newhelm.base_test import BaseTest
 from newhelm.benchmark import BaseBenchmark, Score
-from newhelm.placeholders import Result
+from newhelm.base_test import Result
 
 
 class DemoBenchmark(BaseBenchmark):

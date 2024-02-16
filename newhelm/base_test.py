@@ -6,7 +6,6 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 
-from newhelm.placeholders import Result
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -32,6 +31,13 @@ class BaseTest(ABC):
     def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         pass
+
+
+class Result(BaseModel):
+    """The measurement produced by Test."""
+
+    name: str
+    value: float
 
 
 class BasePromptResponseTest(BaseTest, ABC):

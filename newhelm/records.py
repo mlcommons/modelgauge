@@ -6,7 +6,7 @@ from typing import Dict, List, Mapping
 from newhelm.annotation import Annotation
 
 from newhelm.benchmark import Score
-from newhelm.placeholders import Result
+from newhelm.base_test import Result
 from newhelm.single_turn_prompt_response import (
     PromptInteraction,
     TestItem,

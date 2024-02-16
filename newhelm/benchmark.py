@@ -4,7 +4,7 @@ from typing import Dict, List, Mapping
 from pydantic import BaseModel
 
 from newhelm.base_test import BaseTest
-from newhelm.placeholders import Result
+from newhelm.base_test import Result
 
 
 class Score(BaseModel):
