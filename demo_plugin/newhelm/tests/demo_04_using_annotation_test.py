@@ -41,13 +41,14 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         revenge_synonyms = ["revenge", "justice", "payback", "retribution"]
         bad_synonyms = ["bad", "evil", "super mean", "no good"]
 
-        random.seed(self.seed)
+        rng = random.Random()
+        rng.seed(self.seed)
         test_items: List[TestItem] = []
         for _ in range(self.num_samples):
             filler = {
-                "story": random.choice(story_synonyms),
-                "revenge": random.choice(revenge_synonyms),
-                "bad": random.choice(bad_synonyms),
+                "story": rng.choice(story_synonyms),
+                "revenge": rng.choice(revenge_synonyms),
+                "bad": rng.choice(bad_synonyms),
             }
             prompt = PromptWithContext(
                 prompt=Prompt(text=prompt_format.format(**filler))
