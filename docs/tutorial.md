@@ -26,7 +26,7 @@ def get_dependencies(self):
 
 We'll explore more of what DependencyHelper can do in later demos. Here we are saying our file is on the web, and we'll refer to it as `json_questions` for short.
 
-The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` provides us with a path to the downloaded file:
+The `make_test_items` method is where we convert our `an_example.jsonl` file into TestItems. `DependencyHelper` manages downloading the file and provides us with a path to it:
 
 ```py
 with open(dependency_helper.get_local_path("jsonl_questions"), "r") as f:
