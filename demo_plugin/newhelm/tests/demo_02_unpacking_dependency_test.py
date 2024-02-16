@@ -29,7 +29,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         """Specify all the external dependencies needed to run this Test."""
         return {
             "questions_tar": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/question_answer.tar.gz",
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/question_answer.tar.gz",
                 # Specify that after downloading, this file needs to be unpacked
                 # using the Tar command. Because this is specified, get_local_path
                 # will return the path to the directory.
@@ -60,7 +60,7 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
