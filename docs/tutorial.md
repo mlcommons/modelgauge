@@ -62,7 +62,7 @@ In the first demo, the data file was pretty straightforward: download a jsonl an
 
 `DependencyHelper` makes it trivial to deal with unpacking tar/zip files. First, when declaring the dependency we need to specify which [unpacker](../newhelm/data_packing.py) it uses:
 
-```
+```py
 def get_dependencies(self)
     return {
         "questions_tar": WebData(
@@ -74,7 +74,7 @@ def get_dependencies(self)
 
 Now when calling  `get_local_path("questions_tar")`, `DependencyHelper` will run untar for us and return the top level directory of the output. In our case, this tar contained two files: "questions.txt" and "answers.txt". We can access them using normal Python:
 
-```
+```py
 with open(os.path.join(data_dir, "questions.txt"), "r") as f:
 ```
 
