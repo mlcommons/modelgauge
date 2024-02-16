@@ -19,7 +19,6 @@ from newhelm.test_registry import TESTS
 
 
 class DemoUsingAnnotationTest(BasePromptResponseTest):
-
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="DemoUsingAnnotationTest",

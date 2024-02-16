@@ -7,6 +7,7 @@ from newhelm.single_turn_prompt_response import PromptInteraction
 
 class DemoYBadAnnotation(BaseModel):
     """How bad each SUTResponse in the TestItem is."""
+
     badness: List[int]
 
 
