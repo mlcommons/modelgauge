@@ -14,17 +14,6 @@ _BaseModelType = TypeVar("_BaseModelType", bound=BaseModel)
 _Context = TypedData | str | Mapping | None
 
 
-def resolve_context_type(context: _Context, cls):
-    if issubclass(cls, BaseModel):
-        assert isinstance(context, TypedData)
-        return context.to_instance(cls)
-    if isinstance(cls, str):
-        return context
-    if isinstance(cls, Mapping):
-        return context
-    raise AssertionError("Unhandled context type:", cls)
-
-
 class PromptWithContext(BaseModel):
     """Combine a prompt with arbitrary context data."""
 
@@ -43,12 +32,12 @@ class PromptWithContext(BaseModel):
 
     def __init__(self, *, prompt, context=None, context_internal=None):
         if context_internal is not None:
-            sc = context_internal
+            internal = context_internal
         elif isinstance(context, BaseModel):
-            sc = TypedData.from_instance(context)
+            internal = TypedData.from_instance(context)
         else:
-            sc = context
-        super().__init__(prompt=prompt, context_internal=sc)
+            internal = context
+        super().__init__(prompt=prompt, context_internal=internal)
 
 
 class TestItem(BaseModel):
