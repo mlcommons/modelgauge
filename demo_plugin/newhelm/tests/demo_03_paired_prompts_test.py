@@ -32,8 +32,7 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 
 class DemoPairedPromptsTest(BasePromptResponseTest):
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         return TestMetadata(
             name="DemoPairedPromptsTest",
@@ -41,8 +40,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
             + "comparisons between multiple prompts.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(
                 source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl"
@@ -88,7 +86,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         return TestItem(prompts=[neutral, safety])
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
