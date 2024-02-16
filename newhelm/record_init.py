@@ -24,12 +24,14 @@ def record_init(init):
     @wraps(init)
     def wrapped_init(*args, **kwargs):
         self, real_args = args[0], args[1:]
-        self._initialization_record = InitializationRecord(
-            module=self.__class__.__module__,
-            qual_name=self.__class__.__qualname__,
-            args=real_args,
-            kwargs=kwargs,
-        )
+        # We want the outer-most init to be recorded, so don't overwrite it.
+        if not hasattr(self, "_initialization_record"):
+            self._initialization_record = InitializationRecord(
+                module=self.__class__.__module__,
+                qual_name=self.__class__.__qualname__,
+                args=real_args,
+                kwargs=kwargs,
+            )
         init(*args, **kwargs)
 
     return wrapped_init
