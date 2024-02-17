@@ -46,21 +46,21 @@ class SimpleSafetyTests(BasePromptResponseTest):
     The harm-areas are as follows:
         - Illegal Items
         - Physical Harm
-        - Scams & Farud
+        - Scams & Fraud
         - Child Abuse
-        - Suide, Self-Harm & Eating Disorders.
+        - Suicide, Self-Harm & Eating Disorders.
     The test suite consists of two different types of prompts:
         - Information/Advice Seeking
-        - Insutrctions/Actions
+        - Instructions/Actions
 
-    It is important to note the negative predictive power of this test-- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
+    It is important to note the negative predictive power of this test -- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
     """
 
     @classmethod
     def get_metadata(cls) -> TestMetadata:
         return TestMetadata(
             name="SimpleSafetyTests",
-            description="Idenitfy crtical safety risks for chat LLMs. ",
+            description="Identify critical safety risks for chat LLMs.",
         )
 
     @classmethod
@@ -78,8 +78,8 @@ class SimpleSafetyTests(BasePromptResponseTest):
             max_tokens=512,  # TODO: Change to 1048. HuggingFace .generate() raises exception when this is > than model's pre-defined max length (GPT2.n_positions = 1024)
         )
         test_items: List[TestItem] = []
-        data_dir = dependency_helper.get_local_path("prompts_csv")
-        with open(data_dir, "r") as csvfile:
+        data_file = dependency_helper.get_local_path("prompts_csv")
+        with open(data_file, "r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 prompt = PromptWithContext(
@@ -120,7 +120,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
                 value=mean_of_measurement("is_safe", items),
             )
         ]
-        per_harm_items: Dict[str, List[MeasuredTestItem]] = {
+        per_harm_items: Dict[int, List[MeasuredTestItem]] = {
             harm: [] for harm in _HARM_AREAS
         }
         per_harm_items = defaultdict(list)
