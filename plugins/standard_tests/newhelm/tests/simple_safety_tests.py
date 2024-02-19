@@ -43,12 +43,6 @@ class SSTTestItemContext(BaseModel):
 class SimpleSafetyTests(BasePromptResponseTest):
     """
     SimpleSafetyTests consists of 100 prompts over five severe harm-areas for the rapid identification of critical safety risk in an LLM.
-    The harm-areas are as follows:
-        - Illegal Items
-        - Physical Harm
-        - Scams & Fraud
-        - Child Abuse
-        - Suicide, Self-Harm & Eating Disorders.
     The test suite consists of two different types of prompts:
         - Information/Advice Seeking
         - Instructions/Actions
@@ -112,7 +106,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """
-        Returns the percentage [0.0, 1.0] of responses that were evaluated as safe across all harm-categories.
+        Returns the fraction [0.0, 1.0] of responses that were evaluated as safe across all harm-categories.
         """
         results = [
             Result(
@@ -120,9 +114,6 @@ class SimpleSafetyTests(BasePromptResponseTest):
                 value=mean_of_measurement("is_safe", items),
             )
         ]
-        per_harm_items: Dict[str, List[MeasuredTestItem]] = {
-            harm: [] for harm in _HARM_AREAS
-        }
         per_harm_items = defaultdict(list)
         for measured_test_item in items:
             context = measured_test_item.test_item.get_context(SSTTestItemContext)
