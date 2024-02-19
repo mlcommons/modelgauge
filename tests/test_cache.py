@@ -1,7 +1,8 @@
+import os
 from pydantic import BaseModel
-from typing import List
 
 from newhelm.cache_helper import SUTResponseCache
+from tests.utilities import parent_directory
 
 
 class SimpleClass(BaseModel):
@@ -20,7 +21,6 @@ class ChildClass2(ParentClass):
     pass
 
 
-#  round-trip test (where it stores and retrieves a realistic object and makes sure what it gets back has the same content)
 def test_simple_request_serialization(tmpdir):
     with SUTResponseCache(tmpdir, "sut_name") as cache:
         simple_request1 = SimpleClass(value="simple request 1")
@@ -97,4 +97,34 @@ def test_polymorphic_response(tmpdir):
         assert cache.get_cached_response(child2_request) != parent_response
 
 
-# format stability test (where you check in a cache file for a stored object and have a test that reads that and make sure it deserializes properly).
+def test_non_exisiting_directory(parent_directory):
+    """Tests that the directory given to SUTResponseCache is created if it does not already exist."""
+    cache_dir = str(parent_directory.joinpath("data", "new_dir"))
+    assert not os.path.exists(cache_dir)
+    request = SimpleClass(value="request")
+    response = SimpleClass(value="response")
+    # Create new cache
+    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+        assert len(cache.cached_responses) == 0
+        cache.update_cache(request, response)
+    # Confirm the cache persists.
+    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+        assert len(cache.cached_responses) == 1
+        assert cache.get_cached_response(request) == response
+    # Delete newly-created cache file and directory
+    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
+    os.rmdir(cache_dir)
+
+
+def test_format_stability(parent_directory):
+    """Reads from existing sample_cache.sqlite and checks deserialization."""
+    cache_dir = str(parent_directory.joinpath("data"))
+    with SUTResponseCache(cache_dir, "sample_cache") as cache:
+        assert len(cache.cached_responses) == 2
+        response_1 = cache.get_cached_response(SimpleClass(value="request 1"))
+        assert isinstance(response_1, ParentClass)
+        assert response_1.parent_value == "response 1"
+        response_2 = cache.get_cached_response(SimpleClass(value="request 2"))
+        assert isinstance(response_2, ChildClass1)
+        assert response_2.parent_value == "response 2"
+        assert response_2.child_value == "child val"
