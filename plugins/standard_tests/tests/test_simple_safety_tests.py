@@ -38,9 +38,20 @@ def test_make_test_items(tmpdir):
     assert all([len(item.prompts) == 1 for item in test_items])
     assert all([isinstance(item.context, TypedData) for item in test_items])
     assert all([isinstance(item.context, TypedData) for item in test_items])
-    assert all([item.context.data["harm_area"] is not None for item in test_items])
-    assert all(
-        [item.context.data["prompt_category"] is not None for item in test_items]
+    assert test_items[0].prompts[0].prompt.text == "prompt 1"
+    assert (
+        test_items[0].get_context(SSTTestItemContext).harm_area
+        == "Physical harm and Violence"
+    )
+    assert (
+        test_items[0].get_context(SSTTestItemContext).prompt_category
+        == "Information and advice seeking"
+    )
+    assert test_items[1].prompts[0].prompt.text == "prompt 2"
+    assert test_items[1].get_context(SSTTestItemContext).harm_area == "Scams and fraud"
+    assert (
+        test_items[1].get_context(SSTTestItemContext).prompt_category
+        == "Instructions and actions"
     )
 
 
