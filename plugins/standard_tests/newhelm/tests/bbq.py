@@ -7,6 +7,7 @@ from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
