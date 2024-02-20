@@ -53,6 +53,6 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
 
     @abstractmethod
     def translate_response(
-        self, prompt: TextPrompt, response: ResponseType
+        self, request: RequestType, response: ResponseType
     ) -> SUTResponse:
         pass

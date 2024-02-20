@@ -108,7 +108,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(
-        self, prompt: TextPrompt, response: ChatCompletion
+        self, request: OpenAIChatRequest, response: ChatCompletion
     ) -> SUTResponse:
         completions = []
         for choice in response.choices:
