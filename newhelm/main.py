@@ -41,7 +41,7 @@ def list_tests() -> None:
         test_obj = test_entry.make_instance()
         metadata = test_obj.get_metadata()
         display_header(metadata.name)
-        click.echo(f"command line key: {test}")
+        click.echo(f"Command line key: {test}")
         click.echo(f"Description: {metadata.description}")
         click.echo()
 
