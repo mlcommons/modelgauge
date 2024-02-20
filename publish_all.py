@@ -1,8 +1,7 @@
 import pathlib
 import subprocess
 
-all_paths = pathlib.Path(".").glob("**/pyproject.toml")
-
+all_paths = pathlib.Path(__file__).parent.glob("**/pyproject.toml")
 
 for path in all_paths:
     build_command = [
