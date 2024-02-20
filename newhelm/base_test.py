@@ -6,7 +6,7 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 
-from newhelm.placeholders import Result
+from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -32,6 +32,23 @@ class BaseTest(ABC):
     def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         pass
+
+    @record_init
+    def __init__(self):
+        """Ensure all Tests default to recording their initialization.
+
+        We want to ensure all Tests record their init to allow us to reconstruct
+        their behavior later. If a Test needs to define its own __init__ that is fine,
+        it should just include the decorator.
+        """
+        pass
+
+
+class Result(BaseModel):
+    """The measurement produced by Test."""
+
+    name: str
+    value: float
 
 
 class BasePromptResponseTest(BaseTest, ABC):

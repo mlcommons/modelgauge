@@ -2,10 +2,10 @@ import json
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result
+from newhelm.placeholders import Prompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -29,7 +29,7 @@ class DemoSimpleQATest(BasePromptResponseTest):
             # The keys can be arbitrary, they are used to decide where to store
             # the dependency locally and when you look up the dependency in make_test_items.
             "jsonl_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/an_example.jsonl"
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/an_example.jsonl"
             ),
             # If your test depends on multiple files, you can specify each here.
         }
@@ -53,6 +53,10 @@ class DemoSimpleQATest(BasePromptResponseTest):
                 test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
+    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+        # This demo doesn't use any annotators
+        return {}
+
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Use the TestItem context to report how well the SUT did."""
         # This Test only uses a single Prompt per TestItem, so only 1 interaction.
@@ -62,10 +66,6 @@ class DemoSimpleQATest(BasePromptResponseTest):
             interaction.response.completions[0].text == interaction.prompt.context
         )
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
-
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
-        return {}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
         """Combine the Measurements from measure_quality into Results."""

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
@@ -15,7 +15,8 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.placeholders import Prompt, SUTOptions
+from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -118,6 +119,7 @@ class BBQ(BasePromptResponseTest):
             )
         return dependencies
 
+    @record_init
     def __init__(self, subject: str = "all", num_in_context_examples=5):
         self.subject = subject
         self.num_in_context_examples = num_in_context_examples

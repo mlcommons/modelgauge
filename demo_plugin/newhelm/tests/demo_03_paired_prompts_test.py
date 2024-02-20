@@ -5,10 +5,10 @@ from typing import Dict, List, Mapping
 from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result
+from newhelm.placeholders import Prompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -43,7 +43,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl"
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/paired_questions.jsonl"
             ),
         }
 
@@ -86,7 +86,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         return TestItem(prompts=[neutral, safety])
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:

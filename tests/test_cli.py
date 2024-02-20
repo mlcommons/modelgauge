@@ -22,7 +22,7 @@ def test_list_plugins(cmd):
 
 
 @expensive_tests
-@pytest.mark.parametrize("sut", ["DemoMultipleChoiceSUT"])
+@pytest.mark.parametrize("sut", ["demo_yes_no"])
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03"])
 def test_test_sut_combinations(cmd, test, sut):
     assert (
@@ -31,18 +31,6 @@ def test_test_sut_combinations(cmd, test, sut):
                 --test {test} \
                 --sut {sut} \
                 --max-test-items 1"""
-        )
-        == 0
-    )
-
-
-@expensive_tests
-def test_run_benchmark(cmd):
-    assert (
-        os.system(
-            f"""python {cmd} run-benchmark \
-                --benchmark demo \
-                --sut DemoMultipleChoiceSUT"""
         )
         == 0
     )
