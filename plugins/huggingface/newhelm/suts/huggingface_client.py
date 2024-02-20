@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -420,17 +420,20 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             input_length=len(encoded_input.input_ids[0]),
         )
 
-    def translate_request(self, prompt: Prompt) -> HuggingFaceRequest:
-        options = prompt.options
+    def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceRequest:
+        return self._translate_request(prompt.text, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> HuggingFaceRequest:
+        return self._translate_request(format_chat(prompt), prompt.options)
+
+    def _translate_request(self, text, options):
         request = {
             "model": self.model_path,
+            "prompt": text,
             "max_new_tokens": options.max_tokens,
             "num_return_sequences": options.num_completions,
         }
-        if prompt.text:
-            request["prompt"] = prompt.text
-        else:
-            request["prompt"] = format_chat(prompt.chat)
+
         # Handle defaulting
         temperature = value_or_default(options.temperature, 1.0)
         if temperature == 0:
@@ -443,11 +446,11 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return HuggingFaceRequest.model_validate(request)
 
     def translate_response(
-        self, prompt: Prompt, response: HuggingFaceResponse
+        self, prompt: TextPrompt, response: HuggingFaceResponse
     ) -> SUTResponse:
         # Recreating the request is probably a hack, and we should consider cleaning this up.
         # This is just to get the same defaults as the Request.
-        request = self.translate_request(prompt)
+        request = self.translate_text_prompt(prompt)
         completions = []
         for raw_completion in response.completions:
             sequence_logprob: float = 0

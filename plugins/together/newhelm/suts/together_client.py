@@ -2,7 +2,7 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 import requests
 from together.utils import response_status_exception  # type: ignore
-from newhelm.prompt import ChatRole, Prompt
+from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
@@ -64,23 +64,26 @@ class TogetherCompletionsSUT(
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherCompletionsRequest:
-        if prompt.text:
-            text = prompt.text
-        elif prompt.:
-            text = format_chat(
-                prompt.chat, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE
-            )
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
+        return self._translate_request(prompt.text, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
+        return self._translate_request(
+            format_chat(prompt, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE),
+            prompt.options,
+        )
+
+    def _translate_request(self, text, options):
         return TogetherCompletionsRequest(
             model=self.model,
             prompt=text,
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(
@@ -96,7 +99,7 @@ class TogetherCompletionsSUT(
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherCompletionsResponse
+        self, prompt: TextPrompt, response: TogetherCompletionsResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -151,29 +154,35 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherChatRequest:
-        if prompt.text:
-            messages = [
-                TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)
-            ]
-        else:
-            messages = []
-            for message in prompt.chat.messages:
-                messages.append(
-                    TogetherChatRequest.Message(
-                        content=message.text, role=_ROLE_MAP[message.role]
-                    )
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
+        return self._translate_request(
+            [TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)],
+            prompt.options,
+        )
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherChatRequest:
+        messages = []
+        for message in prompt.messages:
+            messages.append(
+                TogetherChatRequest.Message(
+                    content=message.text, role=_ROLE_MAP[message.role]
                 )
+            )
+        return self._translate_request(messages, prompt.options)
+
+    def _translate_request(
+        self, messages: List[TogetherChatRequest.Message], options: SUTOptions
+    ):
         return TogetherChatRequest(
             model=self.model,
             messages=messages,
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
@@ -187,7 +196,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherChatResponse
+        self, prompt: TextPrompt, response: TogetherChatResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -256,24 +265,26 @@ class TogetherInferenceSUT(
     def __init__(self, model):
         self.model = model
 
-    def translate_request(self, prompt: Prompt) -> TogetherInferenceRequest:
-        if prompt.text:
-            text = prompt.text
-        else:
-            text = format_chat(
-                prompt.chat, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE
-            )
+    def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
+        return self._translate_request(prompt.text, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherInferenceRequest:
+        return self._translate_request(
+            format_chat(prompt, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE),
+            prompt.options,
+        )
+
+    def _translate_request(self, text: str, options: SUTOptions):
         return TogetherInferenceRequest(
             model=self.model,
             prompt=text,
-            # TODO: Add messages here once issue #56 is resolved.
-            max_tokens=prompt.options.max_tokens,
-            stop=prompt.options.stop_sequences,
-            temperature=prompt.options.temperature,
-            top_p=prompt.options.top_p,
-            top_k=prompt.options.top_k_per_token,
-            repetition_penalty=prompt.options.frequency_penalty,
-            n=prompt.options.num_completions,
+            max_tokens=options.max_tokens,
+            stop=options.stop_sequences,
+            temperature=options.temperature,
+            top_p=options.top_p,
+            top_k=options.top_k_per_token,
+            repetition_penalty=options.frequency_penalty,
+            n=options.num_completions,
         )
 
     def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:
@@ -287,7 +298,7 @@ class TogetherInferenceSUT(
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherInferenceResponse
+        self, prompt: TextPrompt, response: TogetherInferenceResponse
     ) -> SUTResponse:
         for p in response.prompt:
             print(p)

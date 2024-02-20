@@ -5,6 +5,7 @@ from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
+from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
@@ -47,7 +48,10 @@ def run_prompt_response_test(
     for item in tqdm(test_items, desc=desc):
         interactions = []
         for prompt in item.prompts:
-            sut_request = sut.translate_request(prompt.prompt)
+            if isinstance(prompt.prompt, TextPrompt):
+                sut_request = sut.translate_text_prompt(prompt.prompt)
+            else:
+                sut_request = sut.translate_chat_prompt(prompt.prompt)
             sut_response = sut.evaluate(sut_request)
             response = sut.translate_response(prompt.prompt, sut_response)
             interactions.append(PromptInteraction(prompt=prompt, response=response))

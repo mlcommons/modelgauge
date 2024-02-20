@@ -55,11 +55,11 @@ class ChatMessage(BaseModel):
 
 class ChatPrompt(BaseModel):
     messages: List[ChatMessage]
+    options: SUTOptions = SUTOptions()
 
 
-class Prompt(BaseModel):
+class TextPrompt(BaseModel):
     """What actually goes to the SUT."""
 
-    text: Optional[str] = None
-    chat: Optional[ChatPrompt] = None
+    text: str
     options: SUTOptions = SUTOptions()

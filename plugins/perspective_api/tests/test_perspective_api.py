@@ -1,5 +1,5 @@
 from typing import Dict, List
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
@@ -16,7 +16,7 @@ Completion = PerspectiveAPIAnnotation.Completion
 def _make_interaction(completions: List[str]) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
         response=SUTResponse(completions=sut_completions),
     )
 

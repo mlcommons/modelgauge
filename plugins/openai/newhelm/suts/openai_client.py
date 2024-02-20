@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
-from newhelm.prompt import ChatRole, Prompt
+from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -73,19 +73,21 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             organization=SECRETS.get_optional("openai", "org_id"),
         )
 
-    def translate_request(self, prompt: Prompt) -> OpenAIChatRequest:
-        # TODO #56 - Allow Tests to specify the full message set.
-        if prompt.text:
-            messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
-        else:
-            messages = []
-            for message in prompt.chat.messages:
-                messages.append(
-                    OpenAIChatMessage(
-                        context=message.text, role=_ROLE_MAP[message.role]
-                    )
-                )
-        options = prompt.options
+    def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
+        messages = [OpenAIChatMessage(content=prompt.text, role=_USER_ROLE)]
+        return self._translate_request(messages, prompt.options)
+
+    def translate_chat_prompt(self, prompt: ChatPrompt) -> OpenAIChatRequest:
+        messages = []
+        for message in prompt.messages:
+            messages.append(
+                OpenAIChatMessage(content=message.text, role=_ROLE_MAP[message.role])
+            )
+        return self._translate_request(messages, prompt.options)
+
+    def _translate_request(
+        self, messages: List[OpenAIChatMessage], options: SUTOptions
+    ):
         return OpenAIChatRequest(
             messages=messages,
             model=self.model,
@@ -106,7 +108,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(
-        self, prompt: Prompt, response: ChatCompletion
+        self, prompt: TextPrompt, response: ChatCompletion
     ) -> SUTResponse:
         completions = []
         for choice in response.choices:
