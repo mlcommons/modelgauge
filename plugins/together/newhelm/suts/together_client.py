@@ -80,7 +80,7 @@ class TogetherCompletionsSUT(
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherCompletionsResponse
+        self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -159,7 +159,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherChatResponse
+        self, request: TogetherChatRequest, response: TogetherChatResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -253,7 +253,7 @@ class TogetherInferenceSUT(
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherInferenceResponse
+        self, request: TogetherInferenceRequest, response: TogetherInferenceResponse
     ) -> SUTResponse:
         for p in response.prompt:
             print(p)

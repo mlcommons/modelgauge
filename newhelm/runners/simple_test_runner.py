@@ -49,7 +49,7 @@ def run_prompt_response_test(
         for prompt in item.prompts:
             sut_request = sut.translate_request(prompt.prompt)
             sut_response = sut.evaluate(sut_request)
-            response = sut.translate_response(prompt.prompt, sut_response)
+            response = sut.translate_response(sut_request, sut_response)
             interactions.append(PromptInteraction(prompt=prompt, response=response))
         item_interactions.append(
             TestItemInteractions(interactions=interactions, test_item=item)
