@@ -24,19 +24,19 @@ class ChildClass2(ParentClass):
 def test_simple_request_serialization(tmpdir):
     with SUTResponseCache(tmpdir, "sut_name") as cache:
         simple_request1 = SimpleClass(value="simple request 1")
-        assert cache.get_cached_response(simple_request1) == None
+        assert cache.get_cached_response(simple_request1) is None
 
         response = SimpleClass(value="simple response")
         cache.update_cache(simple_request1, response)
 
         simple_request2 = SimpleClass(value="simple request 2")
-        assert cache.get_cached_response(simple_request2) == None
+        assert cache.get_cached_response(simple_request2) is None
 
 
 def test_simple_round_trip(tmpdir):
     with SUTResponseCache(tmpdir, "sut_name") as cache:
         request = SimpleClass(value="simple request")
-        assert cache.get_cached_response(request) == None
+        assert cache.get_cached_response(request) is None
 
         response = SimpleClass(value="simple response")
         cache.update_cache(request, response)
@@ -51,12 +51,12 @@ def test_polymorphic_request(tmpdir):
         cache.update_cache(parent_request, parent_response)
 
         child1_request = ChildClass1(parent_value="parent 1", child_value="child 1")
-        assert cache.get_cached_response(child1_request) == None
+        assert cache.get_cached_response(child1_request) is None
         child1_response = SimpleClass(value="child 1 response")
         cache.update_cache(child1_request, child1_response)
 
         child2_request = ChildClass2(parent_value="parent")
-        assert cache.get_cached_response(child2_request) == None
+        assert cache.get_cached_response(child2_request) is None
         child2_response = SimpleClass(value="child 2 response")
         cache.update_cache(child2_request, child2_response)
 

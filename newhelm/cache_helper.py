@@ -44,8 +44,7 @@ class SUTResponseCache:
         self.cached_responses.commit()
 
     def _load_cached_responses(self):
-        if not os.path.exists(self.data_dir):
-            os.makedirs(self.data_dir)
+        os.makedirs(self.data_dir, exist_ok=True)
         path = os.path.join(self.data_dir, self.fname)
         return SqliteDict(path)
 
@@ -58,5 +57,5 @@ class SUTResponseCache:
     def _encode_request(self, request) -> str:
         return TypedData.from_instance(request).model_dump_json()
 
-    def _decode_request(self, request_key: str):
-        return TypedData.model_validate_json(request_key).to_instance()
+    def _decode_request(self, request_json: str):
+        return TypedData.model_validate_json(request_json).to_instance()
