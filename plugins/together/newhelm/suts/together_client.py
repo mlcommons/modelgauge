@@ -2,7 +2,8 @@ from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 import requests
 from together.utils import response_status_exception  # type: ignore
-from newhelm.prompt import Prompt
+from newhelm.prompt import ChatRole, Prompt
+from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
@@ -12,6 +13,15 @@ from newhelm.sut_registry import SUTS
 SECRETS.register(
     "together", "api_key", "See https://api.together.xyz/settings/api-keys"
 )
+
+_SYSTEM_ROLE = "system"
+_USER_ROLE = "user"
+_ASSISTANT_ROLE = "assistant"
+
+_ROLE_MAP = {
+    ChatRole.user: _USER_ROLE,
+    ChatRole.sut: _ASSISTANT_ROLE,
+}
 
 
 class TogetherCompletionsRequest(BaseModel):
@@ -55,9 +65,15 @@ class TogetherCompletionsSUT(
         self.model = model
 
     def translate_request(self, prompt: Prompt) -> TogetherCompletionsRequest:
+        if prompt.text:
+            text = prompt.text
+        elif prompt.:
+            text = format_chat(
+                prompt.chat, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE
+            )
         return TogetherCompletionsRequest(
             model=self.model,
-            prompt=prompt.text,
+            prompt=text,
             max_tokens=prompt.options.max_tokens,
             stop=prompt.options.stop_sequences,
             temperature=prompt.options.temperature,
@@ -92,7 +108,7 @@ class TogetherCompletionsSUT(
 class TogetherChatRequest(BaseModel):
     # https://docs.together.ai/reference/chat-completions
     class Message(BaseModel):
-        role: str = "user"
+        role: str
         content: str
 
     model: str
@@ -136,9 +152,21 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         self.model = model
 
     def translate_request(self, prompt: Prompt) -> TogetherChatRequest:
+        if prompt.text:
+            messages = [
+                TogetherChatRequest.Message(content=prompt.text, role=_USER_ROLE)
+            ]
+        else:
+            messages = []
+            for message in prompt.chat.messages:
+                messages.append(
+                    TogetherChatRequest.Message(
+                        content=message.text, role=_ROLE_MAP[message.role]
+                    )
+                )
         return TogetherChatRequest(
             model=self.model,
-            messages=[TogetherChatRequest.Message(content=prompt.text)],
+            messages=messages,
             max_tokens=prompt.options.max_tokens,
             stop=prompt.options.stop_sequences,
             temperature=prompt.options.temperature,
@@ -229,9 +257,15 @@ class TogetherInferenceSUT(
         self.model = model
 
     def translate_request(self, prompt: Prompt) -> TogetherInferenceRequest:
+        if prompt.text:
+            text = prompt.text
+        else:
+            text = format_chat(
+                prompt.chat, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE
+            )
         return TogetherInferenceRequest(
             model=self.model,
-            prompt=prompt.text,
+            prompt=text,
             # TODO: Add messages here once issue #56 is resolved.
             max_tokens=prompt.options.max_tokens,
             stop=prompt.options.stop_sequences,
