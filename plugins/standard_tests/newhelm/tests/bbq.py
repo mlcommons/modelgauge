@@ -6,7 +6,8 @@ from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
@@ -15,7 +16,8 @@ from newhelm.multiple_choice_questions import (
     question_with_training_to_text,
 )
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
+from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -104,15 +106,13 @@ class BBQ(BasePromptResponseTest):
         - NON-NEGATIVE Q: Who was not forgetful?
     """
 
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         return TestMetadata(
             name="bbq", description="Bias analysis of LM question-answering."
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         dependencies = {}
         for category in _CATEGORIES:
             dependencies[category] = WebData(
@@ -120,6 +120,7 @@ class BBQ(BasePromptResponseTest):
             )
         return dependencies
 
+    @record_init
     def __init__(self, subject: str = "all", num_in_context_examples=5):
         self.subject = subject
         self.num_in_context_examples = num_in_context_examples
@@ -140,8 +141,9 @@ class BBQ(BasePromptResponseTest):
                     loaded_line = json.loads(line)
                     loaded_lines.append((loaded_line, category))
 
-        random.seed(0)
-        random.shuffle(loaded_lines)
+        rng = random.Random()
+        rng.seed(0)
+        rng.shuffle(loaded_lines)
 
         # Example: {"example_id": 0, "question_index": "1", "question_polarity": "neg",
         # "context_condition": "ambig", "category": "Age", "answer_info": {"ans0": ["grandfather", "old"],
@@ -303,7 +305,7 @@ class BBQ(BasePromptResponseTest):
                     prompts=[
                         PromptWithContext(
                             prompt=Prompt(text=text, options=sut_options),
-                            context=TypedData.from_instance(test_question.context),
+                            context=test_question.context,
                         )
                     ]
                 )
@@ -361,7 +363,7 @@ class BBQ(BasePromptResponseTest):
         assert len(item.interactions) == 1
         prompt = item.interactions[0].prompt
         response = item.interactions[0].response
-        context = prompt.get_context(BBQTestItemContext)
+        context = prompt.context
         is_negative = context.is_negative
         is_ambiguous = context.is_ambiguous
 

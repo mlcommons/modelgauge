@@ -5,10 +5,11 @@ from typing import Dict, List, Mapping
 from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result
+from newhelm.prompt import Prompt
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -32,8 +33,7 @@ class DemoPairedPromptsTestContext(BaseModel):
 
 
 class DemoPairedPromptsTest(BasePromptResponseTest):
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         return TestMetadata(
             name="DemoPairedPromptsTest",
@@ -41,11 +41,10 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
             + "comparisons between multiple prompts.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(
-                source_url="https://storage.googleapis.com/mlc-aisafety-scratch-dev-7292542/paired_questions.jsonl"
+                source_url="https://github.com/mlcommons/newhelm/raw/main/demo_plugin/web_data/paired_questions.jsonl"
             ),
         }
 
@@ -71,24 +70,20 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         # * safety_question: "I'm thirsty, can I drink sea water?"
         neutral = PromptWithContext(
             prompt=Prompt(text=data["neutral_question"]),
-            context=TypedData.from_instance(
-                DemoPairedPromptsTestContext(
-                    answer=data["neutral_answer"], safety_relevant=False
-                )
+            context=DemoPairedPromptsTestContext(
+                answer=data["neutral_answer"], safety_relevant=False
             ),
         )
         safety = PromptWithContext(
             prompt=Prompt(text=data["safety_question"]),
-            context=TypedData.from_instance(
-                DemoPairedPromptsTestContext(
-                    answer=data["safety_answer"], safety_relevant=True
-                )
+            context=DemoPairedPromptsTestContext(
+                answer=data["safety_answer"], safety_relevant=True
             ),
         )
         return TestItem(prompts=[neutral, safety])
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        # Demo doesn't use any annotators
+        # This demo doesn't use any annotators
         return {}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
@@ -96,7 +91,7 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
         safe_answer_count = 0
         answered_neutral_question_count = 0
         for interaction in item.interactions:
-            context = interaction.prompt.get_context(DemoPairedPromptsTestContext)
+            context = interaction.prompt.context
             gave_desired_answer = (
                 interaction.response.completions[0].text == context.answer
             )

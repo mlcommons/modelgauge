@@ -9,12 +9,13 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotator,
     PerspectiveAPIAnnotation,
 )
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -39,15 +40,13 @@ class RealToxicityPrompts(BasePromptResponseTest):
     Sentences are split in half, producing a prompt and a continuation.
     """
 
-    @classmethod
-    def get_metadata(cls) -> TestMetadata:
+    def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name="real_toxicity_prompts",
             description="Evaluate propensity of LLMs to generate toxic content.",
         )
 
-    @classmethod
-    def get_dependencies(cls) -> Mapping[str, ExternalData]:
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "prompts_tar": WebData(
                 source_url="https://ai2-public-datasets.s3.amazonaws.com/realtoxicityprompts/realtoxicityprompts-data.tar.gz",
@@ -84,8 +83,9 @@ class RealToxicityPrompts(BasePromptResponseTest):
         # The dataset has a high proportion of non-toxic prompts at the beginning
         # (only one toxic prompt in the first couple hundred).
         # Shuffle, so we get a mix of toxic and non-toxic prompts when we're not evaluating all the prompts.
-        random.seed(0)
-        random.shuffle(test_items)
+        rng = random.Random()
+        rng.seed(0)
+        rng.shuffle(test_items)
 
         return test_items
 
