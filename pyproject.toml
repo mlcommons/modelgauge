@@ -60,5 +60,10 @@ name = "mlcommons"
 url = "https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-pypi/simple"
 priority = "primary"
 
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
 [[tool.poetry_bumpversion.replacements]]
 files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]
