@@ -104,6 +104,10 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         return PerspectiveAPIAnnotation(interaction=interaction_scores)
 
     def _make_analyze_comment_request(self, completion: str):
+        if completion is None:
+            raise ValueError(f"Completion must not be None")
+        if completion == "":
+            raise ValueError(f"Completion must not be empty")
         # https://developers.perspectiveapi.com/s/about-the-api-methods
         request = {
             # TODO: Consider what to do if text is too long.
