@@ -11,7 +11,7 @@ from newhelm.general import get_or_create_json_file
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
-from newhelm.secrets_registry import SECRETS
+from newhelm.secrets_registry import SECRETS, SecretsRegistryMissingValue
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -32,7 +32,15 @@ def run_test(test: str, sut: str, data_dir: str, secrets: str, max_test_items: i
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, BasePromptResponseTest)
 
-    test_journal = run_prompt_response_test(
-        test, test_obj, sut, sut_obj, data_dir, max_test_items
-    )
+    try:
+        test_journal = run_prompt_response_test(
+            test, test_obj, sut, sut_obj, data_dir, max_test_items
+        )
+    except SecretsRegistryMissingValue as e:
+        raise AssertionError(
+            f"Missing secret {e.scope} {e.key}. "
+            f"Instructions for getting the value: {e.instructions}. "
+            f"To add the secret, you can run "
+            f"`python newhelm/main.py set-secret --secrets {secrets} --scope {e.scope} --key {e.key} --value <your_value>`"
+        ) from e
     print(test_journal.model_dump_json(indent=4))

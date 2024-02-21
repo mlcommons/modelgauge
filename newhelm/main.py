@@ -1,3 +1,4 @@
+import json
 import click
 
 from newhelm.command_line import (
@@ -65,6 +66,31 @@ def run_sut(sut: str, secrets: str, prompt: str):
     click.echo(f"{response}\n")
     result = sut_obj.translate_response(prompt_obj, response)
     click.echo(f"{result}\n")
+
+
+@newhelm_cli.command()
+@click.option(
+    "--scope", help="The scope of the secret. For example, 'together'.", required=True
+)
+@click.option(
+    "--key",
+    help="The dictionary key of the secret. For example, 'api_key'",
+    required=True,
+)
+@click.option(
+    "--value", help="The secret to add. For example, '8a8adsfnnc898s8'", required=True
+)
+@SECRETS_FILE_OPTION
+def set_secret(scope: str, key: str, value: str, secrets: str):
+    """Set the value of a secret in the secrets file."""
+    current_secrets = get_or_create_json_file(secrets)
+    if scope not in current_secrets:
+        current_secrets[scope] = {}
+    current_scope = current_secrets[scope]
+    current_scope[key] = value
+    with open(secrets, "w") as f:
+        json.dump(current_secrets, f, indent=4)
+        print("", file=f)  # Add newline to end
 
 
 if __name__ == "__main__":
