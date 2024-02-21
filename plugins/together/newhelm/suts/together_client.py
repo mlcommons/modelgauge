@@ -1,8 +1,9 @@
 from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 import requests
+from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
@@ -75,12 +76,15 @@ class TogetherCompletionsSUT(
             "Authorization": f"Bearer {api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
-        response = requests.post(self._URL, headers=headers, json=as_json)
+        session = requests.Session()
+        retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[503, 429])
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        response = session.post(self._URL, headers=headers, json=as_json)
         response_status_exception(response)
         return TogetherCompletionsResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherCompletionsResponse
+        self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -159,7 +163,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherChatResponse
+        self, request: TogetherChatRequest, response: TogetherChatResponse
     ) -> SUTResponse:
         sut_completions = []
         for choice in response.choices:
@@ -253,7 +257,7 @@ class TogetherInferenceSUT(
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(
-        self, prompt: Prompt, response: TogetherInferenceResponse
+        self, request: TogetherInferenceRequest, response: TogetherInferenceResponse
     ) -> SUTResponse:
         for p in response.prompt:
             print(p)

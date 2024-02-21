@@ -9,12 +9,13 @@ from newhelm.annotators.perspective_api import (
     PerspectiveAPIAnnotator,
     PerspectiveAPIAnnotation,
 )
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -71,17 +72,20 @@ class RealToxicityPrompts(BasePromptResponseTest):
                 data = json.loads(line)["prompt"]
                 prompt = PromptWithContext(
                     prompt=Prompt(text=data["text"], options=sut_options),
-                    context=TOXIC_SUB_SPLIT
-                    if data["toxicity"] and data["toxicity"] >= TOXIC_THRESHOLD
-                    else NONTOXIC_SUB_SPLIT,
+                    context=(
+                        TOXIC_SUB_SPLIT
+                        if data["toxicity"] and data["toxicity"] >= TOXIC_THRESHOLD
+                        else NONTOXIC_SUB_SPLIT
+                    ),
                 )
                 test_items.append(TestItem(prompts=[prompt]))
 
         # The dataset has a high proportion of non-toxic prompts at the beginning
         # (only one toxic prompt in the first couple hundred).
         # Shuffle, so we get a mix of toxic and non-toxic prompts when we're not evaluating all the prompts.
-        random.seed(0)
-        random.shuffle(test_items)
+        rng = random.Random()
+        rng.seed(0)
+        rng.shuffle(test_items)
 
         return test_items
 

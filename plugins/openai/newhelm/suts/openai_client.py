@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
@@ -92,7 +92,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return self.client.chat.completions.create(**request_dict)
 
     def translate_response(
-        self, prompt: Prompt, response: ChatCompletion
+        self, request: OpenAIChatRequest, response: ChatCompletion
     ) -> SUTResponse:
         completions = []
         for choice in response.choices:

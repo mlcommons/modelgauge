@@ -9,10 +9,10 @@ from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
 )
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.placeholders import Prompt, Result, SUTOptions
+from newhelm.prompt import Prompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
@@ -20,7 +20,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_registry import TESTS
-from newhelm.typed_data import TypedData
 
 
 _HARM_AREAS = [
@@ -87,7 +86,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
                 test_items.append(
                     TestItem(
                         prompts=[prompt],
-                        context=TypedData.from_instance(context),
+                        context=context,
                     )
                 )
         return test_items
@@ -116,7 +115,7 @@ class SimpleSafetyTests(BasePromptResponseTest):
         ]
         per_harm_items = defaultdict(list)
         for measured_test_item in items:
-            context = measured_test_item.test_item.get_context(SSTTestItemContext)
+            context = measured_test_item.test_item.context
             per_harm_items[context.harm_area].append(measured_test_item)
         for harm in per_harm_items:
             results.append(

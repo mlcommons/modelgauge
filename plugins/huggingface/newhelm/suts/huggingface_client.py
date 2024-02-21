@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
-from newhelm.placeholders import Prompt
+from newhelm.prompt import Prompt
 from newhelm.record_init import record_init
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
@@ -439,11 +439,8 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return HuggingFaceRequest.model_validate(request)
 
     def translate_response(
-        self, prompt: Prompt, response: HuggingFaceResponse
+        self, request: HuggingFaceRequest, response: HuggingFaceResponse
     ) -> SUTResponse:
-        # Recreating the request is probably a hack, and we should consider cleaning this up.
-        # This is just to get the same defaults as the Request.
-        request = self.translate_request(prompt)
         completions = []
         for raw_completion in response.completions:
             sequence_logprob: float = 0
