@@ -62,12 +62,17 @@ def run_prompt_response_test(
     keyed_annotators = test.get_annotators().items()
     for key, annotator in keyed_annotators:
         annotations: List[Annotation] = []
-        for interactions_for_item in item_interactions:
-            annotations.append(
-                Annotation.from_instance(
-                    annotator.annotate_test_item(interactions_for_item.interactions)
+        desc = f"Collection annotations from {key}"
+        for interactions_for_item in tqdm(item_interactions, desc=desc):
+            try:
+                annotation = annotator.annotate_test_item(
+                    interactions_for_item.interactions
                 )
-            )
+            except Exception as e:
+                raise Exception(
+                    f"Exception while handling: {interactions_for_item}"
+                ) from e
+            annotations.append(Annotation.from_instance(annotation))
         annotations_per_annotator[key] = annotations
     # Flatten annotations across annotators
     with_annotations = []
@@ -128,7 +133,7 @@ def _collect_sut_responses(
                 sut_response = cache.get_or_call(sut_request, sut.evaluate)
             else:
                 sut_response = sut.evaluate(sut_request)
-            response = sut.translate_response(prompt.prompt, sut_response)
+            response = sut.translate_response(sut_request, sut_response)
             interactions.append(PromptInteraction(prompt=prompt, response=response))
         item_interactions.append(
             TestItemInteractions(interactions=interactions, test_item=item)
