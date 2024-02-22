@@ -99,12 +99,10 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                     )
                 request_index += 1
 
-        responses = []
-        if requests:
-            with self._client_lock:
-                responses = _batch_execute_requests(
-                    self.client, requests, self.num_retries, self.rng
-                )
+        with self._client_lock:
+            responses = _batch_execute_requests(
+                self.client, requests, self.num_retries, self.rng
+            )
 
         index = 0
         response_index = 0
@@ -166,6 +164,9 @@ def _batch_execute_requests(
     25 requests is about 15x faster than doing each as separate calls.
     https://googleapis.github.io/google-api-python-client/docs/batch.html
     """
+
+    if not requests:
+        return []
 
     errors = [None] * len(requests)
     responses: List[Dict] = [{}] * len(requests)
