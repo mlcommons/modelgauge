@@ -1,6 +1,6 @@
 # Publishing
-Publishing newhelm and all related plugins uses [Poetry]() and our current publishing target is a GCP Python Repository
-located at [https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-base-pypi](https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-base-pypi).
+We use [Poetry](https://python-poetry.org/) for publishing NewHELM and its plugins. While we are still in early 
+development, we are publishing to a GCP Python Repository located at https://us-central1-python.pkg.dev/ai-safety-dev/aisafety-base-pypi.
 
 Publishing permissions are connected to GCP users and authentication is handled via the gcloud cli. In other words, you
 must be successfully logged into a user or service GCP account using [these instructions](https://cloud.google.com/sdk/docs/authorizing) 
@@ -27,7 +27,7 @@ poetry self add poetry-bumpversion
 ```
 
 ## Publishing
-Bump the version of newhelm and all plugins by using `poetry version <version>`, where `<version>` is one of:
+Bump the version of newHELM and all plugins by using `poetry version <version>`, where `<version>` is one of:
 "patch", "minor", or "major". Note that this will bump the versions of all plugins referenced in pyproject.toml
 as well.
 
