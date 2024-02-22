@@ -47,3 +47,6 @@ notes.otl
 # Miscellaneous
 .nfs*!/dist/
 .tool-versions
+
+# Secrets config folder
+secrets/
