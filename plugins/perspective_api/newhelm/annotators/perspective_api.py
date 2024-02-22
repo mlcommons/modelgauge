@@ -99,10 +99,12 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                     )
                 request_index += 1
 
-        with self._client_lock:
-            responses = _batch_execute_requests(
-                self.client, requests, self.num_retries, self.rng
-            )
+        responses = []
+        if requests:
+            with self._client_lock:
+                responses = _batch_execute_requests(
+                    self.client, requests, self.num_retries, self.rng
+                )
 
         index = 0
         response_index = 0
