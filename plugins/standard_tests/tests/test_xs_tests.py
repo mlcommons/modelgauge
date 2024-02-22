@@ -1,4 +1,6 @@
 import pytest
+
+from newhelm.base_test import Result
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import Prompt
 from newhelm.tests.xstest import XSTest, XSTestItemContext, StrMatchAnnotator
@@ -30,7 +32,8 @@ def _make_test_item(text, is_safe, prompt_type="") -> TestItem:
     )
 
 
-def _make_measured_test_item(test_item, label) -> MeasuredTestItem:
+def _make_measured_test_item(is_safe, label) -> MeasuredTestItem:
+    test_item = _make_test_item("", is_safe)
     measurements = {
         "Full Compliance": 0.0,
         "Full Refusal": 0.0,
@@ -46,6 +49,10 @@ def _make_interaction(completion_text: str) -> PromptInteraction:
         prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
         response=SUTResponse(completions=sut_completions),
     )
+
+
+def _make_result(name: str, value: float) -> Result:
+    return Result(name=name, value=value)
 
 
 def test_make_test_items(tmpdir):
@@ -68,39 +75,34 @@ def test_make_test_items(tmpdir):
     assert len(test_items) == 2
     assert all([len(item.prompts) == 1 for item in test_items])
     assert all([isinstance(item.context, XSTestItemContext) for item in test_items])
-    assert test_items[0].prompts[0].prompt.text == "prompt 1"
-    assert test_items[0].context.is_safe == True
-    assert test_items[0].context.prompt_type == "homonyms"
-    assert test_items[1].prompts[0].prompt.text == "prompt 2"
-    assert test_items[1].context.is_safe == False
-    assert test_items[1].context.prompt_type == "contrast_homonyms"
+    expected_item_1 = _make_test_item("prompt 1", is_safe=True, prompt_type="homonyms")
+    expected_item_2 = _make_test_item(
+        "prompt 2", is_safe=False, prompt_type="contrast_homonyms"
+    )
+    # Ignore the SUTOptions attribute in the prompts
+    get_prompts = lambda item: list(map(lambda x: x.prompt.text, item.prompts))
+    assert get_prompts(test_items[0]) == get_prompts(expected_item_1)
+    assert get_prompts(test_items[1]) == get_prompts(expected_item_2)
+    assert test_items[0].context == expected_item_1.context
+    assert test_items[1].context == expected_item_2.context
 
 
 def test_aggregate_measurements():
-    test_items = [
-        _make_test_item("safe prompt 1", True),
-        _make_test_item("safe prompt 2", True),
-        _make_test_item("unsafe prompt 1", False),
-        _make_test_item("unsafe prompt 2", False),
-    ]
-
     measured_test_items = [
-        _make_measured_test_item(test_items[0], "Full Compliance"),
-        _make_measured_test_item(test_items[1], "Full Refusal"),
-        _make_measured_test_item(test_items[2], "Partial Refusal"),
-        _make_measured_test_item(test_items[3], "Partial Refusal"),
+        _make_measured_test_item(True, "Full Compliance"),
+        _make_measured_test_item(True, "Full Refusal"),
+        _make_measured_test_item(False, "Partial Refusal"),
+        _make_measured_test_item(False, "Partial Refusal"),
     ]
-
     test = XSTest()
     results = test.aggregate_measurements(measured_test_items)
-    expected_results = {
-        "safe_full_refusal_rate": 0.5,
-        "safe_partial_refusal_rate": 0,
-        "unsafe_full_refusal_rate": 0.0,
-        "unsafe_partial_refusal_rate": 1.0,
-    }
-    for result in results:
-        assert expected_results[result.name] == result.value
+    expected_results = [
+        _make_result("safe_full_refusal_rate", 0.5),
+        _make_result("safe_partial_refusal_rate", 0.0),
+        _make_result("unsafe_full_refusal_rate", 0.0),
+        _make_result("unsafe_partial_refusal_rate", 1.0),
+    ]
+    assert results == expected_results
 
 
 def test_invalid_measurements():
