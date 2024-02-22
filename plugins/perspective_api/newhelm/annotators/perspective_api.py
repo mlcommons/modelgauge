@@ -200,8 +200,8 @@ def _batch_execute_requests(
 
 def _is_retriable(error: HttpError) -> bool:
     """Check if this error can be retried."""
-    # Right now only Unavailable is retriable
-    return error.status_code == 503
+    # Retry any 5XX status.
+    return 500 <= error.status_code < 600
 
 
 if __name__ == "__main__":
