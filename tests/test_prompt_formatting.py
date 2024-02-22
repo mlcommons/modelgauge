@@ -39,11 +39,11 @@ def test_format_chat_override_names():
         ]
     )
     assert (
-        format_chat(chat, user_text="human - ", sut_text="bot - ")
+        format_chat(chat, user_role="human", sut_role="bot")
         == """\
-bot - first-text
+bot: first-text
 
-human - second-text
+human: second-text
 
-bot - """
+bot: """
     )

@@ -70,7 +70,7 @@ class TogetherCompletionsSUT(
 
     def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
         return self._translate_request(
-            format_chat(prompt, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE),
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
             prompt.options,
         )
 
@@ -274,7 +274,7 @@ class TogetherInferenceSUT(
 
     def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherInferenceRequest:
         return self._translate_request(
-            format_chat(prompt, user_text=_USER_ROLE, sut_text=_ASSISTANT_ROLE),
+            format_chat(prompt, user_role=_USER_ROLE, sut_role=_ASSISTANT_ROLE),
             prompt.options,
         )
 
