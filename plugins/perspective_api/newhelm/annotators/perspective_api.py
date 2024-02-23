@@ -53,7 +53,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         self,
         desired_attributes: List[str],
         languages: Optional[List[str]] = None,
-        num_retries: int = 5,
+        num_retries: int = 6,
     ):
         assert desired_attributes, "Must specify at least one desired attribute"
         assert len(desired_attributes) == len(
@@ -185,7 +185,7 @@ def _batch_execute_requests(
     for retry_count in range(num_retries + 1):
         if retry_count > 0:
             # Perform exponential backoff
-            sleep_amount = rng.random() * 2**retry_count
+            sleep_amount = rng.uniform(1, 2) * 2**retry_count
             logging.info("Performing exponential backoff. Sleeping:", sleep_amount)
             time.sleep(sleep_amount)
 
