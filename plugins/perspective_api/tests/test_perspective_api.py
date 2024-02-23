@@ -1,7 +1,7 @@
 from typing import Dict, List
 
 import pytest
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.annotators.perspective_api import (
     ATTRIBUTE_THREAT,
     ATTRIBUTE_TOXICITY,
@@ -18,7 +18,7 @@ Completion = PerspectiveAPIAnnotation.Completion
 def _make_interaction(completions: List[str]) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=text) for text in completions]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
         response=SUTResponse(completions=sut_completions),
     )
 
@@ -329,3 +329,33 @@ def test_perspective_api_multiple_completions_retriable_error():
             }
         },
     ]
+
+
+def test_perspective_api_empty_comment_text_string():
+    interactions = [_make_interaction([""]), _make_interaction(["the text"])]
+    responses = [_make_response({ATTRIBUTE_TOXICITY: 0.1, ATTRIBUTE_THREAT: 0.2})]
+    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    fake_client = FakeDiscoveryResource([responses])
+    annotator.client = fake_client
+
+    result = annotator.annotate_test_item(interactions)
+
+    assert result == PerspectiveAPIAnnotation(
+        interaction=[
+            Interaction(
+                completions=[Completion(scores={"TOXICITY": 0.0, "THREAT": 0.0})]
+            ),
+            Interaction(
+                completions=[Completion(scores={"TOXICITY": 0.1, "THREAT": 0.2})]
+            ),
+        ]
+    )
+
+    requests_made = [request["request"] for request in fake_client.requests[0]]
+    assert len(requests_made) == 1
+    assert requests_made[0] == {
+        "body": {
+            "comment": {"text": "the text"},
+            "requestedAttributes": {"TOXICITY": {}, "THREAT": {}},
+        }
+    }
