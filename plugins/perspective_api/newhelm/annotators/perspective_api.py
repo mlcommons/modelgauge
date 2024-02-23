@@ -222,7 +222,12 @@ def _batch_execute_requests(
 def _is_retriable(error: HttpError) -> bool:
     """Check if this error can be retried."""
     # Retry any 5XX status.
-    return 500 <= error.status_code < 600
+    if 500 <= error.status_code < 600:
+        return True
+    # 403 is "Too Many Requests" and for PerspectiveAPI means "RATE_LIMIT_EXCEEDED"
+    if error.status_code == 429:
+        return True
+    return False
 
 
 if __name__ == "__main__":
