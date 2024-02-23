@@ -46,6 +46,9 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
                 if isinstance(interaction.prompt.prompt, TextPrompt):
                     sut_prompt = interaction.prompt.prompt.text
                 else:
+                    assert (
+                        self.formatter is not _default_formatter
+                    ), "Please provide custom formatter for ChatPrompt interactions."
                     sut_prompt = format_chat(interaction.prompt.prompt)
                 openai_prompt = TextPrompt(
                     text=self.formatter(sut_prompt, completion.text),
