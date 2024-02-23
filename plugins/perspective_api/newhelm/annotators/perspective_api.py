@@ -224,7 +224,7 @@ def _is_retriable(error: HttpError) -> bool:
     # Retry any 5XX status.
     if 500 <= error.status_code < 600:
         return True
-    # 403 is "Too Many Requests" and for PerspectiveAPI means "RATE_LIMIT_EXCEEDED"
+    # 429 is "Too Many Requests" and for PerspectiveAPI means "RATE_LIMIT_EXCEEDED"
     if error.status_code == 429:
         return True
     return False
