@@ -78,6 +78,10 @@ class PromptInteraction(BaseModel):
     response: SUTResponse
 
 
+class PromptInteractionList(BaseModel):
+    interactions: List[PromptInteraction]
+
+
 class TestItemInteractions(BaseModel):
     """All of the Interactions with a SUT for a single TestItem."""
 

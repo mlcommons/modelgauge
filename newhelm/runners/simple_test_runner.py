@@ -11,6 +11,7 @@ from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
+    PromptInteractionList,
     TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
@@ -67,9 +68,13 @@ def run_prompt_response_test(
             with SqlDictCache(
                 os.path.join(test_data_path, "cached_annotations"), key
             ) as cache:
-                annotations = _collect_annotations(key, annotator, item_interactions, cache)
+                annotations = _collect_annotations(
+                    key, annotator, item_interactions, cache
+                )
         else:
-            annotations = _collect_annotations(key, annotator, item_interactions, cache=None)
+            annotations = _collect_annotations(
+                key, annotator, item_interactions, cache=None
+            )
         annotations_per_annotator[key] = annotations
     # Flatten annotations across annotators
     with_annotations = []
@@ -142,14 +147,24 @@ def _collect_sut_responses(
 
 
 def _collect_annotations(
-    key: str, annotator: BaseAnnotator, item_interactions: List[TestItemInteractions], cache: Optional[SqlDictCache]
-):
+    key: str,
+    annotator: BaseAnnotator,
+    item_interactions: List[TestItemInteractions],
+    cache: Optional[SqlDictCache],
+) -> List[Annotation]:
     annotations: List[Annotation] = []
     desc = f"Collection annotations from {key}"
     for interactions_for_item in tqdm(item_interactions, desc=desc):
         try:
             if cache is not None:
-                cache.get_or_call
+                request = PromptInteractionList(
+                    interactions=interactions_for_item.interactions
+                )
+
+                def _do_annotation(interaction_list: PromptInteractionList):
+                    return annotator.annotate_test_item(interaction_list.interactions)
+
+                annotation = cache.get_or_call(request, _do_annotation)
             else:
                 annotation = annotator.annotate_test_item(
                     interactions_for_item.interactions
@@ -157,3 +172,4 @@ def _collect_annotations(
         except Exception as e:
             raise Exception(f"Exception while handling: {interactions_for_item}") from e
         annotations.append(Annotation.from_instance(annotation))
+    return annotations
