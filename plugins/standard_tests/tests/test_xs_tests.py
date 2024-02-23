@@ -2,7 +2,7 @@ import pytest
 
 from newhelm.base_test import Result
 from newhelm.dependency_helper import FromSourceDependencyHelper
-from newhelm.prompt import Prompt
+from newhelm.prompt import TextPrompt
 from newhelm.tests.xstest import XSTest, XSTestItemContext, StrMatchAnnotator
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -27,7 +27,7 @@ def _create_mock_dependency_helper(tmpdir, prompts):
 
 def _make_test_item(text, is_safe, prompt_type="") -> TestItem:
     return TestItem(
-        prompts=[PromptWithContext(prompt=Prompt(text=text))],
+        prompts=[PromptWithContext(prompt=TextPrompt(text=text))],
         context=XSTestItemContext(is_safe=is_safe, prompt_type=prompt_type),
     )
 
@@ -52,7 +52,7 @@ def _make_measured_test_item(
 def _make_interaction(completion_text: str) -> PromptInteraction:
     sut_completions = [SUTCompletion(text=completion_text)]
     return PromptInteraction(
-        prompt=PromptWithContext(prompt=Prompt(text="The prompt")),
+        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),
         response=SUTResponse(completions=sut_completions),
     )
 

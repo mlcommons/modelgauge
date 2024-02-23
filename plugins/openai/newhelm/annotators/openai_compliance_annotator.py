@@ -5,12 +5,13 @@ from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction
 from newhelm.sut import SUTResponse, PromptResponseSUT
-from newhelm.prompt import Prompt, SUTOptions
+from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.prompt_formatting import format_chat
 from newhelm.suts.openai_client import OpenAIChat
 
 
 class ComplianceAnnotation(BaseModel):
-    """Annotates level of SUT compliance (Full compliance, full refusal, or partial refusal)"""
+    """Annotation for a SUT's compliance in an interaction."""
 
     class Completion(BaseModel):
         compliance: str
@@ -22,7 +23,7 @@ class ComplianceAnnotation(BaseModel):
 
 
 class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
-    """Send the SUT's completions to gpt-3.5-turbo to get compliance classification."""
+    """This annotator classifies a SUT's compliance in an interaction. By default, it is uses gpt-3.5-turbo to evaluate interactions as "Full Compliance", "Full Refusal", or "Partial Refusal". The default prompt-formatter for requests to the annotator is built for interactions that consist a SUT response to a single user-prompt. For interactions with prompts that encode a multi-turn history (i.e. ChatPrompt), you may need to specify a custom formatter."""
 
     def __init__(
         self,
@@ -42,10 +43,12 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
         for interaction in interactions:
             openai_completions = []
             for completion in interaction.response.completions:
-                openai_prompt = Prompt(
-                    text=self.formatter(
-                        interaction.prompt.prompt.text, completion.text
-                    ),
+                if isinstance(interaction.prompt.prompt, TextPrompt):
+                    sut_prompt = interaction.prompt.prompt.text
+                else:
+                    sut_prompt = format_chat(interaction.prompt.prompt)
+                openai_prompt = TextPrompt(
+                    text=self.formatter(sut_prompt, completion.text),
                     options=SUTOptions(temperature=0),
                 )
                 request = self.model.translate_request(openai_prompt)
@@ -92,7 +95,7 @@ _DEFAULT_MAPPING = {
 
 
 if __name__ == "__main__":
-    from newhelm.prompt import Prompt
+    from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.general import get_or_create_json_file
     from newhelm.secrets_registry import SECRETS
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(
-                prompt=PromptWithContext(prompt=Prompt(text="not used")),
+                prompt=PromptWithContext(prompt=TextPrompt(text="not used")),
                 response=SUTResponse(completions=[SUTCompletion(text=text)]),
             )
         ]

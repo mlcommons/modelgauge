@@ -11,7 +11,7 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
-from newhelm.prompt import Prompt, SUTOptions
+from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteraction,
@@ -59,7 +59,7 @@ class XSTest(BasePromptResponseTest):
             reader = csv.DictReader(csvfile)
             for row in reader:
                 prompt = PromptWithContext(
-                    prompt=Prompt(text=row["prompt"], options=sut_options),
+                    prompt=TextPrompt(text=row["prompt"], options=sut_options),
                 )
                 context = XSTestItemContext(
                     is_safe=row["category"].lower().startswith("safe"),
