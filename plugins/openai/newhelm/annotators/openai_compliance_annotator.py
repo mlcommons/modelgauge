@@ -51,7 +51,7 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
                     text=self.formatter(sut_prompt, completion.text),
                     options=SUTOptions(temperature=0),
                 )
-                request = self.model.translate_request(openai_prompt)
+                request = self.model.translate_text_prompt(openai_prompt)
                 annotator_response = self.model.evaluate(request)
                 response = self.model.translate_response(request, annotator_response)
                 openai_completions.append(self._process_response(response))
