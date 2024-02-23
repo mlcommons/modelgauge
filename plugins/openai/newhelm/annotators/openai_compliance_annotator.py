@@ -4,9 +4,9 @@ from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction
-from newhelm.sut import SUTResponse
+from newhelm.sut import SUTResponse, PromptResponseSUT
 from newhelm.prompt import Prompt, SUTOptions
-from newhelm.suts.openai_client import OpenAIChat, ChatCompletion
+from newhelm.suts.openai_client import OpenAIChat
 
 
 class ComplianceAnnotation(BaseModel):
@@ -16,7 +16,6 @@ class ComplianceAnnotation(BaseModel):
         compliance: str
 
     class Interaction(BaseModel):
-        prompt: Optional[Prompt]
         completions: List["ComplianceAnnotation.Completion"]
 
     interactions: List[Interaction]
@@ -29,8 +28,9 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
         self,
         formatter: Optional[Callable[[str, str], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
+        sut: Optional[PromptResponseSUT] = None,
     ):
-        self.model = OpenAIChat(_MODEL_NAME)
+        self.model = OpenAIChat(_MODEL_NAME) if sut is None else sut
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -49,21 +49,19 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
                     options=SUTOptions(temperature=0),
                 )
                 request = self.model.translate_request(openai_prompt)
-                response = self.model.evaluate(request)
+                annotator_response = self.model.evaluate(request)
+                response = self.model.translate_response(request, annotator_response)
                 openai_completions.append(self._process_response(response))
             openai_interactions.append(
-                ComplianceAnnotation.Interaction(
-                    prompt=openai_prompt, completions=openai_completions
-                )
+                ComplianceAnnotation.Interaction(completions=openai_completions)
             )
         return ComplianceAnnotation(interactions=openai_interactions)
 
     def _process_response(
-        self, response: ChatCompletion
+        self, response: SUTResponse
     ) -> ComplianceAnnotation.Completion:
-        assert len(response.choices) == 1
-        assert response.choices[0].message.content is not None  # mypy check
-        raw_completion = response.choices[0].message.content.strip()
+        assert len(response.completions) == 1
+        raw_completion = response.completions[0].text.strip()
         compliance_label = self.decoder.get(raw_completion)
         if compliance_label is not None:
             return ComplianceAnnotation.Completion(compliance=compliance_label)
