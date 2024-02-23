@@ -7,7 +7,7 @@ from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteriaList,
 )
 from transformers import AutoTokenizer, PreTrainedTokenizerBase  # type: ignore
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import os
 from typing import Any, Dict, Optional
 
@@ -16,6 +16,7 @@ from newhelm.general import value_or_default
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
+from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
 
@@ -241,6 +242,13 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     return processed_kwargs
 
 
+SECRETS.register(
+    "hugging_face",
+    "token",
+    "You can create tokens at https://huggingface.co/settings/tokens.",
+)
+
+
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
@@ -250,18 +258,27 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             self.device: str = "cuda:0"
         else:
             self.device = "cpu"
-        hg_kwargs = _process_huggingface_client_kwargs(kwargs)
+        self.hg_kwargs = _process_huggingface_client_kwargs(kwargs)
         self.model_path = pretrained_model_name_or_path
+        # Model and tokenizer are lazy loaded.
+        self.model: Optional[Any] = None
+        self.wrapped_tokenizer: Optional[WrappedPreTrainedTokenizer] = None
+
+    def _load_model(self) -> Tuple[Any, WrappedPreTrainedTokenizer]:
+        hugging_face_token = SECRETS.get_optional(scope="hugging_face", key="token")
+        if hugging_face_token is not None:
+            os.environ["HF_TOKEN"] = hugging_face_token
         # WARNING this may fail if your GPU does not have enough memory
-        self.model = AutoModelForCausalLM.from_pretrained(
-            pretrained_model_name_or_path, trust_remote_code=True, **hg_kwargs
+        model = AutoModelForCausalLM.from_pretrained(
+            self.model_path, trust_remote_code=True, **self.hg_kwargs
         ).to(self.device)
-        self.wrapped_tokenizer: WrappedPreTrainedTokenizer = create_tokenizer(
-            pretrained_model_name_or_path, **hg_kwargs
-        )
+        wrapped_tokenizer = create_tokenizer(self.model_path, **self.hg_kwargs)
+        return model, wrapped_tokenizer
 
     def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
         assert self.model_path == raw_request.model
+        if not self.model or not self.wrapped_tokenizer:
+            self.model, self.wrapped_tokenizer = self._load_model()
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
                 raw_request.prompt, return_tensors="pt", return_token_type_ids=False
