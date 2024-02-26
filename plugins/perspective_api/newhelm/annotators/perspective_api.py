@@ -53,7 +53,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         self,
         desired_attributes: List[str],
         languages: Optional[List[str]] = None,
-        num_retries: int = 5,
+        num_retries: int = 6,
     ):
         assert desired_attributes, "Must specify at least one desired attribute"
         assert len(desired_attributes) == len(
@@ -182,10 +182,11 @@ def _batch_execute_requests(
 
     # Keep track of what requests have not yet successfully gotten a response
     needs_call = list(range(len(requests)))
+    retriable_errors: List[HttpError] = []
     for retry_count in range(num_retries + 1):
         if retry_count > 0:
             # Perform exponential backoff
-            sleep_amount = rng.random() * 2**retry_count
+            sleep_amount = rng.uniform(1, 2) * 2**retry_count
             logging.info("Performing exponential backoff. Sleeping:", sleep_amount)
             time.sleep(sleep_amount)
 
@@ -203,11 +204,13 @@ def _batch_execute_requests(
         # Figure out which requests need to be tried again.
         next_round_needs_call: List[int] = []
         fatal_errors: List[HttpError] = []
+        retriable_errors = []
         for i in needs_call:
             error = errors[i]
             if error is not None:
                 if _is_retriable(error):
                     next_round_needs_call.append(i)
+                    retriable_errors.append(error)
                 else:
                     fatal_errors.append(error)
         if fatal_errors:
@@ -216,13 +219,21 @@ def _batch_execute_requests(
         if not next_round_needs_call:
             break
         needs_call = next_round_needs_call
+    if retriable_errors:
+        # We exhausted our retries, so raise the first as an example.
+        raise retriable_errors[0]
     return responses
 
 
 def _is_retriable(error: HttpError) -> bool:
     """Check if this error can be retried."""
     # Retry any 5XX status.
-    return 500 <= error.status_code < 600
+    if 500 <= error.status_code < 600:
+        return True
+    # 429 is "Too Many Requests" and for PerspectiveAPI means "RATE_LIMIT_EXCEEDED"
+    if error.status_code == 429:
+        return True
+    return False
 
 
 if __name__ == "__main__":
