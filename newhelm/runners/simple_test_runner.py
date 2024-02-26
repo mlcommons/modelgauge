@@ -1,6 +1,7 @@
 import os
 import random
 from typing import Dict, List, Optional
+from pydantic import BaseModel
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
@@ -11,7 +12,6 @@ from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
-    PromptInteractionList,
     TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
@@ -146,6 +146,12 @@ def _collect_sut_responses(
     return item_interactions
 
 
+class AnnotateTestItemRequest(BaseModel):
+    """Wrapper to make annotate_test_item's request cacheable."""
+
+    interactions: List[PromptInteraction]
+
+
 def _collect_annotations(
     key: str,
     annotator: BaseAnnotator,
@@ -157,11 +163,11 @@ def _collect_annotations(
     for interactions_for_item in tqdm(item_interactions, desc=desc):
         try:
             if cache is not None:
-                request = PromptInteractionList(
+                request = AnnotateTestItemRequest(
                     interactions=interactions_for_item.interactions
                 )
 
-                def _do_annotation(interaction_list: PromptInteractionList):
+                def _do_annotation(interaction_list: AnnotateTestItemRequest):
                     return annotator.annotate_test_item(interaction_list.interactions)
 
                 annotation = cache.get_or_call(request, _do_annotation)
