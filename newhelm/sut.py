@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import record_init
+from newhelm.secrets import SecretValues, SecretsMixin
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")
@@ -22,7 +23,7 @@ class SUTResponse(BaseModel):
     completions: List[SUTCompletion]
 
 
-class SUT(ABC):
+class SUT(ABC, SecretsMixin):
     """Base class for all SUTs. There is no guaranteed interface between SUTs, so no methods here."""
 
     @record_init
@@ -39,6 +40,10 @@ class SUT(ABC):
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
+    @abstractmethod
+    def load(self, secrets: SecretValues) -> None:
+        pass
+        
     @abstractmethod
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
         pass
