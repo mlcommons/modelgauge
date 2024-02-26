@@ -1,8 +1,9 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
+from newhelm.secrets import SecretValues, UseSecret
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI
@@ -19,11 +20,6 @@ _ROLE_MAP = {
     ChatRole.user: _USER_ROLE,
     ChatRole.sut: _ASSISTANT_ROLE,
 }
-
-SECRETS.register("openai", "api_key", "See https://platform.openai.com/api-keys")
-SECRETS.register(
-    "openai", "org_id", "See https://platform.openai.com/account/organization"
-)
 
 
 class OpenAIChatMessage(BaseModel):
@@ -67,10 +63,26 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         self.model = model
         self.client: Optional[OpenAI] = None
 
-    def _load_client(self) -> OpenAI:
-        return OpenAI(
-            api_key=SECRETS.get_required("openai", "api_key"),
-            organization=SECRETS.get_optional("openai", "org_id"),
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return [
+            UseSecret(
+                scope="openai",
+                key="api_key",
+                required=True,
+                instructions="See https://platform.openai.com/api-keys",
+            ),
+            UseSecret(
+                scope="openai",
+                key="org_id",
+                required=False,
+                instructions="See https://platform.openai.com/account/organization",
+            ),
+        ]
+
+    def load_client(self, secrets: SecretValues):
+        self.client = OpenAI(
+            api_key=secrets.get_required("openai", "api_key"),
+            organization=secrets.get_optional("openai", "org_id"),
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
@@ -101,9 +113,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         )
 
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
-        if self.client is None:
-            # Handle lazy init.
-            self.client = self._load_client()
+        assert self.client is not None, "Must call load() before evaluate()"
         request_dict = request.model_dump(exclude_none=True)
         return self.client.chat.completions.create(**request_dict)
 

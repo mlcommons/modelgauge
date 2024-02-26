@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Sequence
 from pydantic import BaseModel, Field
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -6,14 +6,13 @@ from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
+from newhelm.secrets import SecretValues, UseSecret
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 from newhelm.sut_registry import SUTS
 
-SECRETS.register(
-    "together", "api_key", "See https://api.together.xyz/settings/api-keys"
-)
+_API_KEY_SECRET = UseSecret(scope="together", key="api_key", instructions="See https://api.together.xyz/settings/api-keys", required=True)
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -64,6 +63,13 @@ class TogetherCompletionsSUT(
     @record_init
     def __init__(self, model):
         self.model = model
+        self.api_key: Optional[str] = None
+
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return [_API_KEY_SECRET]
+
+    def load(self, secrets: SecretValues) -> None:
+        self.api_key = secrets.get_required("together", "api_key")
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
         return self._translate_request(prompt.text, prompt.options)
@@ -90,9 +96,9 @@ class TogetherCompletionsSUT(
     def evaluate(
         self, request: TogetherCompletionsRequest
     ) -> TogetherCompletionsResponse:
-        api_key = SECRETS.get_required("together", "api_key")
+        assert self.api_key is not None
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         session = requests.Session()
@@ -162,6 +168,13 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     @record_init
     def __init__(self, model):
         self.model = model
+        self.api_key: Optional[str] = None
+
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return [_API_KEY_SECRET]
+
+    def load(self, secrets: SecretValues) -> None:
+        self.api_key = secrets.get_required("together", "api_key")
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
         return self._translate_request(
@@ -195,9 +208,9 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         )
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
-        api_key = SECRETS.get_required("together", "api_key")
+        assert self.api_key is not None
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = requests.post(self._URL, headers=headers, json=as_json)
@@ -273,6 +286,13 @@ class TogetherInferenceSUT(
     @record_init
     def __init__(self, model):
         self.model = model
+        self.api_key: Optional[str] = None
+
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return [_API_KEY_SECRET]
+
+    def load(self, secrets: SecretValues) -> None:
+        self.api_key = secrets.get_required("together", "api_key")
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
         return self._translate_request(prompt.text, prompt.options)
@@ -297,9 +317,9 @@ class TogetherInferenceSUT(
         )
 
     def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:
-        api_key = SECRETS.get_required("together", "api_key")
+        assert self.api_key is not None
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = requests.post(self._URL, headers=headers, json=as_json)

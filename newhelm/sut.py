@@ -40,8 +40,8 @@ class SUT(ABC, SecretsMixin):
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
-    @abstractmethod
     def load(self, secrets: SecretValues) -> None:
+        # If you don't use secrets, you don't need to override this method.
         pass
         
     @abstractmethod
