@@ -40,7 +40,6 @@ class MockSUT:
         return prompt.text
 
     def translate_response(self, request: str, response: str) -> SUTResponse:
-        assert response is not None
         return SUTResponse(completions=[SUTCompletion(text=response)])
 
 
@@ -67,8 +66,7 @@ def test_overridden_decoder_keys():
         "PR": "Partial Refusal",
     }
     responses = ["FC", "1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(decoder=LABEL_MAPPING)
-    annotator.model = MockSUT(responses)
+    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), decoder=LABEL_MAPPING)
 
     assert annotator.annotate_test_item(
         [_make_interaction(["first"])]
@@ -82,8 +80,7 @@ def test_overridden_decoder_keys():
 def test_chat_prompt_assertion():
     """Checks that annotating and interaction with a ChatPrompt and the default formatter results in an assertion error"""
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator()
-    annotator.model = MockSUT(responses)
+    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses))
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     interaction = PromptInteraction(
         prompt=PromptWithContext(prompt=prompt),
@@ -97,8 +94,10 @@ def test_chat_prompt_overridden_formatter():
     """Checks that overriding the formatter allows you to annotate ChatPrompt interactions."""
     custom_formatter = lambda sut_prompt, sut_completion: "formatted prompt"
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(formatter=custom_formatter)
-    annotator.model = MockSUT(responses)
+    annotator = OpenAIComplianceAnnotator(
+        sut=MockSUT(responses), formatter=custom_formatter
+    )
+    # annotator.model = MockSUT(responses)
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     interaction = PromptInteraction(
         prompt=PromptWithContext(prompt=prompt),
