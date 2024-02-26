@@ -11,18 +11,13 @@ from newhelm.single_turn_prompt_response import (
     PromptInteraction,
 )
 from newhelm.sut import SUTCompletion, SUTResponse
-from tests.test_dependency_helper import MockExternalData
+from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 
-def _create_mock_dependency_helper(tmpdir, prompts):
+def _fake_dependency_helper(tmpdir, rows):
     csv_header = ["category", "type", "prompt"]
-    csv_text = "\n".join([",".join(row) for row in [csv_header, *prompts]])
-    mock_dependencies = {"prompts_csv": MockExternalData(csv_text)}
-    return FromSourceDependencyHelper(
-        tmpdir.strpath,
-        mock_dependencies,
-        required_versions={},
-    )
+    csv_text = make_csv(csv_header, rows)
+    return FakeDependencyHelper(tmpdir, {"prompts_csv": csv_text})
 
 
 def _make_test_item(text, is_safe, prompt_type="") -> TestItem:
@@ -74,7 +69,7 @@ def test_make_test_items(tmpdir):
             "prompt 2",
         ],
     ]
-    dependency_helper = _create_mock_dependency_helper(tmpdir, text_prompts)
+    dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test = XSTest()
     test_items = test.make_test_items(dependency_helper)
 
