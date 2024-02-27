@@ -100,3 +100,18 @@ def test_get_optional_listed_required():
     )
     # This is allowed
     assert secrets.get_optional("some-scope", "some-key") == "some-value"
+
+
+def test_get_required_listed_required_and_optional():
+    as_optional = UseSecret(
+        scope=_REQUIRED_SECRET.scope,
+        key=_REQUIRED_SECRET.key,
+        required=False,
+        instructions="optional-instructions",
+    )
+    secrets = SecretValues(
+        used_secrets=[_REQUIRED_SECRET, as_optional],
+        known_secrets={"some-scope": {"some-key": "some-value"}},
+    )
+
+    assert secrets.get_required("some-scope", "some-key") == "some-value"

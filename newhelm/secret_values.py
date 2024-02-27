@@ -45,9 +45,15 @@ class SecretValues:
                 if secret.required:
                     missing_required.append(secret)
                 value = None
-            self.secrets[secret.scope][secret.key] = SecretValues.Stored(
-                value=value, declared_as=secret
-            )
+            to_store = SecretValues.Stored(value=value, declared_as=secret)
+            try:
+                existing = self.secrets[secret.scope][secret.key]
+                if existing.declared_as.required and not to_store.declared_as.required:
+                    # Keep the required version, otherwise the last version.
+                    to_store = existing
+            except KeyError:
+                pass
+            self.secrets[secret.scope][secret.key] = to_store
         if missing_required:
             raise MissingSecretValue(missing_required, known_secrets)
 
