@@ -179,13 +179,14 @@ if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.config import load_secrets_from_config
-    from newhelm.secrets_registry import SECRETS
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    raw_secrets = load_secrets_from_config()
     text = sys.argv[1]
     annotator = LlamaGuardAnnotator()
+    secrets = SecretValues(annotator.get_used_secrets(), raw_secrets)
+    annotator.load(secrets)
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(

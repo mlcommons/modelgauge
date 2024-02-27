@@ -5,7 +5,6 @@ import tomli
 from importlib import resources
 from newhelm import config_templates
 from newhelm.secret_values import RawSecrets
-from newhelm.secrets_registry import SECRETS, SecretsRegistry
 
 
 DEFAULT_CONFIG_DIR = "config"

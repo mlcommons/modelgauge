@@ -7,7 +7,6 @@ from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
 from newhelm.secret_values import SecretValues, UseSecret
-from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 from newhelm.sut_registry import SUTS

@@ -10,7 +10,6 @@ from pydantic import BaseModel  # type: ignore[import-untyped]
 
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.secret_values import SecretValues, UseSecret
-from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion
 
@@ -248,8 +247,10 @@ if __name__ == "__main__":
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
-    load_secrets_from_config()
+    raw_secrets = load_secrets_from_config()
     annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    secrets = SecretValues(annotator.get_used_secrets(), raw_secrets)
+    annotator.load(secrets)
     interactions: List[PromptInteraction] = [
         PromptInteraction(
             prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),

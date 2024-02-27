@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Optional
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.secret_values import SecretValues
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -101,9 +102,12 @@ if __name__ == "__main__":
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    raw_secrets = load_secrets_from_config()
+
     text = sys.argv[1]
     annotator = OpenAIComplianceAnnotator()
+    secrets = SecretValues(annotator.get_used_secrets(), raw_secrets)
+    annotator.load(secrets)
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(

@@ -6,10 +6,11 @@ from newhelm.command_line import (
     display_list_item,
     newhelm_cli,
 )
+from newhelm.config import load_secrets_from_config
 
 from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
-from newhelm.secrets_registry import SECRETS
+from newhelm.secret_values import SecretValues
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
@@ -50,11 +51,12 @@ def list_tests() -> None:
 @click.option("--prompt", help="The full text to send to the SUT.")
 def run_sut(sut: str, prompt: str):
     """Send a prompt from the command line to a SUT."""
-
+    raw_secrets = load_secrets_from_config()
     sut_obj = SUTS.make_instance(sut)
-
+    secrets = SecretValues(sut_obj.get_used_secrets(), raw_secrets)
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
+    sut_obj.load(secrets)
 
     prompt_obj = TextPrompt(text=prompt)
     request = sut_obj.translate_text_prompt(prompt_obj)
