@@ -10,6 +10,7 @@ from pydantic import BaseModel  # type: ignore[import-untyped]
 from newhelm.annotation import Annotation
 
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.secrets import SecretValues, UseSecret
 from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion
@@ -39,13 +40,6 @@ class PerspectiveAPIAnnotation(BaseModel):
     """Each element in the list corresponds to a Prompt in the TestItem."""
 
 
-SECRETS.register(
-    "perspective_api",
-    "api_key",
-    "See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api",
-)
-
-
 class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
@@ -67,23 +61,32 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         # httplib2 is not thread-safe. Acquire this lock when sending requests to PerspectiveAPI
         self._client_lock: threading.Lock = threading.Lock()
 
-    def _load_client(self) -> discovery.Resource:
-        return discovery.build(
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return [
+            UseSecret(
+                scope="perspective_api",
+                key="api_key",
+                required=True,
+                instructions="See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api",
+            )
+        ]
+
+    def load(self, secrets: SecretValues) -> discovery.Resource:
+        client = discovery.build(
             "commentanalyzer",
             "v1alpha1",
-            developerKey=SECRETS.get_required("perspective_api", "api_key"),
+            developerKey=secrets.get_required("perspective_api", "api_key"),
             discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
             static_discovery=False,
         )
 
+        with self._client_lock:
+            self.client = client
+
     def annotate_test_item(
         self, interactions: List[PromptInteraction]
     ) -> PerspectiveAPIAnnotation:
-        with self._client_lock:
-            # Handle lazy init.
-            if self.client is None:
-                self.client = self._load_client()
-
+        assert self.client is not None, "Must call load() before annotate_test_item"
         requests = []
         empty_completion_indexes = set()
         request_index = 0

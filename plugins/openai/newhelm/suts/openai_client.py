@@ -79,7 +79,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             ),
         ]
 
-    def load_client(self, secrets: SecretValues):
+    def load(self, secrets: SecretValues):
         self.client = OpenAI(
             api_key=secrets.get_required("openai", "api_key"),
             organization=secrets.get_optional("openai", "org_id"),

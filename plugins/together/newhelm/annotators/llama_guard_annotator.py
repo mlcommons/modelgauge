@@ -1,5 +1,5 @@
 from string import Template
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Sequence
 from newhelm.suts.together_client import (
     TogetherCompletionsRequest,
     TogetherCompletionsResponse,
@@ -9,6 +9,7 @@ from newhelm.suts.together_client import (
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.secrets import SecretValues, UseSecret
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
@@ -40,6 +41,12 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
         self.model = TogetherCompletionsSUT(_MODEL_NAME)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
+
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return self.model.get_used_secrets()
+
+    def load(self, secrets: SecretValues) -> None:
+        self.model.load(secrets)
 
     def annotate_test_item(
         self, interactions: List[PromptInteraction]
