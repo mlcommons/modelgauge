@@ -20,17 +20,6 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.sut import PromptResponseSUT
 
 
-def assert_secrets_available(
-    test: BasePromptResponseTest,
-    sut: PromptResponseSUT,
-    raw_secrets: RawSecrets,
-):
-    used_secrets = list(sut.get_used_secrets())
-    for annotator in test.get_annotators().values():
-        used_secrets.extend(annotator.get_used_secrets())
-    SecretValues(used_secrets, raw_secrets)
-
-
 def run_prompt_response_test(
     test_name: str,
     test: BasePromptResponseTest,
@@ -47,7 +36,7 @@ def run_prompt_response_test(
     test_initialization = get_initialization_record(test)
     sut_initialization = get_initialization_record(sut)
     # Ensure we have all the required secrets
-    assert_secrets_available(test, sut, raw_secrets)
+    _assert_secrets_available(test, sut, raw_secrets)
     test_data_path = os.path.join(data_dir, test.get_metadata().name)
 
     # This runner just records versions, it doesn't specify a required version.
@@ -131,6 +120,18 @@ def run_prompt_response_test(
         test_item_records=test_item_records,
         results=results,
     )
+
+
+def _assert_secrets_available(
+    test: BasePromptResponseTest,
+    sut: PromptResponseSUT,
+    raw_secrets: RawSecrets,
+):
+    used_secrets = list(sut.get_used_secrets())
+    for annotator in test.get_annotators().values():
+        used_secrets.extend(annotator.get_used_secrets())
+    # This will raise an exception if any required secrets are missing.
+    SecretValues(used_secrets, raw_secrets)
 
 
 def _collect_sut_responses(

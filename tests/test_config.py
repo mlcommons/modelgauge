@@ -38,3 +38,15 @@ def test_load_secrets_from_config_no_file(tmpdir):
 
     with pytest.raises(FileNotFoundError):
         load_secrets_from_config(secrets_file)
+
+
+def test_load_secrets_from_config_bad_format(tmpdir):
+    config_dir = tmpdir.join("config")
+    os.makedirs(config_dir)
+    secrets_file = config_dir.join(DEFAULT_SECRETS)
+    with open(secrets_file, "w") as f:
+        f.write("""not_scoped = "some-value"\n""")
+    with pytest.raises(AssertionError) as err_info:
+        load_secrets_from_config(secrets_file)
+    err_text = str(err_info.value)
+    assert err_text == "All keys should be in a [scope]."

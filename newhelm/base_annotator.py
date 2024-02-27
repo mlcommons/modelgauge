@@ -21,4 +21,9 @@ class BaseAnnotator(ABC, Generic[AnnotationType], SecretsMixin):
         pass
 
     def load(self, secrets: SecretValues) -> None:
+        """Method for performing expensive initialization.
+
+        If your annotator needs secret keys or to perform expensive
+        initialization, override this method.
+        """
         pass
