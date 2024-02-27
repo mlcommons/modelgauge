@@ -66,7 +66,8 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
                 scope="perspective_api",
                 key="api_key",
                 required=True,
-                instructions="See https://crfm-helm.readthedocs.io/en/latest/benchmark/#perspective-api",
+                instructions="First request access https://developers.perspectiveapi.com/s/docs-get-started?language=en_US"
+                " and then you can generate a key with https://developers.perspectiveapi.com/s/docs-enable-the-api?language=en_US",
             )
         ]
 
