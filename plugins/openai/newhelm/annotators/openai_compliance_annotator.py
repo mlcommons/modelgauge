@@ -1,9 +1,9 @@
 import re
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Sequence
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.secret_values import SecretValues
+from newhelm.secret_values import SecretValues, UseSecret
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -35,6 +35,12 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
         self.model = OpenAIChat(_MODEL_NAME) if sut is None else sut
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
+
+    def get_used_secrets(self) -> Sequence[UseSecret]:
+        return self.model.get_used_secrets()
+
+    def load(self, secrets: SecretValues) -> None:
+        return self.model.load(secrets)
 
     def annotate_test_item(
         self, interactions: List[PromptInteraction]
