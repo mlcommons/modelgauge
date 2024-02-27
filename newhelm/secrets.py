@@ -10,46 +10,8 @@ class UseSecret(BaseModel):
     required: bool
 
 
-# class SecretsInstructionRegistry:
-#     """Store instructions for how to get secrets like api_keys."""
+RawSecrets = Mapping[str, Mapping[str, str]]
 
-#     def __init__(self) -> None:
-#         self._registered: Dict[str, Dict[str, str]] = {}
-#         self.lock = threading.Lock()
-
-#     def register(self, scope: str, key: str, instructions: str) -> None:
-#         """Record the instructions for obtaining the key."""
-#         with self.lock:
-#             if scope not in self._registered:
-#                 self._registered[scope] = {}
-#             previous = self._registered[scope].get(key)
-#             if previous is not None:
-#                 assert previous == instructions, (
-#                     f"The key {key} in {scope} has two different instructions: "
-#                     f"{previous} vs {instructions}"
-#                 )
-#             else:
-#                 self._registered[scope][key] = instructions
-    
-#     def assert_registered(self, scope, key) -> None:
-#         error_message = (
-#             f"Before you can access the secret `{key}` in `{scope}`, you have to document "
-#             "how to obtain the value by calling `register(scope, key, instructions)`."
-#         )
-#         if not self._registered:
-#             raise AssertionError(error_message)
-#         elif scope not in self._registered:
-#             error_message += (
-#                 f" Did you mean one of these scopes? {set(self._registered.keys())}"
-#             )
-#             raise AssertionError(error_message)
-#         elif key not in self._registered[scope]:
-#             error_message += f" Did you mean one of these keys in {scope}? {self._registered[scope].keys()}"
-#             raise AssertionError(error_message)
-
-#     def get_instructions(self, scope, key) -> str:
-#         self.assert_registered(scope, key)
-#         return self._registered[scope][key]
 
 class SecretValues:
     class Stored(BaseModel):
@@ -57,7 +19,9 @@ class SecretValues:
         required: bool
 
     def __init__(
-        self, used_secrets: Sequence[UseSecret], value_lookup: Mapping[str, Mapping[str, str]]
+        self,
+        used_secrets: Sequence[UseSecret],
+        value_lookup: RawSecrets,
     ):
         self.secrets: Dict[str, Dict[str, SecretValues.Stored]] = {}
         missing_required = []
@@ -86,9 +50,7 @@ class SecretValues:
     def get_optional(self, scope, key) -> Optional[str]:
         return self._lookup(scope, key).value
 
-
     def _lookup(self, scope, key) -> "SecretValues.Stored":
-        self.registry.assert_registered(scope, key)
         # TODO make this be specific about the failures
         return self.secrets[scope][key]
 

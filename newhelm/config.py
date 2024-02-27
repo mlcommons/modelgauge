@@ -4,6 +4,7 @@ from typing import Optional
 import tomli
 from importlib import resources
 from newhelm import config_templates
+from newhelm.secrets import RawSecrets
 from newhelm.secrets_registry import SECRETS, SecretsRegistry
 
 
@@ -25,13 +26,7 @@ def write_default_config(dir: str = DEFAULT_CONFIG_DIR):
         shutil.copyfile(source_file, output_file)
 
 
-def load_secrets_from_config(
-    path: str = SECRETS_PATH, registry: SecretsRegistry = SECRETS
-) -> None:
+def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
     """If the secrets file exists, use it to call SECRETS.set_values."""
-    if not os.path.exists(path):
-        # Nothing to load
-        return
     with open(path, "rb") as f:
-        values = tomli.load(f)
-    registry.set_values(values)
+        return tomli.load(f)

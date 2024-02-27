@@ -12,7 +12,12 @@ from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 from newhelm.sut_registry import SUTS
 
-_API_KEY_SECRET = UseSecret(scope="together", key="api_key", instructions="See https://api.together.xyz/settings/api-keys", required=True)
+_API_KEY_SECRET = UseSecret(
+    scope="together",
+    key="api_key",
+    instructions="See https://api.together.xyz/settings/api-keys",
+    required=True,
+)
 
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
@@ -61,7 +66,7 @@ class TogetherCompletionsSUT(
     _URL = "https://api.together.xyz/v1/completions"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model: str):
         self.model = model
         self.api_key: Optional[str] = None
 
@@ -166,7 +171,7 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     _URL = "https://api.together.xyz/v1/chat/completions"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model: str):
         self.model = model
         self.api_key: Optional[str] = None
 
@@ -284,7 +289,7 @@ class TogetherInferenceSUT(
     _URL = "https://api.together.xyz/inference"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model: str):
         self.model = model
         self.api_key: Optional[str] = None
 

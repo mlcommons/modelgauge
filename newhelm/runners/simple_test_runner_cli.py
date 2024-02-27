@@ -6,6 +6,7 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
+from newhelm.config import load_secrets_from_config
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
@@ -34,6 +35,7 @@ def run_test(
     no_caching: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
+    raw_secrets = load_secrets_from_config()
     test_obj = TESTS.make_instance(test)
     sut_obj = SUTS.make_instance(sut)
     # Current this only knows how to do prompt response, so assert that is what we have.
@@ -46,6 +48,7 @@ def run_test(
         sut,
         sut_obj,
         data_dir,
+        raw_secrets,
         max_test_items,
         use_caching=not no_caching,
     )

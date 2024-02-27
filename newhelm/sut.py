@@ -43,7 +43,7 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     def load(self, secrets: SecretValues) -> None:
         # If you don't use secrets, you don't need to override this method.
         pass
-        
+
     @abstractmethod
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
         pass
