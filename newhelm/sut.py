@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import record_init
-from newhelm.secrets import SecretValues, SecretsMixin
+from newhelm.secret_values import SecretValues, SecretsMixin
 
 RequestType = TypeVar("RequestType")
 ResponseType = TypeVar("ResponseType")

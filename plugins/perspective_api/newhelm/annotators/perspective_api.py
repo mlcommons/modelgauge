@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.secrets import SecretValues, UseSecret
+from newhelm.secret_values import SecretValues, UseSecret
 from newhelm.secrets_registry import SECRETS
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Generic, List, TypeVar
 
 from pydantic import BaseModel
-from newhelm.secrets import SecretValues, SecretsMixin
+from newhelm.secret_values import SecretValues, SecretsMixin
 
 from newhelm.single_turn_prompt_response import PromptInteraction
 

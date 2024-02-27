@@ -4,7 +4,7 @@ from typing import Optional
 import tomli
 from importlib import resources
 from newhelm import config_templates
-from newhelm.secrets import RawSecrets
+from newhelm.secret_values import RawSecrets
 from newhelm.secrets_registry import SECRETS, SecretsRegistry
 
 

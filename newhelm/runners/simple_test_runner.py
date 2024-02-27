@@ -9,7 +9,7 @@ from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.record_init import get_initialization_record
 from newhelm.records import TestItemRecord, TestRecord
-from newhelm.secrets import RawSecrets, SecretValues
+from newhelm.secret_values import RawSecrets, SecretValues
 from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,

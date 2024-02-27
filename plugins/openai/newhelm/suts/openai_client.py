@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Sequence, Union
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
-from newhelm.secrets import SecretValues, UseSecret
+from newhelm.secret_values import SecretValues, UseSecret
 from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI

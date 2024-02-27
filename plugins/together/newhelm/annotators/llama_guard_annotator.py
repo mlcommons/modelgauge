@@ -9,7 +9,7 @@ from newhelm.suts.together_client import (
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.secrets import SecretValues, UseSecret
+from newhelm.secret_values import SecretValues, UseSecret
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
