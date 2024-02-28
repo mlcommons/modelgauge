@@ -35,7 +35,7 @@ Example usage:
 
 
 def create_tokenizer(
-    pretrained_model_name_or_path: str, **kwargs
+    pretrained_model_name_or_path: str, hugging_face_token: Optional[str], **kwargs
 ) -> WrappedPreTrainedTokenizer:
     """Loads tokenizer using files from disk if they exist. Otherwise, downloads from HuggingFace."""
     # To avoid deadlocks when using HuggingFace tokenizers with multiple processes
@@ -57,6 +57,7 @@ def create_tokenizer(
                 pretrained_model_name_or_path,
                 local_files_only=True,
                 use_fast=True,
+                token=hugging_face_token,
                 **kwargs,
             )
         )
@@ -66,6 +67,7 @@ def create_tokenizer(
                 pretrained_model_name_or_path,
                 local_files_only=False,
                 use_fast=True,
+                token=hugging_face_token,
                 **kwargs,
             )
         )
@@ -266,13 +268,16 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
 
     def _load_model(self) -> Tuple[Any, WrappedPreTrainedTokenizer]:
         hugging_face_token = SECRETS.get_optional(scope="hugging_face", key="token")
-        if hugging_face_token is not None:
-            os.environ["HF_TOKEN"] = hugging_face_token
         # WARNING this may fail if your GPU does not have enough memory
         model = AutoModelForCausalLM.from_pretrained(
-            self.model_path, trust_remote_code=True, **self.hg_kwargs
+            self.model_path,
+            trust_remote_code=True,
+            token=hugging_face_token,
+            **self.hg_kwargs,
         ).to(self.device)
-        wrapped_tokenizer = create_tokenizer(self.model_path, **self.hg_kwargs)
+        wrapped_tokenizer = create_tokenizer(
+            self.model_path, token=hugging_face_token, **self.hg_kwargs
+        )
         return model, wrapped_tokenizer
 
     def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
