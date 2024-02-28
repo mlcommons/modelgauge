@@ -7,7 +7,7 @@ from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteriaList,
 )
 from transformers import AutoTokenizer, PreTrainedTokenizerBase  # type: ignore
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 import os
 from typing import Any, Dict, Optional
 
@@ -16,7 +16,7 @@ from newhelm.general import value_or_default
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
-from newhelm.secrets_registry import SECRETS
+from newhelm.secret_values import SecretValues, UseSecret
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
 
@@ -244,13 +244,6 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     return processed_kwargs
 
 
-SECRETS.register(
-    "hugging_face",
-    "token",
-    "You can create tokens at https://huggingface.co/settings/tokens.",
-)
-
-
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
@@ -266,24 +259,33 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         self.model: Optional[Any] = None
         self.wrapped_tokenizer: Optional[WrappedPreTrainedTokenizer] = None
 
-    def _load_model(self) -> Tuple[Any, WrappedPreTrainedTokenizer]:
-        hugging_face_token = SECRETS.get_optional(scope="hugging_face", key="token")
+    def get_used_secrets(self):
+        return [
+            UseSecret(
+                scope="hugging_face",
+                key="token",
+                required=False,
+                instructions="You can create tokens at https://huggingface.co/settings/tokens.",
+            )
+        ]
+
+    def load(self, secrets: SecretValues):
+        hugging_face_token = secrets.get_optional(scope="hugging_face", key="token")
         # WARNING this may fail if your GPU does not have enough memory
-        model = AutoModelForCausalLM.from_pretrained(
+        self.model = AutoModelForCausalLM.from_pretrained(
             self.model_path,
             trust_remote_code=True,
             token=hugging_face_token,
             **self.hg_kwargs,
         ).to(self.device)
-        wrapped_tokenizer = create_tokenizer(
-            self.model_path, token=hugging_face_token, **self.hg_kwargs
+        self.wrapped_tokenizer = create_tokenizer(
+            self.model_path, hugging_face_token, **self.hg_kwargs
         )
-        return model, wrapped_tokenizer
 
     def evaluate(self, raw_request: HuggingFaceRequest) -> HuggingFaceResponse:
         assert self.model_path == raw_request.model
-        if not self.model or not self.wrapped_tokenizer:
-            self.model, self.wrapped_tokenizer = self._load_model()
+        assert self.model is not None, "Must call load() before evaluate"
+        assert self.wrapped_tokenizer is not None, "Must call load() before evaluate"
         with self.wrapped_tokenizer as tokenizer:
             encoded_input = tokenizer(
                 raw_request.prompt, return_tensors="pt", return_token_type_ids=False
