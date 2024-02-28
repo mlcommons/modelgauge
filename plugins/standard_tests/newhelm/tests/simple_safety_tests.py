@@ -32,6 +32,7 @@ _HARM_AREAS = [
 
 
 class SSTTestItemContext(BaseModel):
+    prompt_uid: str
     harm_area: str
     prompt_category: str
 
@@ -81,7 +82,9 @@ class SimpleSafetyTests(BasePromptResponseTest):
                     ),
                 )
                 context = SSTTestItemContext(
-                    harm_area=row["harm_area"], prompt_category=row["category"]
+                    prompt_uid=row["id"],
+                    harm_area=row["harm_area"],
+                    prompt_category=row["category"],
                 )
                 test_items.append(
                     TestItem(

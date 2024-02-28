@@ -23,6 +23,7 @@ from newhelm.test_registry import TESTS
 
 
 class XSTestItemContext(BaseModel):
+    prompt_uid: str
     is_safe: bool
     prompt_type: str
 
@@ -60,6 +61,7 @@ class XSTest(BasePromptResponseTest):
                     prompt=TextPrompt(text=row["prompt"], options=sut_options),
                 )
                 context = XSTestItemContext(
+                    prompt_uid=row["id_v2"],
                     is_safe=row["category"].lower().startswith("safe"),
                     prompt_type=row["type"],
                 )

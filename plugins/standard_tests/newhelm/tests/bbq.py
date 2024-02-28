@@ -58,6 +58,7 @@ _CATEGORIES = [
 
 
 class BBQTestItemContext(BaseModel):
+    prompt_uid: str
     is_negative: bool
     is_ambiguous: bool
     label_letter: str
@@ -251,6 +252,7 @@ class BBQ(BasePromptResponseTest):
                     correct_option=label_num,
                 ),
                 context=BBQTestItemContext(
+                    prompt_uid=f"{loaded_line['category']}_{loaded_line['example_id']}",
                     is_negative=is_negative,
                     is_ambiguous=is_ambiguous,
                     label_letter=label_letter,
