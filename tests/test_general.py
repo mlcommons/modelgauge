@@ -42,18 +42,18 @@ def test_datetime_round_trip():
     assert original == returned
 
 
-@patch("newhelm.general.current_local_datetime")
-def test_datetime_serialized(mock_date):
-    mock_date.return_value = datetime.datetime(
-        2024,
-        2,
-        28,
-        10,
-        12,
-        34,
-        1111,
+def test_datetime_serialized():
+    desired = datetime.datetime(
+        2017,
+        8,
+        21,
+        11,
+        47,
+        0,
+        123456,
         tzinfo=datetime.timezone(datetime.timedelta(days=-1, seconds=61200), "MST"),
     )
-    current_local_datetime()
-    assert mock_date.call_count == 1
-    # assert original.model_dump_json() == """{"timestamp":"2024-02-28T10:22:15.380163-07:00"}"""
+    original = PydanticWithDateTime(timestamp=desired)
+    assert original.model_dump_json() == (
+        """{"timestamp":"2017-08-21T11:47:00.123456-07:00"}"""
+    )
