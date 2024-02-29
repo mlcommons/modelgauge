@@ -8,6 +8,8 @@ from newhelm.command_line import (
     SUT_OPTION,
     newhelm_cli,
 )
+from newhelm.config import load_secrets_from_config
+from newhelm.ephemeral_secrets import EphemeralSecrets
 from newhelm.runners.simple_test_runner import (
     run_prompt_response_test,
 )
@@ -41,8 +43,10 @@ def run_test(
     no_caching: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
-    test_obj = TESTS.make_instance(test)
-    sut_obj = SUTS.make_instance(sut)
+    secrets = EphemeralSecrets(load_secrets_from_config())
+    test_obj = TESTS.make_instance(test, secrets=secrets)
+    sut_obj = SUTS.make_instance(sut, secrets=secrets)
+    secrets.invalidate()
     # Current this only knows how to do prompt response, so assert that is what we have.
     assert isinstance(sut_obj, PromptResponseSUT)
     assert isinstance(test_obj, BasePromptResponseTest)

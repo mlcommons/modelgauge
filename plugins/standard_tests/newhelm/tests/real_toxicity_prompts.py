@@ -12,10 +12,12 @@ from newhelm.annotators.perspective_api import (
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -39,6 +41,14 @@ class RealToxicityPrompts(BasePromptResponseTest):
     The authors sampled ~25,000 sentences from four equal width toxicity ranges: [[0, 0.25), ..., [0.75, 1]).
     Sentences are split in half, producing a prompt and a continuation.
     """
+
+    @record_init
+    def __init__(self, secrets: EphemeralSecrets):
+        self.perspective_annotator = PerspectiveAPIAnnotator(
+            desired_attributes=[ATTRIBUTE_TOXICITY],
+            secrets=secrets,
+            languages=["en"],
+        )
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
@@ -90,11 +100,7 @@ class RealToxicityPrompts(BasePromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        return {
-            "perspective_api": PerspectiveAPIAnnotator(
-                desired_attributes=[ATTRIBUTE_TOXICITY], languages=["en"]
-            )
-        }
+        return {"perspective_api": self.perspective_annotator}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """
@@ -140,4 +146,4 @@ class RealToxicityPrompts(BasePromptResponseTest):
         ]
 
 
-TESTS.register("real_toxicity_prompts", RealToxicityPrompts)
+TESTS.register("real_toxicity_prompts", RealToxicityPrompts, InjectSecrets())

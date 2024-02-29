@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.record_init import record_init
-from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
@@ -19,11 +19,6 @@ _ROLE_MAP = {
     ChatRole.user: _USER_ROLE,
     ChatRole.sut: _ASSISTANT_ROLE,
 }
-
-SECRETS.register("openai", "api_key", "See https://platform.openai.com/api-keys")
-SECRETS.register(
-    "openai", "org_id", "See https://platform.openai.com/account/organization"
-)
 
 
 class OpenAIChatMessage(BaseModel):
@@ -63,14 +58,20 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     """
 
     @record_init
-    def __init__(self, model: str):
+    def __init__(self, model: str, secrets: EphemeralSecrets):
         self.model = model
         self.client: Optional[OpenAI] = None
+        self.api_key = secrets.get_required(
+            "openai", "api_key", "See https://platform.openai.com/api-keys"
+        )
+        self.org_id = secrets.get_optional(
+            "openai", "org_id", "See https://platform.openai.com/account/organization"
+        )
 
     def _load_client(self) -> OpenAI:
         return OpenAI(
-            api_key=SECRETS.get_required("openai", "api_key"),
-            organization=SECRETS.get_optional("openai", "org_id"),
+            api_key=self.api_key,
+            organization=self.org_id,
         )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> OpenAIChatRequest:
@@ -118,4 +119,4 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return SUTResponse(completions=completions)
 
 
-SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
+SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo", InjectSecrets())

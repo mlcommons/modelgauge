@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 import threading
-from typing import Any, Dict, Generic, List, Tuple, Type, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar
+from newhelm.dependency_injection import create_obj
+
+from newhelm.ephemeral_secrets import EphemeralSecrets
 
 
 _T = TypeVar("_T")
@@ -16,8 +19,8 @@ class FactoryEntry(Generic[_T]):
         """Return a string representation of the entry."""
         return f"{self.cls.__name__}(args={self.args}, kwargs={self.kwargs})"
 
-    def make_instance(self) -> _T:
-        return self.cls(*self.args, **self.kwargs)  # type: ignore [call-arg]
+    def make_instance(self, secrets: Optional[EphemeralSecrets] = None) -> _T:
+        return create_obj(self.cls, self.args, self.kwargs, secrets=secrets)
 
 
 class InstanceFactory(Generic[_T]):
@@ -38,7 +41,7 @@ class InstanceFactory(Generic[_T]):
             )
             self._lookup[key] = FactoryEntry[_T](cls, args, kwargs)
 
-    def make_instance(self, key: str) -> _T:
+    def make_instance(self, key: str, secrets: Optional[EphemeralSecrets] = None) -> _T:
         """Create an instance using the  class and arguments passed to register, raise exception if missing."""
         with self.lock:
             entry: FactoryEntry
@@ -47,7 +50,7 @@ class InstanceFactory(Generic[_T]):
             except KeyError:
                 known_keys = list(self._lookup.keys())
                 raise KeyError(f"No registration for {key}. Known keys: {known_keys}")
-            return entry.make_instance()
+            return entry.make_instance(secrets=secrets)
 
     def items(self) -> List[Tuple[str, FactoryEntry[_T]]]:
         """List all items in the registry."""

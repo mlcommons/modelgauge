@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pytest
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.instance_factory import FactoryEntry, InstanceFactory
 
 
@@ -69,3 +70,22 @@ def test_lists_all_items():
 def test_factory_entry_str():
     entry = FactoryEntry(MockClass, args=("v1",), kwargs={"arg2": "v2"})
     assert str(entry) == "MockClass(args=('v1',), kwargs={'arg2': 'v2'})"
+
+
+class NeedsSecrets:
+    def __init__(self, arg1: str, arg2: EphemeralSecrets):
+        self.arg1 = arg1
+        self.secret = arg2.get_required("some-scope", "some-key", "some-instructions")
+
+
+def test_injection():
+    factory = InstanceFactory[NeedsSecrets]()
+    factory.register("k1", NeedsSecrets, "v1", InjectSecrets())
+    factory.register("k2", NeedsSecrets, "v2", arg2=InjectSecrets())
+    secrets = EphemeralSecrets({"some-scope": {"some-key": "some-value"}})
+    k1_obj = factory.make_instance("k1", secrets=secrets)
+    assert k1_obj.arg1 == "v1"
+    assert k1_obj.secret == "some-value"
+    k2_obj = factory.make_instance("k2", secrets=secrets)
+    assert k2_obj.arg1 == "v2"
+    assert k2_obj.secret == "some-value"

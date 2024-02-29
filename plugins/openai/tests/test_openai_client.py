@@ -3,12 +3,14 @@ from newhelm.suts.openai_client import (
     OpenAIChatMessage,
     OpenAIChatRequest,
 )
+from newhelm.ephemeral_secrets import EphemeralSecrets
 
 from newhelm.prompt import TextPrompt
 
 
 def test_openai_chat_translate_request():
-    client = OpenAIChat(model="some-model")
+    secrets = EphemeralSecrets({"openai": {"api_key": "some-key"}})
+    client = OpenAIChat(model="some-model", secrets=secrets)
     prompt = TextPrompt(text="some-text")
     request = client.translate_text_prompt(prompt)
     assert request == OpenAIChatRequest(

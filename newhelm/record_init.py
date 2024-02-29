@@ -1,7 +1,10 @@
 from functools import wraps
 import importlib
-from typing import Any, List, Mapping
+from typing import Any, List, Mapping, Optional
 from pydantic import BaseModel
+from newhelm.dependency_injection import create_obj, replace_args_with_injector
+
+from newhelm.ephemeral_secrets import EphemeralSecrets
 
 
 class InitializationRecord(BaseModel):
@@ -12,10 +15,10 @@ class InitializationRecord(BaseModel):
     args: List[Any]
     kwargs: Mapping[str, Any]
 
-    def recreate_object(self):
+    def recreate_object(self, secrets: Optional[EphemeralSecrets] = None):
         """Redoes the init call from this record."""
         cls = getattr(importlib.import_module(self.module), self.qual_name)
-        return cls(*self.args, **self.kwargs)
+        return create_obj(cls, self.args, self.kwargs, secrets=secrets)
 
 
 def record_init(init):
@@ -26,11 +29,14 @@ def record_init(init):
         self, real_args = args[0], args[1:]
         # We want the outer-most init to be recorded, so don't overwrite it.
         if not hasattr(self, "_initialization_record"):
+            # When using dependency injection, we don't want to record the injected
+            # dependency.
+            record_args, record_kwargs = replace_args_with_injector(real_args, kwargs)
             self._initialization_record = InitializationRecord(
                 module=self.__class__.__module__,
                 qual_name=self.__class__.__qualname__,
-                args=real_args,
-                kwargs=kwargs,
+                args=record_args,
+                kwargs=record_kwargs,
             )
         init(*args, **kwargs)
 

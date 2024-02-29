@@ -9,7 +9,7 @@ from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.secrets_registry import SECRETS
+from newhelm.ephemeral_secrets import EphemeralSecrets
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion
 
@@ -38,11 +38,9 @@ class PerspectiveAPIAnnotation(BaseModel):
     """Each element in the list corresponds to a Prompt in the TestItem."""
 
 
-SECRETS.register(
-    "perspective_api",
-    "api_key",
+_API_KEY_INSTRUCTIONS = (
     "First request access https://developers.perspectiveapi.com/s/docs-get-started?language=en_US"
-    " and then you can generate a key with https://developers.perspectiveapi.com/s/docs-enable-the-api?language=en_US",
+    " and then you can generate a key with https://developers.perspectiveapi.com/s/docs-enable-the-api?language=en_US"
 )
 
 
@@ -52,6 +50,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
     def __init__(
         self,
         desired_attributes: List[str],
+        secrets: EphemeralSecrets,
         languages: Optional[List[str]] = None,
         num_retries: int = 6,
     ):
@@ -64,6 +63,9 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         self.num_retries = num_retries
         self.rng = random.Random()  # Used for exponential backoff
         self.client: Optional[discovery.Resource] = None
+        self.api_key = secrets.get_required(
+            "perspective_api", "api_key", _API_KEY_INSTRUCTIONS
+        )
         # httplib2 is not thread-safe. Acquire this lock when sending requests to PerspectiveAPI
         self._client_lock: threading.Lock = threading.Lock()
 
@@ -71,7 +73,7 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         return discovery.build(
             "commentanalyzer",
             "v1alpha1",
-            developerKey=SECRETS.get_required("perspective_api", "api_key"),
+            developerKey=self.api_key,
             discoveryServiceUrl="https://commentanalyzer.googleapis.com/$discovery/rest?version=v1alpha1",
             static_discovery=False,
         )
@@ -245,8 +247,10 @@ if __name__ == "__main__":
 
     sut_text = sys.argv[1]
     print("Sending:", sut_text)
-    load_secrets_from_config()
-    annotator = PerspectiveAPIAnnotator([ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT])
+    secrets = EphemeralSecrets(load_secrets_from_config())
+    annotator = PerspectiveAPIAnnotator(
+        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], secrets=secrets
+    )
     interactions: List[PromptInteraction] = [
         PromptInteraction(
             prompt=PromptWithContext(prompt=TextPrompt(text="The prompt")),

@@ -12,6 +12,7 @@ from newhelm.prompt import TextPrompt
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 
 from newhelm.sut import SUTCompletion, SUTResponse
+from tests.fake_secrets import FakeSecrets
 
 Interaction = LlamaGuardAnnotation.Interaction
 Completion = LlamaGuardAnnotation.Completion
@@ -51,7 +52,7 @@ class MockTogetherSUT:
 def test_safe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("safe")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(FakeSecrets())
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -66,7 +67,7 @@ def test_safe():
 def test_unsafe():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(FakeSecrets())
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -87,7 +88,7 @@ def test_unsafe():
 def test_unsafe_multiple_categories():
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nO1,O2")]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(FakeSecrets())
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)
@@ -113,7 +114,7 @@ def test_custom_prompt_decoder():
     decoder = {"foo": "bar"}
     interactions = [_make_interaction(["first"])]
     responses = [_make_response("unsafe\nfoo")]
-    annotator = LlamaGuardAnnotator(prompt_formatter, decoder)
+    annotator = LlamaGuardAnnotator(FakeSecrets(), prompt_formatter, decoder)
     annotator.model = MockTogetherSUT(responses)
 
     result = annotator.annotate_test_item(interactions)

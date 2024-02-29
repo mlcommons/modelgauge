@@ -12,11 +12,11 @@ import os
 from typing import Any, Dict, Optional
 
 from newhelm.concurrency import ThreadSafeWrapper
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.general import value_or_default
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
-from newhelm.secrets_registry import SECRETS
 from newhelm.sut import SUTCompletion, PromptResponseSUT, SUTResponse
 from newhelm.sut_registry import SUTS
 
@@ -244,39 +244,38 @@ def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
     return processed_kwargs
 
 
-SECRETS.register(
-    "hugging_face",
-    "token",
-    "You can create tokens at https://huggingface.co/settings/tokens.",
-)
-
-
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
     @record_init
-    def __init__(self, pretrained_model_name_or_path: str, **kwargs):
+    def __init__(
+        self, pretrained_model_name_or_path: str, secrets: EphemeralSecrets, **kwargs
+    ):
         if torch.cuda.is_available():
             self.device: str = "cuda:0"
         else:
             self.device = "cpu"
         self.hg_kwargs = _process_huggingface_client_kwargs(kwargs)
         self.model_path = pretrained_model_name_or_path
+        self.hugging_face_token = secrets.get_optional(
+            "hugging_face",
+            "token",
+            "You can create tokens at https://huggingface.co/settings/tokens.",
+        )
         # Model and tokenizer are lazy loaded.
         self.model: Optional[Any] = None
         self.wrapped_tokenizer: Optional[WrappedPreTrainedTokenizer] = None
 
     def _load_model(self) -> Tuple[Any, WrappedPreTrainedTokenizer]:
-        hugging_face_token = SECRETS.get_optional(scope="hugging_face", key="token")
         # WARNING this may fail if your GPU does not have enough memory
         model = AutoModelForCausalLM.from_pretrained(
             self.model_path,
             trust_remote_code=True,
-            token=hugging_face_token,
+            token=self.hugging_face_token,
             **self.hg_kwargs,
         ).to(self.device)
         wrapped_tokenizer = create_tokenizer(
-            self.model_path, hugging_face_token, **self.hg_kwargs
+            self.model_path, self.hugging_face_token, **self.hg_kwargs
         )
         return model, wrapped_tokenizer
 
@@ -517,4 +516,4 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return SUTResponse(completions=sut_completions)
 
 
-SUTS.register("gpt2", HuggingFaceSUT, "gpt2")
+SUTS.register("gpt2", HuggingFaceSUT, "gpt2", InjectSecrets())

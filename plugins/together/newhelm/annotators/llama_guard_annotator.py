@@ -9,6 +9,7 @@ from newhelm.suts.together_client import (
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.ephemeral_secrets import EphemeralSecrets
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
@@ -34,10 +35,11 @@ class LlamaGuardAnnotator(BaseAnnotator[LlamaGuardAnnotation]):
 
     def __init__(
         self,
+        secrets: EphemeralSecrets,
         formatter: Optional[Callable[[str, str], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
     ):
-        self.model = TogetherCompletionsSUT(_MODEL_NAME)
+        self.model = TogetherCompletionsSUT(_MODEL_NAME, secrets=secrets)
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -172,13 +174,12 @@ if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
     from newhelm.config import load_secrets_from_config
-    from newhelm.secrets_registry import SECRETS
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    secrets = EphemeralSecrets(load_secrets_from_config())
     text = sys.argv[1]
-    annotator = LlamaGuardAnnotator()
+    annotator = LlamaGuardAnnotator(secrets)
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(

@@ -3,7 +3,7 @@ from newhelm.command_line import (
     display_list_item,
     newhelm_cli,
 )
-from newhelm.secrets_registry import SECRETS
+from newhelm.config import load_secrets_from_config
 import together  # type: ignore
 from collections import defaultdict
 
@@ -11,8 +11,8 @@ from collections import defaultdict
 @newhelm_cli.command()
 def list_together():
     """List all models available in together.ai."""
-
-    together.api_key = SECRETS.get_required("together", "api_key")
+    raw_secrets = load_secrets_from_config()
+    together.api_key = raw_secrets["together"]["api_key"]
     model_list = together.Models.list()
 
     # Group by display_type, which seems to be the model's style.

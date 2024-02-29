@@ -3,18 +3,15 @@ from pydantic import BaseModel, Field
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
 from newhelm.record_init import record_init
-from newhelm.secrets_registry import SECRETS
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 from newhelm.sut_registry import SUTS
 
-SECRETS.register(
-    "together", "api_key", "See https://api.together.xyz/settings/api-keys"
-)
-
+_API_KEY_INSTRUCTIONS = "See https://api.together.xyz/settings/api-keys"
 _SYSTEM_ROLE = "system"
 _USER_ROLE = "user"
 _ASSISTANT_ROLE = "assistant"
@@ -77,8 +74,11 @@ class TogetherCompletionsSUT(
     _URL = "https://api.together.xyz/v1/completions"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model, secrets: EphemeralSecrets):
         self.model = model
+        self.api_key = secrets.get_required(
+            "together", "api_key", _API_KEY_INSTRUCTIONS
+        )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
         return self._translate_request(prompt.text, prompt.options)
@@ -105,9 +105,8 @@ class TogetherCompletionsSUT(
     def evaluate(
         self, request: TogetherCompletionsRequest
     ) -> TogetherCompletionsResponse:
-        api_key = SECRETS.get_required("together", "api_key")
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
@@ -166,8 +165,11 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
     _URL = "https://api.together.xyz/v1/chat/completions"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model, secrets: EphemeralSecrets):
         self.model = model
+        self.api_key = secrets.get_required(
+            "together", "api_key", _API_KEY_INSTRUCTIONS
+        )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherChatRequest:
         return self._translate_request(
@@ -201,9 +203,8 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         )
 
     def evaluate(self, request: TogetherChatRequest) -> TogetherChatResponse:
-        api_key = SECRETS.get_required("together", "api_key")
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
@@ -277,8 +278,11 @@ class TogetherInferenceSUT(
     _URL = "https://api.together.xyz/inference"
 
     @record_init
-    def __init__(self, model):
+    def __init__(self, model, secrets: EphemeralSecrets):
         self.model = model
+        self.api_key = secrets.get_required(
+            "together", "api_key", _API_KEY_INSTRUCTIONS
+        )
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherInferenceRequest:
         return self._translate_request(prompt.text, prompt.options)
@@ -303,9 +307,8 @@ class TogetherInferenceSUT(
         )
 
     def evaluate(self, request: TogetherInferenceRequest) -> TogetherInferenceResponse:
-        api_key = SECRETS.get_required("together", "api_key")
         headers = {
-            "Authorization": f"Bearer {api_key}",
+            "Authorization": f"Bearer {self.api_key}",
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
@@ -325,25 +328,63 @@ class TogetherInferenceSUT(
 
 
 # Language
-SUTS.register("llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b")
-SUTS.register("llama-2-70b", TogetherCompletionsSUT, "togethercomputer/llama-2-70b")
-SUTS.register("falcon-40b", TogetherCompletionsSUT, "togethercomputer/falcon-40b")
-SUTS.register("llama-2-13b", TogetherCompletionsSUT, "togethercomputer/llama-2-13b")
-SUTS.register("flan-t5-xl", TogetherCompletionsSUT, "google/flan-t5-xl")
+SUTS.register(
+    "llama-2-7b", TogetherCompletionsSUT, "togethercomputer/llama-2-7b", InjectSecrets()
+)
+SUTS.register(
+    "llama-2-70b",
+    TogetherCompletionsSUT,
+    "togethercomputer/llama-2-70b",
+    InjectSecrets(),
+)
+SUTS.register(
+    "falcon-40b", TogetherCompletionsSUT, "togethercomputer/falcon-40b", InjectSecrets()
+)
+SUTS.register(
+    "llama-2-13b",
+    TogetherCompletionsSUT,
+    "togethercomputer/llama-2-13b",
+    InjectSecrets(),
+)
+SUTS.register(
+    "flan-t5-xl", TogetherCompletionsSUT, "google/flan-t5-xl", InjectSecrets()
+)
 
 
 # Chat
-SUTS.register("llama-2-7b-chat", TogetherChatSUT, "togethercomputer/llama-2-7b-chat")
-SUTS.register("llama-2-70b-chat", TogetherChatSUT, "togethercomputer/llama-2-70b-chat")
-SUTS.register("zephyr-7b-beta", TogetherChatSUT, "HuggingFaceH4/zephyr-7b-beta")
-SUTS.register("vicuna-13b-v1.5", TogetherChatSUT, "lmsys/vicuna-13b-v1.5")
 SUTS.register(
-    "Mistral-7B-Instruct-v0.2", TogetherChatSUT, "mistralai/Mistral-7B-Instruct-v0.2"
+    "llama-2-7b-chat",
+    TogetherChatSUT,
+    "togethercomputer/llama-2-7b-chat",
+    InjectSecrets(),
 )
-SUTS.register("WizardLM-13B-V1.2", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2")
+SUTS.register(
+    "llama-2-70b-chat",
+    TogetherChatSUT,
+    "togethercomputer/llama-2-70b-chat",
+    InjectSecrets(),
+)
+SUTS.register(
+    "zephyr-7b-beta", TogetherChatSUT, "HuggingFaceH4/zephyr-7b-beta", InjectSecrets()
+)
+SUTS.register(
+    "vicuna-13b-v1.5", TogetherChatSUT, "lmsys/vicuna-13b-v1.5", InjectSecrets()
+)
+SUTS.register(
+    "Mistral-7B-Instruct-v0.2",
+    TogetherChatSUT,
+    "mistralai/Mistral-7B-Instruct-v0.2",
+    InjectSecrets(),
+)
+SUTS.register(
+    "WizardLM-13B-V1.2", TogetherChatSUT, "WizardLM/WizardLM-13B-V1.2", InjectSecrets()
+)
 SUTS.register(
     "oasst-sft-4-pythia-12b-epoch-3.5",
     TogetherChatSUT,
     "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
+    InjectSecrets(),
 )
-SUTS.register("dolly-v2-12b", TogetherChatSUT, "databricks/dolly-v2-12b")
+SUTS.register(
+    "dolly-v2-12b", TogetherChatSUT, "databricks/dolly-v2-12b", InjectSecrets()
+)

@@ -8,6 +8,7 @@ from newhelm.annotators.openai_compliance_annotator import (
 from newhelm.prompt import ChatMessage, ChatPrompt, TextPrompt
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion, SUTResponse
+from tests.fake_secrets import FakeSecrets
 
 Interaction = ComplianceAnnotation.Interaction
 Completion = ComplianceAnnotation.Completion
@@ -45,7 +46,7 @@ class MockSUT:
 
 def test_default_decoder():
     responses = ["1_full_compliance", "2_full_refusal", "3_partial_refusal"]
-    annotator = OpenAIComplianceAnnotator()
+    annotator = OpenAIComplianceAnnotator(secrets=FakeSecrets())
     annotator.model = MockSUT(responses)
 
     assert annotator.annotate_test_item([_make_interaction()]) == _make_annotation(
@@ -66,7 +67,9 @@ def test_overridden_decoder_keys():
         "PR": "Partial Refusal",
     }
     responses = ["FC", "1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), decoder=LABEL_MAPPING)
+    annotator = OpenAIComplianceAnnotator(
+        sut=MockSUT(responses), decoder=LABEL_MAPPING, secrets=FakeSecrets()
+    )
 
     assert annotator.annotate_test_item(
         [_make_interaction(["first"])]
@@ -80,7 +83,7 @@ def test_overridden_decoder_keys():
 def test_chat_prompt_assertion():
     """Checks that annotating and interaction with a ChatPrompt and the default formatter results in an assertion error"""
     responses = ["1_full_compliance"]
-    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses))
+    annotator = OpenAIComplianceAnnotator(sut=MockSUT(responses), secrets=FakeSecrets())
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])
     interaction = PromptInteraction(
         prompt=PromptWithContext(prompt=prompt),
@@ -95,7 +98,9 @@ def test_chat_prompt_overridden_formatter():
     custom_formatter = lambda sut_prompt, sut_completion: "formatted prompt"
     responses = ["1_full_compliance"]
     annotator = OpenAIComplianceAnnotator(
-        sut=MockSUT(responses), formatter=custom_formatter
+        sut=MockSUT(responses),
+        formatter=custom_formatter,
+        secrets=FakeSecrets(),
     )
     # annotator.model = MockSUT(responses)
     prompt = ChatPrompt(messages=[ChatMessage(text="chat", role="USER")])

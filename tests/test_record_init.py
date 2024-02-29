@@ -1,4 +1,5 @@
 import pytest
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.record_init import (
     InitializationRecord,
     get_initialization_record,
@@ -150,3 +151,40 @@ def test_get_record_no_decorator():
         error_text
         == "Class NoDecorator in module test_record_init needs to add `@record_init` to its `__init__` function to enable system reproducibility."
     )
+
+
+class UsesSecrets:
+    @record_init
+    def __init__(self, arg1, arg2):
+        self.arg1 = arg1
+        self.secret = arg2.get_required("some-scope", "some-key", "some-instructions")
+
+
+def test_uses_secrets_arg():
+    original_secrets = EphemeralSecrets({"some-scope": {"some-key": "some-value"}})
+    obj = UsesSecrets(1, original_secrets)
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init",
+        qual_name="UsesSecrets",
+        args=[1, InjectSecrets()],
+        kwargs={},
+    )
+
+    new_secrets = EphemeralSecrets({"some-scope": {"some-key": "another-value"}})
+    returned = obj._initialization_record.recreate_object(secrets=new_secrets)
+    assert returned.secret == "another-value"
+
+
+def test_uses_secrets_kwarg():
+    original_secrets = EphemeralSecrets({"some-scope": {"some-key": "some-value"}})
+    obj = UsesSecrets(arg1=1, arg2=original_secrets)
+    assert obj._initialization_record == InitializationRecord(
+        module="test_record_init",
+        qual_name="UsesSecrets",
+        args=[],
+        kwargs={"arg1": 1, "arg2": InjectSecrets()},
+    )
+
+    new_secrets = EphemeralSecrets({"some-scope": {"some-key": "another-value"}})
+    returned = obj._initialization_record.recreate_object(secrets=new_secrets)
+    assert returned.secret == "another-value"

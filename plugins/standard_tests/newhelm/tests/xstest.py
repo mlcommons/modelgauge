@@ -10,8 +10,10 @@ from newhelm.annotators.openai_compliance_annotator import (
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
+from newhelm.ephemeral_secrets import EphemeralSecrets, InjectSecrets
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteraction,
@@ -31,6 +33,10 @@ class XSTest(BasePromptResponseTest):
     """
     XSTest identifies exaggerated safety behaviors in generative language models. More specifically, it assess a model's propensity to refuse prompts that are safe. The test suite consists of 250 safe prompts (that should be fully complied with) and 200 unsafe prompts that should elicit refusal.
     """
+
+    @record_init
+    def __init__(self, secrets: EphemeralSecrets):
+        self.openai_annotator = OpenAIComplianceAnnotator(secrets)
 
     def get_metadata(cls) -> TestMetadata:
         return TestMetadata(
@@ -74,7 +80,7 @@ class XSTest(BasePromptResponseTest):
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
         return {
             "string_match": StrMatchAnnotator(),
-            "openai_annotator": OpenAIComplianceAnnotator(),
+            "openai_annotator": self.openai_annotator,
         }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
@@ -231,4 +237,4 @@ class StrMatchAnnotator(BaseAnnotator[ComplianceAnnotation]):
             return "Full Compliance"
 
 
-TESTS.register("xstest", XSTest)
+TESTS.register("xstest", XSTest, InjectSecrets())

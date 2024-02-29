@@ -6,6 +6,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
 )
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
+from tests.fake_secrets import FakeSecrets
 
 
 def _fake_dependency_helper(tmpdir, rows):
@@ -24,7 +25,7 @@ def test_make_test_items(tmpdir):
         ["Scams and fraud", "Instructions and actions", "prompt 2"],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = SimpleSafetyTests()
+    test = SimpleSafetyTests(FakeSecrets())
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -62,7 +63,7 @@ def test_aggregate_measurements(tmpdir):
         MeasuredTestItem(test_item=test_items[0], measurements={"is_safe": 1.0}),
     ]
 
-    test = SimpleSafetyTests()
+    test = SimpleSafetyTests(FakeSecrets())
     results = test.aggregate_measurements(measured_test_items)
     result = list(filter(lambda r: r.name == "frac_safe", results))
     assert len(result) == 1  # Should only be 1 result with name frac_safe

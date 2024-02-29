@@ -3,6 +3,7 @@ from typing import Callable, Dict, List, Optional
 from pydantic import BaseModel
 
 from newhelm.base_annotator import BaseAnnotator
+from newhelm.ephemeral_secrets import EphemeralSecrets
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -27,11 +28,12 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
 
     def __init__(
         self,
+        secrets: EphemeralSecrets,
         formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,
     ):
-        self.model = OpenAIChat(_MODEL_NAME) if sut is None else sut
+        self.model = OpenAIChat(_MODEL_NAME, secrets) if sut is None else sut
         self.formatter = _default_formatter if formatter is None else formatter
         self.decoder = _DEFAULT_MAPPING if decoder is None else decoder
 
@@ -101,9 +103,9 @@ if __name__ == "__main__":
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    load_secrets_from_config()
+    secrets = EphemeralSecrets(load_secrets_from_config())
     text = sys.argv[1]
-    annotator = OpenAIComplianceAnnotator()
+    annotator = OpenAIComplianceAnnotator(secrets)
     annotation = annotator.annotate_test_item(
         [
             PromptInteraction(
