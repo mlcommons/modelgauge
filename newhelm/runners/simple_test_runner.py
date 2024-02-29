@@ -16,7 +16,6 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     PromptInteraction,
-    TestItemInteractions,
 )
 from newhelm.sut import PromptResponseSUT
 
@@ -114,7 +113,7 @@ def _process_test_item(
     sut_cache: BaseCache,
     annotators: List[AnnotatorData],
 ) -> TestItemRecord:
-    interactions = []
+    interactions: List[PromptInteraction] = []
     for prompt in item.prompts:
         if isinstance(prompt.prompt, TextPrompt):
             sut_request = sut.translate_text_prompt(prompt.prompt)
@@ -124,10 +123,10 @@ def _process_test_item(
             sut_response = cache.get_or_call(sut_request, sut.evaluate)
         response = sut.translate_response(sut_request, sut_response)
         interactions.append(PromptInteraction(prompt=prompt, response=response))
-    item_interactions = TestItemInteractions(interactions=interactions, test_item=item)
+
     annotations_per_annotator: Dict[str, Annotation] = {}
     for annotator in annotators:
-        request = AnnotateTestItemRequest(interactions=item_interactions.interactions)
+        request = AnnotateTestItemRequest(interactions=interactions)
 
         def _do_annotation(interaction_list: AnnotateTestItemRequest):
             return annotator.annotator.annotate_test_item(interaction_list.interactions)
@@ -136,11 +135,11 @@ def _process_test_item(
             with annotator.cache as cache:
                 annotation = cache.get_or_call(request, _do_annotation)
         except Exception as e:
-            raise Exception(f"Exception while handling: {item_interactions}") from e
+            raise Exception(f"Exception while handling: {interactions}") from e
         annotations_per_annotator[annotator.key] = Annotation.from_instance(annotation)
     annotated = TestItemAnnotations(
         test_item=item,
-        interactions=item_interactions.interactions,
+        interactions=interactions,
         annotations=annotations_per_annotator,
     )
     measurements = test.measure_quality(annotated)
