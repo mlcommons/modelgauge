@@ -20,6 +20,7 @@ def fake_test_item(text):
 
 class FakeTest(BasePromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
+
     @record_init
     def __init__(
         self, *, dependencies={}, test_items=[], annotators={}, measurement={}
