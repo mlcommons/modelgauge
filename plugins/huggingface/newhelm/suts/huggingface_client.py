@@ -517,4 +517,4 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         return SUTResponse(completions=sut_completions)
 
 
-SUTS.register("gpt2", HuggingFaceSUT, "gpt2")
+SUTS.register("huggingface/gpt2", HuggingFaceSUT, "gpt2")

@@ -118,4 +118,4 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
         return SUTResponse(completions=completions)
 
 
-SUTS.register("gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
+SUTS.register("openai/gpt-3.5-turbo", OpenAIChat, "gpt-3.5-turbo")
