@@ -97,6 +97,14 @@ def test_polymorphic_response(tmpdir):
         assert cache.get_cached_response(child2_request) != parent_response
 
 
+def test_slashes_in_file_identifier(tmpdir):
+    with SqlDictCache(tmpdir, "sut/name") as cache:
+        request = SimpleClass(value="val")
+        response = SimpleClass(value="response")
+        cache.update_cache(request, response)
+        assert cache.get_cached_response(request) == response
+
+
 def test_non_exisiting_directory(parent_directory):
     """Tests that the directory given to SUTResponseCache is created if it does not already exist."""
     cache_dir = str(parent_directory.joinpath("data", "new_dir"))
@@ -112,7 +120,9 @@ def test_non_exisiting_directory(parent_directory):
         assert len(cache.cached_responses) == 1
         assert cache.get_cached_response(request) == response
     # Delete newly-created cache file and directory
-    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
+    os.remove(
+        os.path.join(cache_dir, "0097de8ba7e8d5c79d93cf4e81926c5bfe77bd1f.sqlite")
+    )
     os.rmdir(cache_dir)
 
 

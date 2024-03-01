@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import os
+import hashlib
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
@@ -31,13 +32,13 @@ class BaseCache(ABC):
 class SqlDictCache(BaseCache):
     """Cache the response from a method using the request as the key.
 
-    Will create a `file_identifier`.sqlite file in `data_dir` to persist
-    the cache.
+    Will create a file with a hash of `file_identifier`.sqlite in
+    `data_dir` to persist the cache.
     """
 
     def __init__(self, data_dir, file_identifier):
         self.data_dir = data_dir
-        self.fname = f"{file_identifier}.sqlite"
+        self.fname = f"{hashlib.sha1(file_identifier.encode()).hexdigest()}.sqlite"
         self.cached_responses = self._load_cached_responses()
 
     def __enter__(self):
