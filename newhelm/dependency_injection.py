@@ -15,6 +15,7 @@ def _replace(obj):
 def replace_args_with_injector(
     args: Sequence, kwargs: Mapping[str, Any]
 ) -> Tuple[List, Dict[str, Any]]:
+    """Switch inputs of injectable types with their injectors."""
     replaced_args = []
     replaced_kwargs = {}
     for arg in args:
@@ -37,6 +38,7 @@ def create_obj(
     kwargs: Mapping[str, Any],
     secrets: Optional[EphemeralSecrets] = None,
 ) -> _T:
+    """Return cls(*args, **kwargs) after performing dependency injection."""
     replaced_args = []
     replaced_kwargs = {}
     for arg in args:

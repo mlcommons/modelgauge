@@ -48,7 +48,7 @@ class EphemeralSecrets:
         self._values = None
 
 
-class MissingSecretValue(AssertionError):
+class MissingSecretValue(LookupError):
     def __init__(self, scope: str, key: str, instructions: str):
         self.scope = scope
         self.key = key
