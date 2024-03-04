@@ -120,9 +120,7 @@ def test_non_exisiting_directory(parent_directory):
         assert len(cache.cached_responses) == 1
         assert cache.get_cached_response(request) == response
     # Delete newly-created cache file and directory
-    os.remove(
-        os.path.join(cache_dir, "0097de8ba7e8d5c79d93cf4e81926c5bfe77bd1f.sqlite")
-    )
+    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
     os.rmdir(cache_dir)
 
 
