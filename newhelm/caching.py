@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
 from newhelm.typed_data import TypedData
+from newhelm.general import normalize_filename
 
 
 class BaseCache(ABC):
@@ -37,7 +38,7 @@ class SqlDictCache(BaseCache):
 
     def __init__(self, data_dir, file_identifier):
         self.data_dir = data_dir
-        self.fname = self._normalize_filename(f"{file_identifier}.sqlite")
+        self.fname = normalize_filename(f"{file_identifier}.sqlite")
         self.cached_responses = self._load_cached_responses()
 
     def __enter__(self):
@@ -94,9 +95,6 @@ class SqlDictCache(BaseCache):
 
     def _decode_request(self, request_json: str):
         return TypedData.model_validate_json(request_json).to_instance()
-
-    def _normalize_filename(self, filename: str) -> str:
-        return filename.replace("/", "_")
 
 
 class NoCache(BaseCache):
