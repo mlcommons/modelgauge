@@ -160,7 +160,9 @@ class TestFromSource:
             tmpdir.strpath, dependencies, required_versions={d1_key: "not-real"}
         )
 
-        with pytest.raises(RuntimeError, match="version not-real for dependency d1"):
+        with pytest.raises(
+            RuntimeError, match=f"version not-real for dependency {d1_key}"
+        ):
             helper.get_local_path(d1_key)
 
     def test_require_older_version(self, d1_key, tmpdir):
