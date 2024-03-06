@@ -1,0 +1,7 @@
+.pytest_cache/
+.mypy_cache/
+.github/
+.git/
+output/
+run_data/
+secrets/
