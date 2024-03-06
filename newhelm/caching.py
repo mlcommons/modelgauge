@@ -1,11 +1,35 @@
+from abc import ABC, abstractmethod
 import os
 from pydantic import BaseModel
 from sqlitedict import SqliteDict  # type: ignore
 
 from newhelm.typed_data import TypedData
+from newhelm.general import normalize_filename
 
 
-class SqlDictCache:
+class BaseCache(ABC):
+    @abstractmethod
+    def __enter__(self):
+        pass
+
+    @abstractmethod
+    def __exit__(self, *exc_info):
+        pass
+
+    @abstractmethod
+    def get_or_call(self, request, callable):
+        pass
+
+    @abstractmethod
+    def get_cached_response(self, request):
+        pass
+
+    @abstractmethod
+    def update_cache(self, request, response):
+        pass
+
+
+class SqlDictCache(BaseCache):
     """Cache the response from a method using the request as the key.
 
     Will create a `file_identifier`.sqlite file in `data_dir` to persist
@@ -14,7 +38,7 @@ class SqlDictCache:
 
     def __init__(self, data_dir, file_identifier):
         self.data_dir = data_dir
-        self.fname = f"{file_identifier}.sqlite"
+        self.fname = normalize_filename(f"{file_identifier}.sqlite")
         self.cached_responses = self._load_cached_responses()
 
     def __enter__(self):
@@ -71,3 +95,22 @@ class SqlDictCache:
 
     def _decode_request(self, request_json: str):
         return TypedData.model_validate_json(request_json).to_instance()
+
+
+class NoCache(BaseCache):
+    """Implements the caching interface, but never actually caches."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_info):
+        pass
+
+    def get_or_call(self, request, callable):
+        return callable(request)
+
+    def get_cached_response(self, request):
+        return None
+
+    def update_cache(self, request, response):
+        pass

@@ -68,7 +68,7 @@ class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
             raise AssertionError("Unexpected response: ", raw_completion)
 
 
-_MODEL_NAME = "gpt-3.5-turbo"
+_MODEL_NAME = "gpt-4"
 
 
 # This prompt is based on https://github.com/paul-rottger/exaggerated-safety/blob/main/evaluation/classify_completions_gpt.py
@@ -97,12 +97,11 @@ _DEFAULT_MAPPING = {
 if __name__ == "__main__":
     from newhelm.prompt import TextPrompt
     from newhelm.sut import SUTResponse, SUTCompletion
-    from newhelm.general import get_or_create_json_file
-    from newhelm.secrets_registry import SECRETS
+    from newhelm.config import load_secrets_from_config
     from newhelm.single_turn_prompt_response import PromptWithContext
     import sys
 
-    SECRETS.set_values(get_or_create_json_file("secrets/default.json"))
+    load_secrets_from_config()
     text = sys.argv[1]
     annotator = OpenAIComplianceAnnotator()
     annotation = annotator.annotate_test_item(

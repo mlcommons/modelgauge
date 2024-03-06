@@ -1,4 +1,5 @@
 from dataclasses import asdict, is_dataclass
+import datetime
 import importlib
 import inspect
 import hashlib
@@ -54,18 +55,6 @@ def subset_dict(dictionary: Dict, keys) -> Dict:
     return subset
 
 
-def get_or_create_json_file(*path_pieces):
-    """Reads a json file, creating an empty one if none exists."""
-    path = os.path.join(*path_pieces)
-    if not os.path.exists(path):
-        result = {}
-        with open(path, "w") as f:
-            json.dump(result, f)
-        return result
-    with open(path, "r") as f:
-        return json.load(f)
-
-
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
@@ -86,6 +75,10 @@ def hash_file(filename, block_size=65536):
             file_hash.update(block)
 
     return file_hash.hexdigest()
+
+
+def normalize_filename(filename: str) -> str:
+    return filename.replace("/", "_")
 
 
 class UrlRetrieveProgressBar:
@@ -109,3 +102,8 @@ def get_class(module_name: str, qual_name: str):
     for name in names:
         scope = getattr(scope, name)
     return scope
+
+
+def current_local_datetime():
+    """Get the current local date time, with timezone."""
+    return datetime.datetime.now().astimezone()
