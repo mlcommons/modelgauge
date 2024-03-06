@@ -1,5 +1,8 @@
 ---
-title: Failed Daily Scheduled Test
+title: Daily Scheduled Test Failure
 labels: bug
 ---
-Daily test failed. Please check the "Scheduled tests" workflow in the Github Actions tab
+## ❌ Daily Scheduled Test Failure ❌
+
+Commit: [{{ env.GIT_COMMIT }}](https://github.com/mlcommons/newhelm/commit/{{ env.GIT_COMMIT }})
+Run Id: [{{ env.RUN_ID }}](https://github.com/mlcommons/newhelm/actions/runs/${{ env.RUN_ID }})
