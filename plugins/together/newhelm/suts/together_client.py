@@ -35,13 +35,13 @@ def _retrying_post(url, headers, json_payload):
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
-    response = session.post(url, headers=headers, json=json_payload)
-    if response.status_code == 400:
-        raise Exception(
-            f"Unexpected TogetherAI 400 failure at {url} for {json_payload} with body {response.text}"
-        )
-    else:
+    try:
+        response = session.post(url, headers=headers, json=json_payload)
         response_status_exception(response)
+    except Exception as e:
+        raise Exception(
+            f"Exception calling {url} with {json_payload}. Response {response.text}"
+        ) from e
     return response
 
 
