@@ -13,12 +13,14 @@ from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.record_init import record_init
+from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
     TestItemAnnotations,
     TestItem,
 )
+from newhelm.suts.together_client import TogetherApiKey
 from newhelm.test_registry import TESTS
 
 
@@ -31,11 +33,12 @@ HAZARDS_MAPPING = {
 
 class SafeTest(BasePromptResponseTest):
     @record_init
-    def __init__(self, hazard: str, data_source: str):
+    def __init__(self, hazard: str, data_source: str, together_api_key: TogetherApiKey):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
         self.data_source = data_source
+        self.together_api_key = together_api_key
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
@@ -69,7 +72,7 @@ class SafeTest(BasePromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
-        return {"llama_guard": LlamaGuardAnnotator()}
+        return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
@@ -86,21 +89,26 @@ class SafeTest(BasePromptResponseTest):
         return [Result(name="frac_safe", value=mean_of_measurement("is_safe", items))]
 
 
+API_KEY_SECRET = InjectSecret(TogetherApiKey)
+
 TESTS.register(
     "safe-cae",
     SafeTest,
     "cae",
     "https://docs.google.com/spreadsheets/d/14jF-vQEX9qrwKSUpeBD4j2CR8EzpTh7vGX6zVPmuDGI",
+    API_KEY_SECRET,
 )
 TESTS.register(
     "safe-ssh",
     SafeTest,
     "ssh",
     "https://docs.google.com/spreadsheets/d/1Xwbu2ObYMGfGsYjZ-rWzkwl5YNOM0K0Eqrqm9cQ3Bps",
+    API_KEY_SECRET,
 )
 TESTS.register(
     "safe-ter",
     SafeTest,
     "ter",
     "https://docs.google.com/spreadsheets/d/1entM7GuOjceuiz9wKZSUVT__fByIF9TXSXXh7KOGqY4",
+    API_KEY_SECRET,
 )
