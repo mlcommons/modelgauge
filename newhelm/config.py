@@ -39,6 +39,8 @@ def load_secrets_from_config(path: str = SECRETS_PATH) -> RawSecrets:
 
 
 class MissingSecretsFromConfig(MissingSecretValues):
+    """Exception showing how to add missing secrets to the config file."""
+
     def __init__(self, missing: MissingSecretValues, config_path: str = SECRETS_PATH):
         super().__init__(descriptions=missing.descriptions)
         self.config_path = config_path
@@ -65,6 +67,7 @@ class MissingSecretsFromConfig(MissingSecretValues):
 def raise_if_missing_from_config(
     missing_values: Sequence[MissingSecretValues], config_path: str = SECRETS_PATH
 ):
+    """If there are missing secrets, raise a MissingSecretsFromConfig exception."""
     if not missing_values:
         return
     combined = MissingSecretValues.combine(missing_values)
