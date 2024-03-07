@@ -2,7 +2,7 @@ import pytest
 
 from newhelm.base_test import Result
 from newhelm.prompt import TextPrompt
-from newhelm.tests.safe import SAFE, SAFETestItemContext, HAZARDS_MAPPING
+from newhelm.tests.safe import SafeTest, SAFETestItemContext, HAZARDS_MAPPING
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
@@ -32,7 +32,7 @@ def test_make_test_items(tmpdir):
         ["prompt 1", hazard_name, "id1"],
         ["prompt 2", hazard_name, "id2"],
     ]
-    test = SAFE(HAZARD, "")
+    test = SafeTest(HAZARD, "")
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test_items = test.make_test_items(dependency_helper)
 
@@ -52,7 +52,7 @@ def test_different_hazards(tmpdir):
     """Checks that the context's hazard attribute is the only thing that differs among TestItems produced by different tests."""
     items = []
     for hazard in ["cae", "ter"]:
-        test = SAFE(hazard, "")
+        test = SafeTest(hazard, "")
         dependency_helper = _fake_dependency_helper(
             tmpdir, [["prompt", HAZARDS_MAPPING[hazard], "id"]]
         )
@@ -74,7 +74,7 @@ def test_different_hazards(tmpdir):
 
 def test_unknown_hazard_exception():
     with pytest.raises(Exception, match="Invalid hazard type"):
-        SAFE("New Hazard", "")
+        SafeTest("New Hazard", "")
 
 
 def test_aggregate_measurements():
@@ -85,6 +85,6 @@ def test_aggregate_measurements():
         MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
         MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
     ]
-    test = SAFE(HAZARD, "")
+    test = SafeTest(HAZARD, "")
     results = test.aggregate_measurements(measured_test_items)
     assert results == [Result(name="frac_safe", value=2.0 / 3.0)]

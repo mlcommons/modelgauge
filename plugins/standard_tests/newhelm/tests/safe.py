@@ -34,7 +34,7 @@ class SAFETestItemContext(BaseModel):
     hazard: str
 
 
-class SAFE(BasePromptResponseTest):
+class SafeTest(BasePromptResponseTest):
     @record_init
     def __init__(self, hazard: str, data_source: str):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
@@ -44,7 +44,7 @@ class SAFE(BasePromptResponseTest):
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
-            name=f"SAFE-{self.hazard}",
+            name=f"SafeTest-{self.hazard}",
             description=f"Safe AI with Flexible Evaluation for {self.hazard_name}",
         )
 
@@ -97,19 +97,19 @@ class SAFE(BasePromptResponseTest):
 
 TESTS.register(
     "safe-cae",
-    SAFE,
+    SafeTest,
     "cae",
     "https://docs.google.com/spreadsheets/d/14jF-vQEX9qrwKSUpeBD4j2CR8EzpTh7vGX6zVPmuDGI",
 )
 TESTS.register(
     "safe-ssh",
-    SAFE,
+    SafeTest,
     "ssh",
     "https://docs.google.com/spreadsheets/d/1Xwbu2ObYMGfGsYjZ-rWzkwl5YNOM0K0Eqrqm9cQ3Bps",
 )
 TESTS.register(
     "safe-ter",
-    SAFE,
+    SafeTest,
     "ter",
     "https://docs.google.com/spreadsheets/d/1entM7GuOjceuiz9wKZSUVT__fByIF9TXSXXh7KOGqY4",
 )
