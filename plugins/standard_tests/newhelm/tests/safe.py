@@ -68,7 +68,7 @@ class SafeTest(BasePromptResponseTest):
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=sut_options),
                 )
-                test_items.append(TestItem(prompts=[prompt], context=row["UID"]))
+                test_items.append(TestItem(prompts=[prompt]))
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
