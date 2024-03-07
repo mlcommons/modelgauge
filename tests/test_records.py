@@ -198,9 +198,11 @@ def test_serialize_test_record():
 def test_round_trip_prompt_with_context():
     prompt = PromptWithContext(
         prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        source_id="id01",
         context=MockContext(context_field="prompt-context"),
     )
     as_json = prompt.model_dump_json()
     returned = PromptWithContext.model_validate_json(as_json)
     assert prompt == returned
-    assert type(prompt.context) == MockContext
+    assert type(returned.context) == MockContext
+    assert returned.source_id == "id01"
