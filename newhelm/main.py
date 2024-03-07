@@ -64,8 +64,11 @@ def list_tests() -> None:
 def list_secrets() -> None:
     """List details about secrets newhelm might need."""
     descriptions = get_all_secrets()
-    display_header("Here are the known secrets newhelm might use.")
-    click.echo(toml_format_secrets(descriptions))
+    if descriptions:
+        display_header("Here are the known secrets newhelm might use.")
+        click.echo(toml_format_secrets(descriptions))
+    else:
+        display_header("No secrets used by any installed plugin.")
 
 
 # TODO: Consider moving this somewhere else.
