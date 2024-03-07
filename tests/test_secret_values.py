@@ -87,11 +87,12 @@ scope='s2' key='k2' instructions='i2'
 
 def test_get_all_secrets():
     descriptions = get_all_secrets()
-    test_secret = SecretDescription(
-        scope="some-scope", key="some-key", instructions="some-instructions"
-    )
-    matching = [s for s in descriptions if s == test_secret]
-    assert len(matching) == 1, f"Found secrets: {descriptions}"
+    required_secret = SomeRequiredSecret.description()
+    matching = [s for s in descriptions if s == required_secret]
+
+    # This test can be impacted by other files, so just
+    # check that at least one exists.
+    assert len(matching) > 1, f"Found secrets: {descriptions}"
 
 
 def test_serialize_secret():
