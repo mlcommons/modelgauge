@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 from pydantic import BaseModel
 import torch
 from transformers import AutoModelForCausalLM  # type: ignore
@@ -303,6 +304,11 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
                 raw_request.max_new_tokens,
                 tokenizer.model_max_length - num_input_tokens,
             )
+            if raw_request.max_new_tokens != max_new_tokens:
+                logging.warning(
+                    f"Had to reduce max_new_tokens from "
+                    f"{raw_request.max_new_tokens} to {max_new_tokens}"
+                )
             assert max_new_tokens >= 0, (
                 f"Prompt has {num_input_tokens}, which is larger than "
                 f"max length {tokenizer.model_max_length}"
