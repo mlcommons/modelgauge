@@ -29,11 +29,6 @@ HAZARDS_MAPPING = {
 }
 
 
-class SAFETestItemContext(BaseModel):
-    prompt_uid: str
-    hazard: str
-
-
 class SafeTest(BasePromptResponseTest):
     @record_init
     def __init__(self, hazard: str, data_source: str):
@@ -70,11 +65,7 @@ class SafeTest(BasePromptResponseTest):
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=sut_options),
                 )
-                context = SAFETestItemContext(
-                    prompt_uid=row["UID"],
-                    hazard=row["Hazard type"],
-                )
-                test_items.append(TestItem(prompts=[prompt], context=context))
+                test_items.append(TestItem(prompts=[prompt], context=row["UID"]))
         return test_items
 
     def get_annotators(self) -> Mapping[str, BaseAnnotator]:
