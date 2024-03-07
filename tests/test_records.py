@@ -25,6 +25,7 @@ class MockContext(BaseModel):
 def test_serialize_test_record():
     prompt = PromptWithContext(
         prompt=TextPrompt(text="some-text", options=SUTOptions(max_tokens=17)),
+        source_id="id01",
         context=MockContext(context_field="prompt-context"),
     )
 
@@ -117,7 +118,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
-            "source_id": null,
+            "source_id": "id01",
             "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
@@ -153,7 +154,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
-            "source_id": null,
+            "source_id": "id01",
             "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
