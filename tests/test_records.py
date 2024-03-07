@@ -117,6 +117,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
+            "source_id": null,
             "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
@@ -152,6 +153,7 @@ def test_serialize_test_record():
                 "random": null
               }
             },
+            "source_id": null,
             "context_internal": {
               "module": "test_records",
               "class_name": "MockContext",
