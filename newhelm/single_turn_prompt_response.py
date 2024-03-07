@@ -40,7 +40,7 @@ class PromptWithContext(BaseModel):
             internal = TypedData.from_instance(context)
         else:
             internal = context
-        super().__init__(prompt=prompt, souce_id=source_id, context_internal=internal)
+        super().__init__(prompt=prompt, source_id=source_id, context_internal=internal)
 
 
 class TestItem(BaseModel):
