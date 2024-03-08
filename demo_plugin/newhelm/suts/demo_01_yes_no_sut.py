@@ -14,6 +14,7 @@ class DemoYesNoSUTRequest(BaseModel):
 class DemoYesNoSUTResponse(BaseModel):
     """This SUT is only capable of returning text."""
 
+    number_of_words: int
     text: str
 
 
@@ -30,7 +31,7 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoSUTRequest, DemoYesNoSUTResponse])
         # Return Yes if the input is an even number of words
         number_of_words = len(request.text.split())
         answer = "Yes" if number_of_words % 2 == 0 else "No"
-        return DemoYesNoSUTResponse(text=answer)
+        return DemoYesNoSUTResponse(number_of_words=number_of_words, text=answer)
 
     def translate_response(
         self, request: DemoYesNoSUTRequest, response: DemoYesNoSUTResponse
