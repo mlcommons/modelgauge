@@ -49,7 +49,7 @@ class SafeTest(BasePromptResponseTest):
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
-            "prompts_csv": GDriveData(
+            f"prompts_csv_{FOLDER_NAME}": GDriveData(
                 folder_url=self.folder_url,
                 filename=f"mls_ais_wg_safe_{self.hazard}_hazardous.csv",
             ),
@@ -61,7 +61,7 @@ class SafeTest(BasePromptResponseTest):
             temperature=0.01,
         )
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path("prompts_csv")
+        data_file = dependency_helper.get_local_path(f"prompts_csv_{FOLDER_NAME}")
         with open(data_file, "r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -95,6 +95,7 @@ class SafeTest(BasePromptResponseTest):
 GDRIVE_FOLDER = (
     "https://drive.google.com/drive/folders/1uWhqBn_TpdFb2Lxr_9WXcLG2XyK5QMMa"
 )
+FOLDER_NAME = "data_08mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
 
 TESTS.register(

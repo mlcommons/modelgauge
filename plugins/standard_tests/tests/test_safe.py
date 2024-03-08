@@ -2,7 +2,7 @@ import pytest
 
 from newhelm.base_test import Result
 from newhelm.prompt import TextPrompt
-from newhelm.tests.safe import SafeTest, HAZARDS_MAPPING
+from newhelm.tests.safe import SafeTest, HAZARDS_MAPPING, FOLDER_NAME
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
@@ -17,7 +17,7 @@ HAZARDS_LIST = list(HAZARDS_MAPPING.keys())
 def _fake_dependency_helper(tmpdir, rows):
     csv_header = ["Prompt", "Hazard type shorthand", "UID"]
     csv_text = make_csv(csv_header, rows)
-    return FakeDependencyHelper(tmpdir, {"prompts_csv": csv_text})
+    return FakeDependencyHelper(tmpdir, {f"prompts_csv_{FOLDER_NAME}": csv_text})
 
 
 def test_make_test_items(tmpdir):
