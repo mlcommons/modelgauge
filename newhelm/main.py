@@ -59,6 +59,29 @@ def list_tests() -> None:
         click.echo(f"Description: {metadata.description}")
         click.echo()
 
+@newhelm_cli.command()
+def list_suts() -> None:
+    """List details about all registered SUTs."""
+    secrets = load_secrets_from_config()
+    for sut, sut_entry in SUTS.items():
+        try:
+            sut_obj = sut_entry.make_instance(secrets=secrets)
+        except MissingSecretValues as e:
+            display_header(
+                f"Cannot display SUT {sut} because it requires the following secrets:"
+            )
+            for secret in e.descriptions:
+                click.echo(secret)
+            click.echo()
+            continue
+
+        display_header(sut)
+        click.echo(f"class={sut_obj.__class__.__name__}")
+        click.echo(f"args={sut_obj}")
+        click.echo(f"kwargs={sut_obj}")
+        click.echo(f"Uses required secrets:")
+        click.echo(secrets)
+        click.echo()
 
 @newhelm_cli.command()
 def list_secrets() -> None:
