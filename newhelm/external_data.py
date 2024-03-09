@@ -51,7 +51,7 @@ class GDriveData(ExternalData):
             if file.path == self.filename:
                 gdown.download(id=file.id, output=location)
                 return
-        raise Exception(
+        raise RuntimeError(
             f"Cannot find file with name {self.filename} in google drive folder {self.folder_url}"
         )
 

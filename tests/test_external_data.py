@@ -59,7 +59,7 @@ def test_gdrive_nonexistent_filename(mocker):
     )
     mock_download_file = mocker.patch("gdown.download")
     gdrive_data = GDriveData(folder_url="http://example_drive.com", filename="file.csv")
-    with pytest.raises(Exception, match="Cannot find file"):
+    with pytest.raises(RuntimeError, match="Cannot find file"):
         gdrive_data.download("test.tgz")
 
 
