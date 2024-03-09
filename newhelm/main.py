@@ -74,13 +74,10 @@ def list_suts() -> None:
                 click.echo(secret)
             click.echo()
             continue
-
-        display_header(sut)
-        click.echo(f"class={sut_obj.__class__.__name__}")
-        click.echo(f"args={sut_obj}")
-        click.echo(f"kwargs={sut_obj}")
-        click.echo(f"Uses required secrets:")
-        click.echo(secrets)
+        
+        # Consider create getter function for `_initialization_record`
+        click.echo(f"{sut} {sut_obj.__class__.__name__}(args={sut_obj._initialization_record.args}, Inject({secret}), kwargs={sut_obj._initialization_record.kwargs})")
+        #display_list_item(f"{sut} {sut_entry}")
         click.echo()
 
 @newhelm_cli.command()
