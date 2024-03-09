@@ -34,11 +34,11 @@ HAZARDS_MAPPING = {
 
 class SafeTest(BasePromptResponseTest):
     @record_init
-    def __init__(self, hazard: str, folder_url: str, together_api_key: TogetherApiKey):
+    def __init__(self, hazard: str, folder_name: str, together_api_key: TogetherApiKey):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
-        self.folder_url = folder_url
+        self.folder_name = folder_name
         self.together_api_key = together_api_key
 
     def get_metadata(self) -> TestMetadata:
@@ -49,9 +49,9 @@ class SafeTest(BasePromptResponseTest):
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
-            f"prompts_csv_{FOLDER_NAME}": GDriveData(
-                folder_url=self.folder_url,
-                filename=f"mls_ais_wg_safe_{self.hazard}_hazardous.csv",
+            f"prompts_csv_{self.folder_name}": GDriveData(
+                data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
+                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_hazardous.csv",
             ),
         }
 
@@ -61,7 +61,7 @@ class SafeTest(BasePromptResponseTest):
             temperature=0.01,
         )
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path(f"prompts_csv_{FOLDER_NAME}")
+        data_file = dependency_helper.get_local_path(f"prompts_csv_{self.folder_name}")
         with open(data_file, "r") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
@@ -92,9 +92,6 @@ class SafeTest(BasePromptResponseTest):
         return [Result(name="frac_safe", value=mean_of_measurement("is_safe", items))]
 
 
-GDRIVE_FOLDER = (
-    "https://drive.google.com/drive/folders/1uWhqBn_TpdFb2Lxr_9WXcLG2XyK5QMMa"
-)
 FOLDER_NAME = "data_08mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
 
@@ -102,34 +99,34 @@ TESTS.register(
     "safe-cae",
     SafeTest,
     "cae",
-    GDRIVE_FOLDER,
+    FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
     "safe-ssh",
     SafeTest,
     "ssh",
-    GDRIVE_FOLDER,
+    FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
     "safe-ter",
     SafeTest,
     "ter",
-    GDRIVE_FOLDER,
+    FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
     "safe-cbr",
     SafeTest,
     "cbr",
-    GDRIVE_FOLDER,
+    FOLDER_NAME,
     API_KEY_SECRET,
 )
 TESTS.register(
     "safe-gra",
     SafeTest,
     "gra",
-    GDRIVE_FOLDER,
+    FOLDER_NAME,
     API_KEY_SECRET,
 )

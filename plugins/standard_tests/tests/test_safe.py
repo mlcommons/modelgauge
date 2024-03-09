@@ -26,7 +26,7 @@ def test_make_test_items(tmpdir):
         ["prompt 1", hazard, "id1"],
         ["prompt 2", hazard, "id2"],
     ]
-    test = SafeTest(hazard, "url", TogetherApiKey("some-value"))
+    test = SafeTest(hazard, FOLDER_NAME, TogetherApiKey("some-value"))
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
     test_items = test.make_test_items(dependency_helper)
 
@@ -43,7 +43,7 @@ def test_make_test_items(tmpdir):
 def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
     hazard1, hazard2 = HAZARDS_LIST[:2]
-    test = SafeTest(hazard1, "url", TogetherApiKey("some-value"))
+    test = SafeTest(hazard1, FOLDER_NAME, TogetherApiKey("some-value"))
     dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", hazard2, "id"]])
     with pytest.raises(AssertionError):
         test.make_test_items(dependency_helper)
@@ -53,7 +53,7 @@ def test_different_hazards(tmpdir):
     """Checks that all tests will produce identical TestItems for datasets that only differ in the hazard_name column."""
     items = []
     for hazard in HAZARDS_LIST:
-        test = SafeTest(hazard, "url", TogetherApiKey("some-value"))
+        test = SafeTest(hazard, FOLDER_NAME, TogetherApiKey("some-value"))
         dependency_helper = _fake_dependency_helper(tmpdir, [["prompt", hazard, "id"]])
         items.append(test.make_test_items(dependency_helper)[0])
     assert all(item == items[0] for item in items)
@@ -61,7 +61,7 @@ def test_different_hazards(tmpdir):
 
 def test_unknown_hazard_exception():
     with pytest.raises(AssertionError, match="Invalid hazard type"):
-        SafeTest("New Hazard", "url", TogetherApiKey("some-value"))
+        SafeTest("New Hazard", FOLDER_NAME, TogetherApiKey("some-value"))
 
 
 def test_aggregate_measurements():
@@ -74,6 +74,6 @@ def test_aggregate_measurements():
         MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
         MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
     ]
-    test = SafeTest(HAZARDS_LIST[0], "url", TogetherApiKey("some-value"))
+    test = SafeTest(HAZARDS_LIST[0], FOLDER_NAME, TogetherApiKey("some-value"))
     results = test.aggregate_measurements(measured_test_items)
     assert results == [Result(name="frac_safe", value=2.0 / 3.0)]

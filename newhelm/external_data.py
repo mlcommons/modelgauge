@@ -37,22 +37,22 @@ class WebData(ExternalData):
 
 @dataclass(frozen=True, kw_only=True)
 class GDriveData(ExternalData):
-    """File downloaded using file's name and a google drive folder url."""
+    """File downloaded using a google drive folder url and a file's relative path to the folder."""
 
-    folder_url: str
-    filename: str
+    data_source: str
+    file_path: str
 
     def download(self, location):
         # Find file id needed to download the file.
         available_files = gdown.download_folder(
-            url=self.folder_url, skip_download=True, quiet=True
+            url=self.data_source, skip_download=True, quiet=True
         )
         for file in available_files:
-            if file.path == self.filename:
+            if file.path == self.file_path:
                 gdown.download(id=file.id, output=location)
                 return
         raise RuntimeError(
-            f"Cannot find file with name {self.filename} in google drive folder {self.folder_url}"
+            f"Cannot find file with name {self.file_path} in google drive folder {self.data_source}"
         )
 
 

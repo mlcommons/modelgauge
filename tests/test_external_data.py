@@ -21,7 +21,9 @@ def test_gdrive_data_download(mocker):
         return_value=[GDriveFileToDownload("file_id", "file.csv")],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(folder_url="http://example_drive.com", filename="file.csv")
+    gdrive_data = GDriveData(
+        data_source="http://example_drive.com", file_path="file.csv"
+    )
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
         url="http://example_drive.com", skip_download=True, quiet=True
@@ -40,12 +42,30 @@ def test_gdrive_correct_file_download(mocker):
         ],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(folder_url="http://example_drive.com", filename="file.csv")
+    gdrive_data = GDriveData(
+        data_source="http://example_drive.com", file_path="file.csv"
+    )
     gdrive_data.download("test.tgz")
     mock_download_folder.assert_called_once_with(
         url="http://example_drive.com", skip_download=True, quiet=True
     )
     mock_download_file.assert_called_once_with(id="file_id3", output="test.tgz")
+
+
+def test_gdrive_download_file_with_relative_path(mocker):
+    mock_download_folder = mocker.patch(
+        "gdown.download_folder",
+        return_value=[
+            GDriveFileToDownload("file_id", "file.csv"),
+            GDriveFileToDownload("nested_file_id", "sub_folder/file.csv"),
+        ],
+    )
+    mock_download_file = mocker.patch("gdown.download")
+    gdrive_data = GDriveData(
+        data_source="http://example_drive.com", file_path="sub_folder/file.csv"
+    )
+    gdrive_data.download("test.tgz")
+    mock_download_file.assert_called_once_with(id="nested_file_id", output="test.tgz")
 
 
 def test_gdrive_nonexistent_filename(mocker):
@@ -58,7 +78,9 @@ def test_gdrive_nonexistent_filename(mocker):
         ],
     )
     mock_download_file = mocker.patch("gdown.download")
-    gdrive_data = GDriveData(folder_url="http://example_drive.com", filename="file.csv")
+    gdrive_data = GDriveData(
+        data_source="http://example_drive.com", file_path="file.csv"
+    )
     with pytest.raises(RuntimeError, match="Cannot find file"):
         gdrive_data.download("test.tgz")
 
