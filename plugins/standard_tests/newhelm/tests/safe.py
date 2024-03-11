@@ -5,6 +5,7 @@ from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
+from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
