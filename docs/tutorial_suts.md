@@ -96,10 +96,7 @@ poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
 
 [Demo: DemoYesNoSUT](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
 
-We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.
-
-
-Furthermore, we require the user provide their secret API key in order to access this state of the art SUT. To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
+We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
 
 ### Secrets
 
@@ -129,11 +126,11 @@ def __init__(self, api_key: DemoApiKey):
     self.api_key = api_key.value
 ```
 
-As we are defining a custom `__init__` the `@record_init` decorator is needed to ensure someone can reconstruct your SUT using the same arguments as previous run. This recording will automatically strip out the secret value, and leave only the `DemoApiKey` class itself.
+Because we are defining a custom `__init__`, the `@record_init` decorator is needed to ensure someone can reconstruct your SUT using the same arguments as previous run. This recording will automatically strip out the secret value, and leave only the `DemoApiKey` class itself.
 
-The `.value` property has the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
+The `.value` property on `RequiredSecret` returns the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
 
-Finally, when we register an instance of the SUT, we need to specify what secret we need:
+Finally, when we register an instance of the SUT, we need to specify which secret we need:
 
 ```py
 SUTS.register("demo_random_words", DemoRandomWords, InjectSecret(DemoApiKey))
@@ -145,6 +142,33 @@ When running from the command line, NewHELM will (by default) read the `config/s
 
 Requests to the `RandomWords` API take the following arguments:
 
-* source_text: "All of the text from the prompt.",
-* desired_words: "How many words to return per completion.",
-* num_completions": "How many completions to create for this request."
+* source_text: All of the text from the prompt.
+* num_words_desired: How many words to return per completion.
+* num_completions: How many completions to create for this request.
+
+The API returns a list of strings, one for each requested completion. We can create a native representation of this API with:
+
+```py
+class DemoRandomWordsRequest(BaseModel):
+    source_text: str
+    num_words_desired: int
+    num_completions: int
+
+class DemoRandomWordsResponse(BaseModel):
+    completions: Sequence[str]
+```
+
+We've previously seen how Tests pass the Prompt text into the SUT. However, Tests can also provide configuration for many other parameters a SUT might want via `SUTOptions`. For example the values `prompt.options.max_tokens` and `prompt.options.num_completions` correspond well to the arguments in the `RandomWords` API. When defining your native representation, we request that you pass through all values in `SUTOptions` to your SUT that your SUT can use:
+
+```py
+def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
+    return DemoRandomWordsRequest(
+        source_text=prompt.text,
+        num_words_desired=prompt.options.max_tokens,
+        num_completions=prompt.options.num_completions,
+    )
+```
+
+## Adding your own SUT
+
+NewHELM makes adding your own SUT as easy as creating a new file in the right directory. To learn how that works, see the [plugins](plugins.md) tutorial.
