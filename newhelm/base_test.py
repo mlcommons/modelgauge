@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Mapping
+from typing import Dict, Generic, List, Mapping, TypeVar
 
 from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
@@ -51,7 +51,11 @@ class Result(BaseModel):
     value: float
 
 
-class BasePromptResponseTest(BaseTest, ABC):
+# All ResultTypes should be Pydantic objects.
+ResultType = TypeVar("ResultType", bound=BaseModel)
+
+
+class BasePromptResponseTest(BaseTest, ABC, Generic[ResultType]):
     """This is the base class for all tests that are single turn."""
 
     @abstractmethod
@@ -75,6 +79,6 @@ class BasePromptResponseTest(BaseTest, ABC):
         pass
 
     @abstractmethod
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
-        """Combine the measurements for each TestItem into a list of Results."""
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> ResultType:
+        """Combine the measurements for each TestItem into a test specific ResultType."""
         pass
