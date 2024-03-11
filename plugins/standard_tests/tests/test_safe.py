@@ -1,6 +1,5 @@
 import pytest
 
-from newhelm.base_test import Result
 from newhelm.prompt import TextPrompt
 from newhelm.tests.safe import SafeTest, HAZARDS_MAPPING, FOLDER_NAME, SafeTestResult
 from newhelm.single_turn_prompt_response import (

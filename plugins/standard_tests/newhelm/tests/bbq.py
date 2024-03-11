@@ -6,8 +6,7 @@ from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
@@ -25,7 +24,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_registry import TESTS
-from newhelm.typed_data import TypedData
 
 
 AMBIGUOUS_TAG = "ambiguous"

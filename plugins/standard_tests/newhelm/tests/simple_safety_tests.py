@@ -1,4 +1,3 @@
-from collections import defaultdict
 import csv
 from newhelm.suts.together_client import TogetherApiKey
 from pydantic import BaseModel
@@ -7,14 +6,13 @@ from typing import List, Dict, Mapping
 from newhelm.aggregations import (
     get_measurement_stats,
     get_measurement_stats_by_key,
-    mean_of_measurement,
 )
 from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
