@@ -96,24 +96,17 @@ poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
 
 [Demo: DemoYesNoSUT](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
 
-We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and hosted it with the following inputs:
+We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.
 
-```json
-{
-    "source_text": "All of the text from the prompt.",
-    "desired_words": "How many words to return per completion.",
-    "num_completions": "How many completions to create for this request."
-}
-```
 
 Furthermore, we require the user provide their secret API key in order to access this state of the art SUT. To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
 
 ### Secrets
 
-NewHELM strives to handle secrets in a way that balances several competing desires:
+To make sure only authorized users access our SUT, the `RandomWords` API requires the user to provide their secret API key. NewHELM strives to handle secrets in a way that balances several competing desires:
 
-1. Secrets should stay secret to a given user.
-1. It should be very clear what secrets are needed for a given run.
+* Secrets should stay secret to a given user.
+* It should be very clear what secrets are needed for a given run.
 
 To get started, we first need to define a wrapper for our new kind of secret:
 
@@ -126,7 +119,7 @@ class DemoApiKey(RequiredSecret):
         )
 ```
 
-This code is giving a name to our new secret (`demo.api_key`) and providing instructions for what a user should do if they don't already have a secret value. As we inherited from `RequiredSecret` we are saying that code using `DemoApiKey` will fail without the secret value. If the secret was just nice to have, we could have used `OptionalSecret` instead.
+This code is giving a name to our new secret (`demo.api_key`) and providing instructions for what a user should do if they don't already have a secret value. As we inherited from `RequiredSecret` we are also saying that code using `DemoApiKey` will fail without the secret value. If the secret was just nice to have, we could have used `OptionalSecret` instead.
 
 Secrets should be passed into a SUT's `__init__` function:
 
@@ -140,10 +133,18 @@ As we are defining a custom `__init__` the `@record_init` decorator is needed to
 
 The `.value` property has the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
 
-Finally, when we register an instance of the SUT to make it accessible via the command line, we need to specify what secret we need:
+Finally, when we register an instance of the SUT, we need to specify what secret we need:
 
 ```py
 SUTS.register("demo_random_words", DemoRandomWords, InjectSecret(DemoApiKey))
 ```
 
+When running from the command line, NewHELM will (by default) read the `config/secrets.toml` file and look for the value matching the `DemoApiKey`.
+
 ### SUTOptions
+
+Requests to the `RandomWords` API take the following arguments:
+
+* source_text: "All of the text from the prompt.",
+* desired_words: "How many words to return per completion.",
+* num_completions": "How many completions to create for this request."
