@@ -12,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
 )
+from newhelm.typed_data import TypedData
 
 
 class TestMetadata(BaseModel):
@@ -82,3 +83,15 @@ class BasePromptResponseTest(BaseTest, ABC, Generic[ResultType]):
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> ResultType:
         """Combine the measurements for each TestItem into a test specific ResultType."""
         pass
+
+
+class TestResult(TypedData):
+    """Container for plugin defined Test result data.
+
+    Every Test can return data however it wants.
+    Since you need to understand what Test ran in order to interpret
+    the results, you can use `to_instance` to get back to the original form.
+    """
+
+    # Convince pytest to ignore this class.
+    __test__ = False

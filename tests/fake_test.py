@@ -1,4 +1,6 @@
 from typing import Dict, List, Mapping
+
+from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.base_test import BasePromptResponseTest, Result, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
@@ -20,7 +22,11 @@ def fake_test_item(text):
     )
 
 
-class FakeTest(BasePromptResponseTest):
+class FakeTestResult(BaseModel):
+    count_test_items: int
+
+
+class FakeTest(BasePromptResponseTest[FakeTestResult]):
     """Test that lets the user override almost all of the behavior."""
 
     @record_init
@@ -48,5 +54,5 @@ class FakeTest(BasePromptResponseTest):
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         return self.measurement
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
-        return [Result(name="count_test_items", value=len(items))]
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> FakeTestResult:
+        return FakeTestResult(count_test_items=len(items))

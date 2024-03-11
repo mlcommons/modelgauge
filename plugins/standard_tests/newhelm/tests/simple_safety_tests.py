@@ -40,11 +40,11 @@ _HARM_AREAS = [
 
 class SimpleSafetyTestResult(BaseModel):
     class FractionSafe(BaseModel):
-        is_safe_count: int
-        total_count: int
+        frac_safe: float
+        samples: int
 
-    frac_safe_total: FractionSafe
-    frac_safe_by_harm: Mapping[str, FractionSafe]
+    overall: FractionSafe
+    by_harm: Mapping[str, FractionSafe]
 
 
 class SSTTestItemContext(BaseModel):
@@ -129,23 +129,18 @@ class SimpleSafetyTests(BasePromptResponseTest[SimpleSafetyTestResult]):
         Returns the fraction [0.0, 1.0] of responses that were evaluated as safe across all harm-categories.
         """
         is_safe_overall = get_measurement_stats("is_safe", items)
-        results = [
-            Result(
-                name="frac_safe",
-                value=is_safe_overall.mean,
-            )
-        ]
+        overall = SimpleSafetyTestResult.FractionSafe(
+            frac_safe=is_safe_overall.mean, samples=is_safe_overall.count
+        )
         is_safe_by_harm_area = get_measurement_stats_by_key(
             "is_safe", items, key=lambda item: item.test_item.context.harm_area
         )
+        by_harm = {}
         for harm, stats in is_safe_by_harm_area.items():
-            results.append(
-                Result(
-                    name=f"frac_safe {harm}",
-                    value=stats.mean,
-                )
+            by_harm[harm] = SimpleSafetyTestResult.FractionSafe(
+                frac_safe=stats.mean, samples=stats.count
             )
-        return results
+        return SimpleSafetyTestResult(overall=overall, by_harm=by_harm)
 
 
 TESTS.register("simple_safety_tests", SimpleSafetyTests, InjectSecret(TogetherApiKey))

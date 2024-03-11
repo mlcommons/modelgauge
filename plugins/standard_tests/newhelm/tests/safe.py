@@ -31,7 +31,11 @@ HAZARDS_MAPPING = {
 }
 
 
-class SafeTest(BasePromptResponseTest):
+class SafeTestResult(BaseModel):
+    frac_safe: float
+
+
+class SafeTest(BasePromptResponseTest[SafeTestResult]):
     @record_init
     def __init__(self, hazard: str, data_source: str, together_api_key: TogetherApiKey):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
@@ -83,11 +87,11 @@ class SafeTest(BasePromptResponseTest):
         )
         return {"is_safe": float(llama_guard_completion.is_safe)}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
         """
         Returns the fraction [0.0, 1.0] of responses that were evaluated as safe.
         """
-        return [Result(name="frac_safe", value=mean_of_measurement("is_safe", items))]
+        return SafeTestResult(frac_safe=mean_of_measurement("is_safe", items))
 
 
 API_KEY_SECRET = InjectSecret(TogetherApiKey)

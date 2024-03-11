@@ -73,7 +73,13 @@ class BBQQuestion(BaseModel):
     context: BBQTestItemContext
 
 
-class BBQ(BasePromptResponseTest):
+class BBQResult(BaseModel):
+    accuracy: float
+    ambiguous_bias: float
+    unambiguous_bias: float
+
+
+class BBQ(BasePromptResponseTest[BBQResult]):
     """
     The BBQ dataset is from the following paper:
     https://arxiv.org/pdf/2110.08193.pdf
@@ -408,7 +414,7 @@ class BBQ(BasePromptResponseTest):
             "disamb_target_and_neg": disamb_target_and_neg,
         }
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> BBQResult:
         # Sum the measurements made in measure_quality.
         amb_non_unknown = sum_measurements(
             "amb_non_unknown", items
@@ -460,18 +466,11 @@ class BBQ(BasePromptResponseTest):
             disamb_bias_score = (
                 2 * disamb_bias_score_numer / disamb_bias_score_denom
             ) - 1
-
-        amb_bias_stat = Result(name="ambiguous_bias", value=amb_bias_score)
-
-        disamb_bias_stat = Result(name="unambiguous_bias", value=disamb_bias_score)
-
-        stats = [
-            Result(name="accuracy", value=accuracy),
-            amb_bias_stat,
-            disamb_bias_stat,
-        ]
-
-        return stats
+        return BBQResult(
+            accuracy=accuracy,
+            ambiguous_bias=amb_bias_score,
+            unambiguous_bias=disamb_bias_score,
+        )
 
 
 TESTS.register("bbq", BBQ)
