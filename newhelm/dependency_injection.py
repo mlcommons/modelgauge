@@ -1,4 +1,4 @@
-from typing import Any, Dict, Mapping, Sequence, Tuple
+from typing import Any, Dict, Mapping, Sequence, Tuple, List
 from newhelm.general import get_class
 from newhelm.secret_values import (
     BaseSecret,
@@ -11,28 +11,40 @@ from newhelm.secret_values import (
 
 def inject_dependencies(
     args: Sequence[Any], kwargs: Mapping[str, Any], secrets: RawSecrets
-) -> Tuple[Sequence[Any], Mapping[str, Any]]:
+) -> Tuple[Sequence[Any], Mapping[str, Any], List[Any]]:
     """Replace any arg or kwarg injectors with their concrete values."""
-    replaced_args = []
-    missing_secrets = []
-    for arg in args:
+
+    def process_item(item, secrets):
+        """Process an individual item (arg or kwarg)."""
         try:
-            replaced_args.append(_replace_with_injected(arg, secrets))
+            replaced_item = _replace_with_injected(item, secrets)
+            if isinstance(item, (Injector, SerializedSecret)):
+                used_secrets.append(replaced_item)
+            return replaced_item, None
         except MissingSecretValues as e:
-            missing_secrets.append(e)
+            return item, e
         # TODO Catch other kinds of missing dependencies
 
-    replaced_kwargs: Dict[str, Any] = {}
-    for key, arg in kwargs.items():
-        try:
-            replaced_kwargs[key] = _replace_with_injected(arg, secrets)
-        except MissingSecretValues as e:
-            missing_secrets.append(e)
-        # TODO Catch other kinds of missing dependencies
+    replaced_args, missing_secrets = [], []
+    used_secrets = []
+
+    for arg in args:
+        replaced_arg, missing = process_item(arg, secrets)
+        replaced_args.append(replaced_arg)
+        if missing:
+            missing_secrets.append(missing)
+
+    replaced_kwargs = {}
+    for key, kwarg in kwargs.items():
+        replaced_kwarg, missing = process_item(kwarg, secrets)
+        replaced_kwargs[key] = replaced_kwarg
+        if missing:
+            missing_secrets.append(missing)
+
     if missing_secrets:
         raise MissingSecretValues.combine(missing_secrets)
 
-    return replaced_args, replaced_kwargs
+    return replaced_args, replaced_kwargs, used_secrets
 
 
 def _replace_with_injected(value, secrets: RawSecrets):

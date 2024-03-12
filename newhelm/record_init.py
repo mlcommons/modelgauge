@@ -21,7 +21,7 @@ class InitializationRecord(BaseModel):
     def recreate_object(self, *, secrets: RawSecrets = {}):
         """Redoes the init call from this record."""
         cls = getattr(importlib.import_module(self.module), self.qual_name)
-        args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
+        args, kwargs, _ = inject_dependencies(self.args, self.kwargs, secrets=secrets)
         return cls(*args, **kwargs)
 
 

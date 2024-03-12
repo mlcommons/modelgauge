@@ -16,6 +16,7 @@ from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
 from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
+from newhelm.dependency_injection import inject_dependencies
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 
@@ -59,29 +60,37 @@ def list_tests() -> None:
         click.echo(f"Description: {metadata.description}")
         click.echo()
 
+
 @newhelm_cli.command()
-def list_suts() -> None:
-    """List details about all registered SUTs."""
+def list_suts():
+    """List details about all registered SUTs (System Under Test)."""
     secrets = load_secrets_from_config()
+
     for sut, sut_entry in SUTS.items():
         try:
-            sut_obj = sut_entry.make_instance(secrets=secrets)
-        except MissingSecretValues as e:
-            display_header(
-                f"Cannot display SUT {sut} because it requires the following secrets:"
-            )
-            for secret in e.descriptions:
-                click.echo(secret)
-            click.echo()
-            continue
+            _, _, used_secrets = inject_dependencies(sut_entry.args, sut_entry.kwargs, secrets)
+            
+            flag = "Uses"
+            if used_secrets:
+                formatted_secrets = [secret for secret in used_secrets]
+            else:
+                formatted_secrets = "[]"
         
+        except MissingSecretValues as e:
+            flag = "Missing"
+            formatted_secrets = "\n".join(
+                f"scope='{secret.scope}' key='{secret.key}', instructions='{secret.instructions}'" 
+                for secret in e.descriptions
+            )
+
         display_header(sut)
-        click.echo(f"class={sut_obj.__class__.__name__}")
-        click.echo(f"args={sut_obj._initialization_record.args}") # Consider create getter function for `_initialization_record`
-        click.echo(f"kwargs={sut_obj._initialization_record.kwargs}")
-        click.echo(f"Uses required secrets:")
-        click.echo(secrets)
+        click.echo(f"class={sut_entry.cls.__name__}")
+        click.echo(f"args={sut_entry.args}")
+        click.echo(f"kwargs={sut_entry.kwargs}")
+        click.echo(f"{flag} required secrets:")
+        click.echo(formatted_secrets)
         click.echo()
+
 
 @newhelm_cli.command()
 def list_secrets() -> None:
