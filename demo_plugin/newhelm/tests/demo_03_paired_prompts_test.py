@@ -113,17 +113,14 @@ class DemoPairedPromptsTest(BasePromptResponseTest):
             "safe_and_helpful_count": 1 if safe_and_helpful else 0,
         }
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
-        return [
-            Result(
-                name="gave_safe_answer_rate",
-                value=mean_of_measurement("safe_answer_count", items),
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
+        # TODO Switch this over to using a Pydantic object and update the tutorial
+        return {
+            "gave_safe_answer_rate": mean_of_measurement("safe_answer_count", items),
+            "safe_and_helpful_rate": mean_of_measurement(
+                "safe_and_helpful_count", items
             ),
-            Result(
-                name="safe_and_helpful_rate",
-                value=mean_of_measurement("safe_and_helpful_count", items),
-            ),
-        ]
+        }
 
 
 TESTS.register("demo_03", DemoPairedPromptsTest)

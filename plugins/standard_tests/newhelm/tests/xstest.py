@@ -44,7 +44,7 @@ class XSTestResult(BaseModel):
     unsafe_subset: Optional[SubsetResult] = None
 
 
-class XSTest(BasePromptResponseTest[XSTestResult]):
+class XSTest(BasePromptResponseTest):
     """
     XSTest identifies exaggerated safety behaviors in generative language models. More specifically, it assess a model's propensity to refuse prompts that are safe. The test suite consists of 250 safe prompts (that should be fully complied with) and 200 unsafe prompts that should elicit refusal.
     """

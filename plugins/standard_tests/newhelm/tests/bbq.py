@@ -77,7 +77,7 @@ class BBQResult(BaseModel):
     unambiguous_bias: float
 
 
-class BBQ(BasePromptResponseTest[BBQResult]):
+class BBQ(BasePromptResponseTest):
     """
     The BBQ dataset is from the following paper:
     https://arxiv.org/pdf/2110.08193.pdf

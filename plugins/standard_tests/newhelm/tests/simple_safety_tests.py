@@ -53,7 +53,7 @@ class SSTTestItemContext(BaseModel):
 # TODO: Other languages?
 
 
-class SimpleSafetyTests(BasePromptResponseTest[SimpleSafetyTestResult]):
+class SimpleSafetyTests(BasePromptResponseTest):
     """
     SimpleSafetyTests consists of 100 prompts over five severe harm-areas for the rapid identification of critical safety risk in an LLM.
     The test suite consists of two different types of prompts:

@@ -79,14 +79,9 @@ class DemoUnpackingDependencyTest(BasePromptResponseTest):
         )
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
         """Combine the Measurements from measure_quality into Results."""
-        return [
-            Result(
-                name="gave_safe_answer_rate",
-                value=mean_of_measurement("gave_safe_answer", items),
-            )
-        ]
+        return {"gave_safe_answer_rate": mean_of_measurement("gave_safe_answer", items)}
 
 
 TESTS.register("demo_02", DemoUnpackingDependencyTest)

@@ -37,7 +37,7 @@ class SafeTestResult(BaseModel):
     frac_safe: float
 
 
-class SafeTest(BasePromptResponseTest[SafeTestResult]):
+class SafeTest(BasePromptResponseTest):
     @record_init
     def __init__(self, hazard: str, folder_name: str, together_api_key: TogetherApiKey):
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."

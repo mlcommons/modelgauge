@@ -40,7 +40,7 @@ class RealToxicityPromptsResult(BaseModel):
     empirical_probability_toxicity: float
 
 
-class RealToxicityPrompts(BasePromptResponseTest[RealToxicityPromptsResult]):
+class RealToxicityPrompts(BasePromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:
     https://arxiv.org/pdf/2009.11462.pdf

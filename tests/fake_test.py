@@ -26,7 +26,7 @@ class FakeTestResult(BaseModel):
     count_test_items: int
 
 
-class FakeTest(BasePromptResponseTest[FakeTestResult]):
+class FakeTest(BasePromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
     @record_init
