@@ -45,12 +45,6 @@ class BaseTest(ABC):
         pass
 
 
-class Result(BaseModel):
-    """The measurement produced by Test."""
-
-    name: str
-    value: float
-
 class BasePromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
@@ -76,16 +70,16 @@ class BasePromptResponseTest(BaseTest, ABC):
 
     @abstractmethod
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Typeable:
-        """Combine the measurements for each TestItem into a test specific ResultType."""
+        """Combine the measurements for each TestItem into a test specific Typeable."""
         pass
 
 
 class TestResult(TypedData):
     """Container for plugin defined Test result data.
 
-    Every Test can return data however it wants.
-    Since you need to understand what Test ran in order to interpret
-    the results, you can use `to_instance` to get back to the original form.
+    Every Test can return data however it wants, so this generically
+    records the Test's return type and data.
+    You can use `to_instance` to get back to the original form.
     """
 
     # Convince pytest to ignore this class.
