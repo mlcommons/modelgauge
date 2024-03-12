@@ -169,30 +169,6 @@ def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
     )
 ```
 
-## Reusing SUT classes
-
-[Demo: DemoConstantSUT](../demo_plugin/newhelm/suts/demo_03_sut_with_args.py)
-
-Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, NewHELM allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
-
-```py
-class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
-    @record_init
-    def __init__(self, response_text: str):
-        self.response_text = response_text
-```
-
-We can then register multiple version of this SUT:
-
-```py
-# Everything after the class name gets passed to the class.
-SUTS.register("demo_always_angry", DemoConstantSUT, "I hate you!")
-# You can use kwargs if you want.
-SUTS.register("demo_always_sorry", DemoConstantSUT, response_text="Sorry, I can't help with that.")
-```
-
-Reminder: when using NewHELM as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.
-
 ## Adding your own SUT
 
 NewHELM makes adding your own SUT as easy as creating a new file in the right directory. To learn how that works, see the [plugins](plugins.md) tutorial.
