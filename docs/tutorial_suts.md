@@ -94,7 +94,7 @@ poetry run python newhelm/main.py run-test --test demo_01 --sut demo_yes_no
 
 ## SUTs that call an API
 
-[Demo: DemoYesNoSUT](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
+[Demo: DemoRandomWords](../demo_plugin/newhelm/suts/demo_02_secrets_and_options_sut.py)
 
 We expect the most common way to define a SUT is as a wrapper around an existing API. To explore this kind of SUT implementation, lets assume we've recently created a `RandomWords` SUT and set up an API for users to call it.  To implement this SUT in NewHELM we'll need to explore two new features: Secrets and SUT Options.
 
