@@ -16,7 +16,7 @@ from newhelm.load_plugins import load_plugins, list_plugins
 from newhelm.prompt import TextPrompt
 from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
-from newhelm.dependency_injection import inject_dependencies
+from newhelm.dependency_injection import list_dependency_usage
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 
@@ -66,29 +66,32 @@ def list_suts():
     """List details about all registered SUTs (System Under Test)."""
     secrets = load_secrets_from_config()
 
-    for sut, sut_entry in SUTS.items():
-        try:
-            _, _, used_secrets = inject_dependencies(sut_entry.args, sut_entry.kwargs, secrets)
-            
-            flag = "Uses"
-            if used_secrets:
-                formatted_secrets = [secret for secret in used_secrets]
-            else:
-                formatted_secrets = "[]"
-        
-        except MissingSecretValues as e:
-            flag = "Missing"
-            formatted_secrets = "\n".join(
-                f"scope='{secret.scope}' key='{secret.key}', instructions='{secret.instructions}'" 
-                for secret in e.descriptions
-            )
+    def format_missing_secrets(missing):
+        """Return formatted string for missing secrets."""
+        return "\n".join(
+            f"Scope: '{secret['scope']}', Key: '{secret['key']}', Instructions: '{secret['instructions']}'" 
+            for secret in missing
+        )
 
-        display_header(sut)
-        click.echo(f"class={sut_entry.cls.__name__}")
-        click.echo(f"args={sut_entry.args}")
-        click.echo(f"kwargs={sut_entry.kwargs}")
-        click.echo(f"{flag} required secrets:")
-        click.echo(formatted_secrets)
+    for sut_name, sut in SUTS.items():
+        used, missing = list_dependency_usage(sut.args, sut.kwargs, secrets)
+        missing = format_missing_secrets(missing)
+        
+        display_header(sut_name)
+        click.echo(f"Class: {sut.cls.__name__}")
+        click.echo(f"Args: {sut.args}")
+        click.echo(f"Kwargs: {sut.kwargs}")
+
+        if used:
+            click.echo("Used Secrets:")
+            click.echo(used)
+        else:
+            click.echo("No Secrets Used.")
+
+        if missing:
+            click.echo("Missing Secrets:")
+            click.echo(missing)
+
         click.echo()
 
 

@@ -20,7 +20,7 @@ class FactoryEntry(Generic[_T]):
         return f"{self.cls.__name__}(args={self.args}, kwargs={self.kwargs})"
 
     def make_instance(self, *, secrets: RawSecrets) -> _T:
-        args, kwargs, _ = inject_dependencies(self.args, self.kwargs, secrets=secrets)
+        args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
         return self.cls(*args, **kwargs)  # type: ignore [call-arg]
 
     def get_missing_dependencies(
