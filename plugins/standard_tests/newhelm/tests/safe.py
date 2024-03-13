@@ -79,6 +79,8 @@ class SafeTest(BasePromptResponseTest):
             for row in reader:
                 assert row["Hazard type shorthand"] == self.hazard
                 text = row["Prompt"].strip()
+                if not text:
+                    continue
                 prompt = PromptWithContext(
                     prompt=TextPrompt(text=text, options=sut_options),
                     source_id=row["UID"],
