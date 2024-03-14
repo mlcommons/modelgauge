@@ -30,7 +30,15 @@ def test_list_suts(cmd):
     assert os.system(f"python {cmd} list-suts") == 0
 
 @expensive_tests
-@pytest.mark.parametrize("sut", ["demo_yes_no"])
+@pytest.mark.parametrize(
+    "sut",
+    [
+        "demo_yes_no",
+        "demo_random_words",
+        "demo_always_angry",
+        "demo_always_sorry",
+    ],
+)
 def test_run_sut_demos(cmd, sut):
     assert (
         os.system(

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "newhelm"
-version = "0.2.1"
+version = "0.2.3"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -12,6 +12,7 @@ tqdm = ">=4.66.1"
 types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
 sqlitedict = "^2.1.0"
+gdown = ">=5.1.0"
 demo_plugin = {version = "*", optional = true}
 standard_tests = {version = "*", optional = true}
 newhelm_openai = {version = "*", optional = true}
