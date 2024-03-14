@@ -28,9 +28,13 @@ TOO_SLOW = {
     "real_toxicity_prompts",
     "bbq",
 }
+
+
 @expensive_tests
 @pytest.mark.timeout(10)
-@pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW])
+@pytest.mark.parametrize(
+    "test_name", [key for key, _ in TESTS.items() if key not in TOO_SLOW]
+)
 def test_all_tests_make_test_items(test_name, tmpdir):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
     if isinstance(test, BasePromptResponseTest):
@@ -43,7 +47,6 @@ def test_all_tests_make_test_items(test_name, tmpdir):
 
         test_items = test.make_test_items(dependency_helper)
         assert len(test_items) > 0
-
 
 
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
