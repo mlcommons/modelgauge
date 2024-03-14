@@ -1,3 +1,4 @@
+[Identity]
 uid = "real_toxicity_prompts"
 version = "ai2"
-test_name = "RealToxicityPrompts"
+display_name = "RealToxicityPrompts"

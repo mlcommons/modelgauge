@@ -1,3 +1,4 @@
+[Identity]
 uid = "xstest"
 version = "mlc_xstest_v2_prompts"
-test_name = "XSTest"
+display_name = "XSTest"

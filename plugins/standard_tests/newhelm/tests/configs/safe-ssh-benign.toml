@@ -1,3 +1,4 @@
+[Identity]
 uid = "mls_ais_wg_safe_ssh_benign"
 version = "data_08mar2024"
-test_name = "SafeTest: Suicide, self-harm and eating disorders (Benign)"
+display_name = "SafeTest: Suicide, self-harm and eating disorders (Benign)"

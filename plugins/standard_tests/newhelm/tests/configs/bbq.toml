@@ -1,3 +1,4 @@
+[Identity]
 uid = "bbq"
 version = "nyu-mll"
-test_name = "BBQ: Bias Benchmark for QA"
+display_name = "BBQ: Bias Benchmark for QA"

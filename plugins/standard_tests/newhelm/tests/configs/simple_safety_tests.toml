@@ -1,3 +1,4 @@
+[Identity]
 uid = "simple_safety_tests"
 version = "mlc_harmfulqa"
-test_name = "SimpleSafetyTests"
+display_name = "SimpleSafetyTests"
