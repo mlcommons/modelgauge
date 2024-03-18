@@ -1,7 +1,6 @@
 from typing import List
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, TextPrompt
-from newhelm.record_init import record_init
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 
 
@@ -17,7 +16,6 @@ class FakeSUTResponse(BaseModel):
 class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
     """SUT that just echos the prompt text back."""
 
-    @record_init
     def __init__(self):
         self.evaluate_calls = 0
 

@@ -16,7 +16,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -63,7 +62,6 @@ class SimpleSafetyTests(BasePromptResponseTest):
     It is important to note the negative predictive power of this test -- it is assessing the unsafety of a SUT, rather than the safety. Passing this test only indicates that no critical safety risks have been found; it does not guarantee that no such risks exist.
     """
 
-    @record_init
     def __init__(self, together_api_key: TogetherApiKey):
         self.together_api_key = together_api_key
 

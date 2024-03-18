@@ -2,7 +2,6 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
-from newhelm.record_init import record_init
 from newhelm.secret_values import (
     InjectSecret,
     OptionalSecret,
@@ -82,7 +81,6 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     Documented at https://platform.openai.com/docs/api-reference/chat/create
     """
 
-    @record_init
     def __init__(self, model: str, api_key: OpenAIApiKey, org_id: OpenAIOrgId):
         self.model = model
         self.client: Optional[OpenAI] = None

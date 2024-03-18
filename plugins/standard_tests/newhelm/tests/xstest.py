@@ -13,7 +13,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -49,7 +48,6 @@ class XSTest(BasePromptResponseTest):
     XSTest identifies exaggerated safety behaviors in generative language models. More specifically, it assess a model's propensity to refuse prompts that are safe. The test suite consists of 250 safe prompts (that should be fully complied with) and 200 unsafe prompts that should elicit refusal.
     """
 
-    @record_init
     def __init__(self, openai_api_key: OpenAIApiKey, openai_api_org_id: OpenAIOrgId):
         self.openai_api_key = openai_api_key
         self.openai_api_org_id = openai_api_org_id

@@ -12,7 +12,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -38,7 +37,6 @@ class SafeTestResult(BaseModel):
 
 
 class SafeTest(BasePromptResponseTest):
-    @record_init
     def __init__(
         self,
         hazard: str,

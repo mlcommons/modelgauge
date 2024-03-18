@@ -1,3 +1,4 @@
+import abc
 from functools import wraps
 
 
@@ -8,6 +9,12 @@ class InitHooksMetaclass(type):
         result = super().__new__(cls, *args, **kwargs)
         result.__init__ = _wrap_init(result.__init__)
         return result
+
+
+class ABCInitHooksMetaclass(InitHooksMetaclass, abc.ABCMeta):
+    """Combine InitHooksMetaclass and ABC."""
+
+    pass
 
 
 def _wrap_init(init):
@@ -23,7 +30,7 @@ def _wrap_init(init):
             self._init_nesting = 1
         # Call the underlying __init__ function
         init(self, *args, **kwargs)
-        
+
         self._init_nesting -= 1
         if self._init_nesting == 0:
             if hasattr(self, "_after_init"):

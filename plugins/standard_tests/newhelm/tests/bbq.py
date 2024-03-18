@@ -16,7 +16,6 @@ from newhelm.multiple_choice_questions import (
 )
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -125,7 +124,6 @@ class BBQ(BasePromptResponseTest):
             )
         return dependencies
 
-    @record_init
     def __init__(self, subject: str = "all", num_in_context_examples=5):
         self.subject = subject
         self.num_in_context_examples = num_in_context_examples

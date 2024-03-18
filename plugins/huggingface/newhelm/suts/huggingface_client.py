@@ -16,7 +16,6 @@ from newhelm.concurrency import ThreadSafeWrapper
 from newhelm.general import value_or_default
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.record_init import record_init
 from newhelm.secret_values import (
     InjectSecret,
     OptionalSecret,
@@ -262,7 +261,6 @@ class HuggingFaceToken(OptionalSecret):
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
-    @record_init
     def __init__(
         self, pretrained_model_name_or_path: str, token: HuggingFaceToken, **kwargs
     ):

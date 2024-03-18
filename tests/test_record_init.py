@@ -1,21 +1,25 @@
 import pytest
+from newhelm.init_hooks import InitHooksMetaclass
 from newhelm.record_init import (
     InitializationRecord,
+    add_initialization_record,
     get_initialization_record,
-    record_init,
 )
 from newhelm.secret_values import SerializedSecret
 from tests.fake_secrets import FakeRequiredSecret
 
 
-class SomeClass:
-    @record_init
+class BeforeInit(metaclass=InitHooksMetaclass):
+    def _before_init(self, *args, **kwargs):
+        add_initialization_record(self, *args, **kwargs)
+
+
+class SomeClass(BeforeInit):
     def __init__(self, x, y, z):
         self.total = x + y + z
 
 
-class ClassWithDefaults:
-    @record_init
+class ClassWithDefaults(BeforeInit):
     def __init__(self, a=None):
         if a is None:
             self.a = "the-default"
@@ -23,19 +27,17 @@ class ClassWithDefaults:
             self.a = a
 
 
-class NoDecorator:
+class NoRecord:
     def __init__(self, a):
         self.a = a
 
 
-class ParentWithInit:
-    @record_init
+class ParentWithInit(BeforeInit):
     def __init__(self, one):
         self.one = one
 
 
 class ChildWithInit(ParentWithInit):
-    @record_init
     def __init__(self, one, two):
         super().__init__(one)
         self.two = two
@@ -144,18 +146,18 @@ def test_get_record():
 
 
 def test_get_record_no_decorator():
-    obj = NoDecorator(1)
+    obj = NoRecord(1)
     with pytest.raises(AssertionError) as err_info:
         get_initialization_record(obj)
     error_text = str(err_info.value)
     assert (
-        error_text
-        == "Class NoDecorator in module test_record_init needs to add `@record_init` to its `__init__` function to enable system reproducibility."
+        error_text == "Class NoRecord in module test_record_init needs to call "
+        "`add_initialization_record` to its `__init__` or `_after_init` "
+        "to enable system reproducibility."
     )
 
 
-class UsesSecrets:
-    @record_init
+class UsesSecrets(BeforeInit):
     def __init__(self, arg1, arg2):
         self.arg1 = arg1
         self.secret = arg2.value

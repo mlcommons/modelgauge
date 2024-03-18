@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
+from newhelm.init_hooks import ABCInitHooksMetaclass
 
-from newhelm.record_init import record_init
+from newhelm.record_init import add_initialization_record
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
@@ -26,7 +27,7 @@ class TestMetadata(BaseModel):
     __test__ = False
 
 
-class BaseTest(ABC):
+class BaseTest(ABC, metaclass=ABCInitHooksMetaclass):
     """This is the placeholder base class for all tests."""
 
     @abstractmethod
@@ -34,15 +35,8 @@ class BaseTest(ABC):
         """Return a description of the test."""
         pass
 
-    @record_init
-    def __init__(self):
-        """Ensure all Tests default to recording their initialization.
-
-        We want to ensure all Tests record their init to allow us to reconstruct
-        their behavior later. If a Test needs to define its own __init__ that is fine,
-        it should just include the decorator.
-        """
-        pass
+    def _before_init(self, *args, **kwargs):
+        add_initialization_record(self, *args, **kwargs)
 
 
 class BasePromptResponseTest(BaseTest, ABC):

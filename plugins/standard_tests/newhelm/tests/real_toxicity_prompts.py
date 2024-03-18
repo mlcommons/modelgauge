@@ -18,7 +18,6 @@ from newhelm.external_data import ExternalData, WebData
 from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import TextPrompt, SUTOptions
-from newhelm.record_init import record_init
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -50,7 +49,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
     Sentences are split in half, producing a prompt and a continuation.
     """
 
-    @record_init
     def __init__(self, perspective_developer_key: PerspectiveDeveloperKey):
         self.perspective_developer_key = perspective_developer_key
 

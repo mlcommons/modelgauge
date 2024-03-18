@@ -121,12 +121,9 @@ This code is giving a name to our new secret (`demo.api_key`) and providing inst
 Secrets should be passed into a SUT's `__init__` function:
 
 ```py
-@record_init
 def __init__(self, api_key: DemoApiKey):
     self.api_key = api_key.value
 ```
-
-Because we are defining a custom `__init__`, the `@record_init` decorator is needed to ensure someone can reconstruct your SUT using the same arguments as previous run. This recording will automatically strip out the secret value, and leave only the `DemoApiKey` class itself.
 
 The `.value` property on `RequiredSecret` returns the `str` secret itself, so we can pass that to our API: `RandomWordsClient(api_key=self.api_key)`.
 
@@ -177,7 +174,6 @@ Many APIs allow you to interact with different models as easily as switching a r
 
 ```py
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
-    @record_init
     def __init__(self, response_text: str):
         self.response_text = response_text
 ```

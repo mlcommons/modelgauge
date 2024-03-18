@@ -5,7 +5,6 @@ from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.record_init import record_init
 from newhelm.secret_values import (
     InjectSecret,
     RequiredSecret,
@@ -92,7 +91,6 @@ class TogetherCompletionsSUT(
 ):
     _URL = "https://api.together.xyz/v1/completions"
 
-    @record_init
     def __init__(self, model, api_key: TogetherApiKey):
         self.model = model
         self.api_key = api_key.value
@@ -181,7 +179,6 @@ class TogetherChatResponse(BaseModel):
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
-    @record_init
     def __init__(self, model, api_key: TogetherApiKey):
         self.model = model
         self.api_key = api_key.value
@@ -292,7 +289,6 @@ class TogetherInferenceSUT(
 ):
     _URL = "https://api.together.xyz/inference"
 
-    @record_init
     def __init__(self, model, api_key: TogetherApiKey):
         self.model = model
         self.api_key = api_key.value
