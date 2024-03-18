@@ -86,6 +86,52 @@ def test_factory_entry_str():
     assert str(entry) == "MockClass(uid=k1, args=('v1',), kwargs={'arg2': 'v2'})"
 
 
+class BadParams(TrackedObject):
+    def __init__(self, other: str, uid: str):
+        super().__init__(uid)
+        self.other = other
+
+
+def test_factory_uid_not_first():
+    factory = InstanceFactory[BadParams]()
+    with pytest.raises(AssertionError) as err_info:
+        factory.register(BadParams, "other-value", "uid-value")
+    err_text = str(err_info.value)
+    assert "test_instance_factory.BadParams" in err_text
+    assert "Arguments: ['other', 'uid']" in err_text
+
+
+class NotSetUid(TrackedObject):
+    def __init__(self, uid: str, other: str):
+        self.other = other
+
+
+def test_factory_uid_not_set():
+    factory = InstanceFactory[NotSetUid]()
+    factory.register(NotSetUid, "uid-value", "other-value")
+    with pytest.raises(AssertionError) as err_info:
+        factory.make_instance("uid-value", secrets={})
+    err_text = str(err_info.value)
+    assert "test_instance_factory.NotSetUid" in err_text
+    assert "must set member variable 'uid'." in err_text
+
+
+class BadSetUid(TrackedObject):
+    def __init__(self, uid: str, other: str):
+        super().__init__(other)
+        self.other = uid
+
+
+def test_factory_uid_set_to_different_value():
+    factory = InstanceFactory[BadSetUid]()
+    factory.register(BadSetUid, "uid-value", "other-value")
+    with pytest.raises(AssertionError) as err_info:
+        factory.make_instance("uid-value", secrets={})
+    err_text = str(err_info.value)
+    assert "test_instance_factory.BadSetUid" in err_text
+    assert "must set 'uid' to first constructor argument." in err_text
+
+
 class NeedsSecrets(TrackedObject):
     def __init__(self, uid: str, arg1: str, arg2: FakeRequiredSecret):
         super().__init__(uid)

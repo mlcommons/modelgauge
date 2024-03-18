@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import inspect
 import threading
 from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar
 from newhelm.dependency_injection import inject_dependencies
@@ -17,13 +18,28 @@ class FactoryEntry(Generic[_T]):
     args: Tuple[Any]
     kwargs: Dict[str, Any]
 
+    def __post_init__(self):
+        param_names = list(inspect.signature(self.cls).parameters.keys())
+        if not param_names or param_names[0] != "uid":
+            raise AssertionError(
+                f"Cannot create factory entry for {self.cls} as its first "
+                f"constructor argument must be 'uid'. Arguments: {param_names}."
+            )
+
     def __str__(self):
         """Return a string representation of the entry."""
         return f"{self.cls.__name__}(uid={self.uid}, args={self.args}, kwargs={self.kwargs})"
 
     def make_instance(self, *, secrets: RawSecrets) -> _T:
         args, kwargs = inject_dependencies(self.args, self.kwargs, secrets=secrets)
-        return self.cls(self.uid, *args, **kwargs)  # type: ignore [call-arg]
+        result = self.cls(self.uid, *args, **kwargs)  # type: ignore [call-arg]
+        assert hasattr(
+            result, "uid"
+        ), f"Class {self.cls} must set member variable 'uid'."
+        assert (
+            result.uid == self.uid
+        ), f"Class {self.cls} must set 'uid' to first constructor argument."
+        return result
 
     def get_missing_dependencies(
         self, *, secrets: RawSecrets
@@ -45,6 +61,7 @@ class InstanceFactory(Generic[_T]):
 
     def register(self, cls: Type[_T], uid: str, *args, **kwargs):
         """Add value to the registry, ensuring it has a unique key."""
+
         with self.lock:
             previous = self._lookup.get(uid)
             assert previous is None, (
