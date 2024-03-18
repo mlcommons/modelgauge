@@ -1,4 +1,4 @@
-from typing import Mapping, Optional
+from typing import Any, Generator, Mapping, Optional
 from pydantic import BaseModel
 import tomli
 import newhelm.tests.specifications
@@ -20,6 +20,19 @@ class TestSpecification(BaseModel):
     identity: Identity
 
     # TODO The rest of the fields.
+
+
+def load_module_toml_files(module) -> Generator[dict[str, Any]]:
+    for path in resources.files(module).iterdir():
+        if not path.is_file():
+            continue
+        if not path.name.endswith(".toml"):
+            continue
+        try:
+            with path.open("rb") as f:
+                yield tomli.load(f)
+        except Exception as e:
+            raise Exception(f"While processing {path}.") from e
 
 
 def load_test_specification_files() -> Mapping[str, TestSpecification]:
