@@ -3,7 +3,7 @@ import pytest
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.load_plugins import load_plugins
-from newhelm.record_init import get_initialization_record
+from newhelm.record_init import InitializationRecord
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
 from tests.fake_secrets import fake_all_secrets
@@ -17,8 +17,10 @@ _FAKE_SECRETS = fake_all_secrets()
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
 def test_all_tests_construct_and_record_init(test_name):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    # This throws if things are set up incorrectly.
-    get_initialization_record(test)
+    assert hasattr(
+        test, "initialization_record"
+    ), "Test is probably missing @newhelm_test() decorator."
+    assert isinstance(test.initialization_record, InitializationRecord)
 
 
 # Some tests require such large downloads / complex processing
@@ -52,5 +54,7 @@ def test_all_tests_make_test_items(test_name, tmpdir):
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
 def test_all_suts_construct_and_record_init(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)
-    # This throws if things are set up incorrectly.
-    get_initialization_record(sut)
+    assert hasattr(
+        sut, "initialization_record"
+    ), "SUT is probably missing @newhelm_sut() decorator."
+    assert isinstance(sut.initialization_record, InitializationRecord)
