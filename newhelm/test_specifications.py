@@ -1,5 +1,6 @@
-from typing import Any, Generator, Mapping, Optional
-from pydantic import BaseModel
+from collections.abc import Generator
+from typing import Any, Dict, Mapping, Optional, Tuple
+from pydantic import BaseModel, ValidationError
 import tomli
 import newhelm.tests.specifications
 from importlib import resources
@@ -20,9 +21,11 @@ class TestSpecification(BaseModel):
     identity: Identity
 
     # TODO The rest of the fields.
+    __test__ = False
 
 
-def load_module_toml_files(module) -> Generator[dict[str, Any]]:
+def load_module_toml_files(module) -> Generator[Tuple[str, dict[str, Any]], None, None]:
+    """Find all toml files in the module and return their contents."""
     for path in resources.files(module).iterdir():
         if not path.is_file():
             continue
@@ -30,27 +33,40 @@ def load_module_toml_files(module) -> Generator[dict[str, Any]]:
             continue
         try:
             with path.open("rb") as f:
-                yield tomli.load(f)
+                # `load` expects binary, but `f` is the generic IO type.
+                yield (str(path), tomli.load(f))  # type: ignore
         except Exception as e:
             raise Exception(f"While processing {path}.") from e
 
 
-def load_test_specification_files() -> Mapping[str, TestSpecification]:
-    results = {}
-    for path in resources.files(newhelm.tests.specifications).iterdir():
-        if not path.is_file():
-            continue
-        if not path.name.endswith(".toml"):
-            continue
+def load_test_specification_files(
+    override_files: Optional[Generator[Tuple[str, dict[str, Any]], None, None]] = None
+) -> Mapping[str, TestSpecification]:
+    """Return TestSpecifications in newhelm.tests.specifications keyed by uid."""
+    results: Dict[str, TestSpecification] = {}
+    if override_files is not None:
+        generator = override_files
+    else:
+        generator = load_module_toml_files(newhelm.tests.specifications)
+    for source, raw in generator:
+        if "source" in raw:
+            raise AssertionError(
+                f"File {source} should not include the "
+                f"`source` variable as that changes during packaging."
+            )
+        raw["source"] = source
         try:
-            with path.open("rb") as f:
-                raw = tomli.load(f)
-            assert "source" not in raw
-            raw["source"] = str(path)
             parsed = TestSpecification.model_validate(raw, strict=True)
-        except Exception as e:
-            raise Exception(f"While processing {path}.") from e
+        except ValidationError as e:
+            raise AssertionError(
+                f"Could not parse {source} into TestSpecification."
+            ) from e
         uid = parsed.identity.uid
-        assert uid not in results
+        if uid in results:
+            existing = results[uid].source
+            raise AssertionError(
+                f"Expected UID to be unique across files, "
+                f"but {existing} and {source} both have uid={uid}."
+            )
         results[uid] = parsed
     return results
