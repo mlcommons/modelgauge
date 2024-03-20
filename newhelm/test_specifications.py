@@ -1,7 +1,12 @@
 from collections.abc import Generator
-from typing import Any, Dict, Mapping, Optional, Tuple
-from pydantic import BaseModel, ValidationError
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from pydantic import BaseModel, Field, ValidationError
 import tomli
+from newhelm.base_test import BaseTest
+from newhelm.instance_factory import InstanceFactory
+from newhelm.secret_values import InjectSecret, get_secrets_lookup
+from newhelm.test_decorator import NEWHELM_TESTS
+from newhelm.test_registry import TESTS
 import newhelm.tests.specifications
 from importlib import resources
 
@@ -12,6 +17,14 @@ class Identity(BaseModel):
     display_name: str
 
 
+class Definition(BaseModel):
+    class_name: str
+    keyword_arguments: Mapping[str, Any] = Field(default_factory=dict)
+    secrets: Mapping[str, str] = Field(default_factory=dict)
+
+
+# TODO: Split out a `TestSpecificationFile` class so we can
+# have a clean representation for created-with-code objects.
 class TestSpecification(BaseModel):
     source: str
     """Source is NOT in the toml file.
@@ -19,6 +32,8 @@ class TestSpecification(BaseModel):
     For toml files, this is the path the file was loaded from.
     """
     identity: Identity
+    # TODO: Make this not optional.
+    definition: Optional[Definition] = None
 
     # TODO The rest of the fields.
     __test__ = False
@@ -70,3 +85,23 @@ def load_test_specification_files(
             )
         results[uid] = parsed
     return results
+
+
+def register_test_from_specifications(
+    specs: Sequence[TestSpecification], registry: InstanceFactory[BaseTest]
+):
+    lookup = get_secrets_lookup()
+    for spec in specs:
+        if spec.definition is None:
+            continue
+        cls = NEWHELM_TESTS[spec.definition.class_name]
+        secret_injectors: Dict[str, InjectSecret] = {}
+        for arg_name, secret_class_name in spec.definition.secrets.items():
+            secret_injectors[arg_name] = InjectSecret(lookup[secret_class_name])
+        registry.register(
+            cls,
+            uid=spec.identity.uid,
+            # TODO: Pass specification to all Tests here.
+            **spec.definition.keyword_arguments,
+            **secret_injectors,
+        )

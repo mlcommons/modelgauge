@@ -43,6 +43,11 @@ def get_all_secrets() -> Sequence[SecretDescription]:
     return [s.description() for s in secrets]
 
 
+def get_secrets_lookup() -> Mapping[str, Type[BaseSecret]]:
+    secrets = get_concrete_subclasses(BaseSecret)  # type: ignore
+    return {s.__name__: s for s in secrets}
+
+
 class SerializedSecret(BaseModel):
     """Hold a pointer to the secret class in a serializable form."""
 

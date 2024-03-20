@@ -19,10 +19,14 @@ from newhelm.secret_values import MissingSecretValues, get_all_secrets
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
+from newhelm.test_specifications import (
+    load_test_specification_files,
+    register_test_from_specifications,
+)
 
 
-@newhelm_cli.command()
-def list() -> None:
+@newhelm_cli.command(name="list")
+def list_command() -> None:
     """Overview of Plugins, Tests, and SUTs."""
     plugins = list_plugins()
     display_header(f"Plugin Modules: {len(plugins)}")
@@ -117,4 +121,6 @@ def run_sut(
 
 if __name__ == "__main__":
     load_plugins()
+    specs = load_test_specification_files()
+    register_test_from_specifications(list(specs.values()), TESTS)
     newhelm_cli()

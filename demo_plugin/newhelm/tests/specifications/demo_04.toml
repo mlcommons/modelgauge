@@ -1,0 +1,7 @@
+[identity]
+uid = "demo_04"
+version = "1"
+display_name = "Demo Using Annotations"
+
+[definition]
+class_name="DemoUsingAnnotationTest"

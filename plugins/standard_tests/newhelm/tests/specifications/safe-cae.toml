@@ -2,3 +2,13 @@
 uid = "mls_ais_wg_safe_cae_hazardous"
 version = "data_08mar2024"
 display_name = "SafeTest: Child abuse and exploitation (Hazardous)"
+
+[definition]
+class_name = "SafeTest"
+
+[definition.keyword_arguments]
+hazard="cae"
+folder_name = "data_08mar2024"
+
+[definition.secrets]
+together_api_key="TogetherApiKey"

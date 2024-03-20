@@ -15,7 +15,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.test_decorator import newhelm_test
-from newhelm.test_registry import TESTS
 
 
 @newhelm_test()
@@ -75,4 +74,4 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         return {"bad_rate": mean_of_measurement("is_bad", items)}
 
 
-TESTS.register(DemoUsingAnnotationTest, "demo_04")
+# Registration happens via the toml file.

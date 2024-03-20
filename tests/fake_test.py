@@ -37,7 +37,7 @@ class FakeTest(BasePromptResponseTest):
         dependencies={},
         test_items=[],
         annotators={},
-        measurement={}
+        measurement={},
     ):
         super().__init__(uid)
         self.dependencies = dependencies
