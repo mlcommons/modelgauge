@@ -49,7 +49,8 @@ def _retrying_post(url, headers, json_payload):
             424,  # Failed Dependency
             425,  # Too Early
             429,  # Too Many Requests
-        ] + list(range(500, 599)),  # Add all 5XX.
+        ]
+        + list(range(500, 599)),  # Add all 5XX.
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
