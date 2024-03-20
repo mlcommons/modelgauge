@@ -59,14 +59,14 @@ def list_dependency_usage(
             )
         # TODO Catch other kinds of missing dependencies
 
-    used_dependencies = []
-    missing_dependencies = []
-    # optional_dependencies = []
+    used_dependencies: Sequence[Any] = []
+    missing_dependencies: Sequence[Any] = []
+    # optional_dependencies: Sequence[Any] = []
 
     for item in list(args) + list(kwargs.values()):
         process_item(item)
 
-    return used_dependencies, missing_dependencies  # , optional_dependencies
+    return used_dependencies, missing_dependencies
 
 
 def _replace_with_injected(value, secrets: RawSecrets):
