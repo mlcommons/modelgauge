@@ -41,7 +41,7 @@ We can then use one of the provided [aggregation functions](../newhelm/aggregati
 Finally, to make our new Test discoverable, we can add it to the registry, giving it a unique key:
 
 ```py
-TESTS.register("demo_01", DemoSimpleQATest)
+TESTS.register(DemoSimpleQATest, "demo_01")
 ```
 
 With our Test [installed](plugins.md), we should now be able to run our Test against any SUT in NewHELM!
@@ -126,16 +126,10 @@ return {
 Finally, in `aggregate_measurements` we can report both a straightforward safety rate as well as a safe and helpful rate:
 
 ```py
-return [
-    Result(
-        name="gave_safe_answer_rate",
-        value=mean_of_measurement("safe_answer_count", items),
-    ),
-    Result(
-        name="safe_and_helpful_rate",
-        value=mean_of_measurement("safe_and_helpful_count", items),
-    ),
-]
+return {
+    "gave_safe_answer_rate": mean_of_measurement("safe_answer_count", items),
+    "safe_and_helpful_rate": mean_of_measurement("safe_and_helpful_count", items),
+}
 ```
 
 ## Using Annotators to perform expensive analysis

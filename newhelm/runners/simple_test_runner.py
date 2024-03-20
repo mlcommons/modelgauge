@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.base_test import BasePromptResponseTest, TestResult
 from newhelm.caching import BaseCache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
@@ -21,13 +21,11 @@ from newhelm.sut import PromptResponseSUT
 
 
 def run_prompt_response_test(
-    test_name: str,
     test: BasePromptResponseTest,
-    sut_name: str,
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
-    use_caching: Optional[bool] = True,
+    use_caching: bool = True,
     disable_progress_bar: bool = False,
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
@@ -40,7 +38,7 @@ def run_prompt_response_test(
     sut_cache: BaseCache
     if use_caching:
         directory = os.path.join(test_data_path, "cached_responses")
-        sut_cache = SqlDictCache(directory, sut_name)
+        sut_cache = SqlDictCache(directory, sut.uid)
     else:
         sut_cache = NoCache()
     annotators = []
@@ -62,13 +60,15 @@ def run_prompt_response_test(
     )
 
     test_items = test.make_test_items(dependency_helper)
-    if max_test_items and max_test_items < len(test_items):
-        rng = random.Random()
-        rng.seed(0)
-        test_items = rng.sample(test_items, max_test_items)
+    if max_test_items is not None:
+        assert max_test_items > 0, f"Cannot run a test using {max_test_items}."
+        if max_test_items < len(test_items):
+            rng = random.Random()
+            rng.seed(0)
+            test_items = rng.sample(test_items, max_test_items)
     test_item_records = []
     measured_test_items = []
-    desc = f"Processing TestItems for test={test_name} sut={sut_name}"
+    desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         test_item_record = _process_test_item(
             test_item, test, sut, sut_cache, annotators
@@ -80,15 +80,17 @@ def run_prompt_response_test(
                 measurements=test_item_record.measurements,
             )
         )
-    results = test.aggregate_measurements(measured_test_items)
+    test_result = TestResult.from_instance(
+        test.aggregate_measurements(measured_test_items)
+    )
     return TestRecord(
-        test_name=test_name,
+        test_name=test.uid,
         test_initialization=test_initialization,
         dependency_versions=dependency_helper.versions_used(),
-        sut_name=sut_name,
+        sut_name=sut.uid,
         sut_initialization=sut_initialization,
         test_item_records=test_item_records,
-        results=results,
+        result=test_result,
     )
 
 

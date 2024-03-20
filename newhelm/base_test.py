@@ -6,12 +6,13 @@ from newhelm.base_annotator import BaseAnnotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 
-from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     MeasuredTestItem,
     TestItem,
 )
+from newhelm.tracked_object import TrackedObject
+from newhelm.typed_data import Typeable, TypedData
 
 
 class TestMetadata(BaseModel):
@@ -25,30 +26,13 @@ class TestMetadata(BaseModel):
     __test__ = False
 
 
-class BaseTest(ABC):
+class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
 
     @abstractmethod
     def get_metadata(self) -> TestMetadata:
         """Return a description of the test."""
         pass
-
-    @record_init
-    def __init__(self):
-        """Ensure all Tests default to recording their initialization.
-
-        We want to ensure all Tests record their init to allow us to reconstruct
-        their behavior later. If a Test needs to define its own __init__ that is fine,
-        it should just include the decorator.
-        """
-        pass
-
-
-class Result(BaseModel):
-    """The measurement produced by Test."""
-
-    name: str
-    value: float
 
 
 class BasePromptResponseTest(BaseTest, ABC):
@@ -75,6 +59,18 @@ class BasePromptResponseTest(BaseTest, ABC):
         pass
 
     @abstractmethod
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
-        """Combine the measurements for each TestItem into a list of Results."""
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Typeable:
+        """Combine the measurements for each TestItem into a test specific Typeable."""
         pass
+
+
+class TestResult(TypedData):
+    """Container for plugin defined Test result data.
+
+    Every Test can return data however it wants, so this generically
+    records the Test's return type and data.
+    You can use `to_instance` to get back to the original form.
+    """
+
+    # Convince pytest to ignore this class.
+    __test__ = False

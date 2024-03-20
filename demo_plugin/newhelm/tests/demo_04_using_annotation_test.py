@@ -8,7 +8,6 @@ from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt
-from newhelm.base_test import Result
 from newhelm.record_init import record_init
 from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
@@ -31,7 +30,8 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         return {}
 
     @record_init
-    def __init__(self, num_samples=10, seed=0):
+    def __init__(self, uid: str, num_samples=10, seed=0):
+        super().__init__(uid)
         self.num_samples = num_samples
         self.seed = seed
 
@@ -70,14 +70,9 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
         is_bad = annotation.badness[0] > 0
         return {"is_bad": 1 if is_bad else 0}
 
-    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> List[Result]:
+    def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:
         """Combine the Measurements from measure_quality into Results."""
-        return [
-            Result(
-                name="bad_rate",
-                value=mean_of_measurement("is_bad", items),
-            )
-        ]
+        return {"bad_rate": mean_of_measurement("is_bad", items)}
 
 
-TESTS.register("demo_04", DemoUsingAnnotationTest)
+TESTS.register(DemoUsingAnnotationTest, "demo_04")

@@ -1,6 +1,5 @@
 import pytest
 from newhelm.annotation import Annotation
-from newhelm.base_test import Result
 from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
 from newhelm.single_turn_prompt_response import (
@@ -9,7 +8,7 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.sut import SUTCompletion, SUTResponse
 from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
-from tests.fake_test import FakeTest, fake_test_item
+from tests.fake_test import FakeTest, FakeTestResult, fake_test_item
 
 
 def test_run_prompt_response_test_output(tmpdir):
@@ -17,13 +16,11 @@ def test_run_prompt_response_test_output(tmpdir):
     item_2 = fake_test_item("2")
     fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=[item_1, item_2],
             annotators={"some-annotator": FakeAnnotator()},
             measurement=fake_measurement,
         ),
-        "some-sut",
         FakeSUT(),
         tmpdir,
     )
@@ -64,7 +61,7 @@ def test_run_prompt_response_test_output(tmpdir):
             measurements=fake_measurement,
         ),
     ]
-    assert record.results == [Result(name="count_test_items", value=2.0)]
+    assert record.result.to_instance() == FakeTestResult(count_test_items=2.0)
 
 
 def test_run_prompt_response_test_caching(tmpdir):
@@ -74,13 +71,11 @@ def test_run_prompt_response_test_caching(tmpdir):
     sut_1 = FakeSUT()
     # First run is in empty directory
     record_1 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
     )
@@ -90,13 +85,11 @@ def test_run_prompt_response_test_caching(tmpdir):
     annotator_2 = FakeAnnotator()
     sut_2 = FakeSUT()
     record_2 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_2},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_2,
         tmpdir,
     )
@@ -104,7 +97,7 @@ def test_run_prompt_response_test_caching(tmpdir):
     assert annotator_2.annotate_test_item_calls == 0
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
-    assert record_1.results == record_2.results
+    assert record_1.result == record_2.result
 
 
 def test_run_prompt_response_test_ignore_caching(tmpdir):
@@ -114,13 +107,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     sut_1 = FakeSUT()
     # First run is in empty directory, turn off caching.
     record_1 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
         use_caching=False,
@@ -129,13 +120,11 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert annotator_1.annotate_test_item_calls == 1
     # Second run even with the same objects should call again.
     record_2 = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": annotator_1},
             measurement=fake_measurement,
         ),
-        "some-sut",
         sut_1,
         tmpdir,
     )
@@ -143,7 +132,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert annotator_1.annotate_test_item_calls == 2
     # Fields like timestamp and initialization differ, so ignore them.
     assert record_1.test_item_records == record_2.test_item_records
-    assert record_1.results == record_2.results
+    assert record_1.result == record_2.result
 
 
 def test_run_prompt_response_test_max_test_items(tmpdir):
@@ -151,20 +140,35 @@ def test_run_prompt_response_test_max_test_items(tmpdir):
     test_items = [fake_test_item(str(i)) for i in range(100)]
     fake_measurement = {"some-measurement": 0.5}
     record = run_prompt_response_test(
-        "some-test",
         FakeTest(
             test_items=test_items,
             annotators={"some-annotator": FakeAnnotator()},
             measurement=fake_measurement,
         ),
-        "some-sut",
         FakeSUT(),
         tmpdir,
         # Limit to just 3 test items
         max_test_items=3,
     )
     assert len(record.test_item_records) == 3
-    assert record.results == [Result(name="count_test_items", value=3.0)]
+    assert record.result.to_instance() == FakeTestResult(count_test_items=3.0)
+
+
+def test_run_prompt_response_test_max_test_items_zero(tmpdir):
+    # Lots of test items
+    test_items = [fake_test_item(str(i)) for i in range(100)]
+    with pytest.raises(AssertionError) as err_info:
+        run_prompt_response_test(
+            FakeTest(
+                test_items=test_items,
+                annotators={"some-annotator": FakeAnnotator()},
+                measurement={},
+            ),
+            FakeSUT(),
+            tmpdir,
+            max_test_items=0,
+        )
+    assert str(err_info.value) == "Cannot run a test using 0."
 
 
 def test_run_prompt_response_test_sut_exception(tmpdir):
@@ -179,13 +183,11 @@ def test_run_prompt_response_test_sut_exception(tmpdir):
 
     with pytest.raises(Exception) as err_info:
         run_prompt_response_test(
-            "some-test",
             FakeTest(
                 test_items=[item_1],
                 annotators={"some-annotator": FakeAnnotator()},
                 measurement=fake_measurement,
             ),
-            "some-sut",
             sut,
             tmpdir,
         )
@@ -208,13 +210,11 @@ def test_run_prompt_response_test_annotator_exception(tmpdir):
 
     with pytest.raises(Exception) as err_info:
         run_prompt_response_test(
-            "some-test",
             FakeTest(
                 test_items=[item_1],
                 annotators={"some-annotator": annotator},
                 measurement=fake_measurement,
             ),
-            "some-sut",
             FakeSUT(),
             tmpdir,
         )

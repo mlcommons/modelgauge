@@ -1,10 +1,13 @@
 from newhelm.suts.openai_client import OpenAIApiKey, OpenAIOrgId
 import pytest
 
-from newhelm.base_test import Result
-from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
-from newhelm.tests.xstest import XSTest, XSTestItemContext, StrMatchAnnotator
+from newhelm.tests.xstest import (
+    XSTest,
+    XSTestItemContext,
+    StrMatchAnnotator,
+    XSTestResult,
+)
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
@@ -53,10 +56,6 @@ def _make_interaction(completion_text: str) -> PromptInteraction:
     )
 
 
-def _make_result(name: str, value: float, annotator="openai_annotator") -> Result:
-    return Result(name=name, value=value)
-
-
 # I have no idea why these need mypy ignore, but they do.
 _FAKE_API_KEY = OpenAIApiKey("some-key")  # type: ignore
 _FAKE_ORG_ID = OpenAIOrgId(None)  # type: ignore
@@ -78,7 +77,7 @@ def test_make_test_items(tmpdir):
         ],
     ]
     dependency_helper = _fake_dependency_helper(tmpdir, text_prompts)
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     test_items = test.make_test_items(dependency_helper)
 
     assert len(test_items) == 2
@@ -105,16 +104,25 @@ def test_aggregate_openai_measurements():
         _make_measured_test_item(False, openai_label="Partial Refusal"),
         _make_measured_test_item(False, openai_label="Partial Refusal"),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
-    expected_results = [
-        _make_result("safe_full_refusal_rate-openai_annotator", 0.5),
-        _make_result("safe_partial_refusal_rate-openai_annotator", 0.0),
-        _make_result("safe_full_refusal_rate-string_match", 0.0),
-        _make_result("unsafe_full_refusal_rate-openai_annotator", 0.0),
-        _make_result("unsafe_partial_refusal_rate-openai_annotator", 1.0),
-        _make_result("unsafe_full_refusal_rate-string_match", 0.0),
-    ]
+    expected_results = XSTestResult.model_validate(
+        {
+            "safe_subset": {
+                "openai": {
+                    "full_refusal_rate": 0.5,
+                    "partial_refusal_rate": 0.0,
+                },
+                "str_matching": {"full_refusal_rate": 0.0, "partial_refusal_rate": 0.0},
+                "subset_size": 2,
+            },
+            "unsafe_subset": {
+                "openai": {"full_refusal_rate": 0.0, "partial_refusal_rate": 1.0},
+                "str_matching": {"full_refusal_rate": 0.0, "partial_refusal_rate": 0.0},
+                "subset_size": 2,
+            },
+        }
+    )
     assert results == expected_results
 
 
@@ -125,16 +133,25 @@ def test_aggregate_strmatch_measurements():
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
         _make_measured_test_item(False, strmatch_label="Full Refusal"),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
-    expected_results = [
-        _make_result("safe_full_refusal_rate-openai_annotator", 0.0),
-        _make_result("safe_partial_refusal_rate-openai_annotator", 0.0),
-        _make_result("safe_full_refusal_rate-string_match", 0.5),
-        _make_result("unsafe_full_refusal_rate-openai_annotator", 0.0),
-        _make_result("unsafe_partial_refusal_rate-openai_annotator", 0.0),
-        _make_result("unsafe_full_refusal_rate-string_match", 1.0),
-    ]
+    expected_results = XSTestResult.model_validate(
+        {
+            "safe_subset": {
+                "openai": {
+                    "full_refusal_rate": 0.0,
+                    "partial_refusal_rate": 0.0,
+                },
+                "str_matching": {"full_refusal_rate": 0.5, "partial_refusal_rate": 0.0},
+                "subset_size": 2,
+            },
+            "unsafe_subset": {
+                "openai": {"full_refusal_rate": 0.0, "partial_refusal_rate": 0.0},
+                "str_matching": {"full_refusal_rate": 1.0, "partial_refusal_rate": 0.0},
+                "subset_size": 2,
+            },
+        }
+    )
     assert results == expected_results
 
 
@@ -144,14 +161,15 @@ def test_no_contrast_set():
         _make_measured_test_item(True),
         _make_measured_test_item(True),
     ]
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     results = test.aggregate_measurements(measured_test_items)
-    assert all([result.name.startswith("safe") for result in results])
+    assert results.safe_subset.subset_size == 2
+    assert results.unsafe_subset is None
 
 
 def test_invalid_measurements():
     """Tests that assertion is raised for measurements without exactly one true label"""
-    test = XSTest(_FAKE_API_KEY, _FAKE_ORG_ID)
+    test = XSTest("uid", _FAKE_API_KEY, _FAKE_ORG_ID)
     test_item = _make_test_item("prompt", True)
     # Two true openai labels
     measured_test_item_conflicting_labels = MeasuredTestItem(
