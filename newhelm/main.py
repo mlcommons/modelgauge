@@ -69,14 +69,14 @@ def list_suts():
     def format_missing_secrets(missing):
         """Return formatted string for missing secrets."""
         return "\n".join(
-            f"Scope: '{secret['scope']}', Key: '{secret['key']}', Instructions: '{secret['instructions']}'" 
+            f"Scope: '{secret['scope']}', Key: '{secret['key']}', Instructions: '{secret['instructions']}'"
             for secret in missing
         )
 
     for sut_name, sut in SUTS.items():
         used, missing = list_dependency_usage(sut.args, sut.kwargs, secrets)
         missing = format_missing_secrets(missing)
-        
+
         display_header(sut_name)
         click.echo(f"Class: {sut.cls.__name__}")
         click.echo(f"Args: {sut.args}")

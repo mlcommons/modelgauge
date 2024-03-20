@@ -48,8 +48,15 @@ def list_dependency_usage(
                 used_dependencies.append(replaced_item)
         except MissingSecretValues as e:
             missing_dependencies.extend(
-                [{'scope': desc.scope, 'key': desc.key, 'instructions': desc.instructions}
-                 for desc in e.descriptions])
+                [
+                    {
+                        "scope": desc.scope,
+                        "key": desc.key,
+                        "instructions": desc.instructions,
+                    }
+                    for desc in e.descriptions
+                ]
+            )
         # TODO Catch other kinds of missing dependencies
 
     used_dependencies = []
