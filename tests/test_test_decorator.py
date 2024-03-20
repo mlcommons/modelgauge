@@ -87,3 +87,26 @@ def test_bad_signature():
                 self.arg1 = arg1
 
     assert "All Tests must have UID as the first parameter." in str(err_info.value)
+
+
+@newhelm_test()
+class DoubleRegister(SomeTest):
+    """In the module's scope."""
+
+    pass
+
+
+def test_double_register():
+    with pytest.raises(AssertionError) as err_info:
+        # Exception happens without even constructing an instance.
+        @newhelm_test()
+        class DoubleRegister(SomeTest):
+            """In the method's scope."""
+
+            pass
+
+    assert str(err_info.value) == (
+        "Found two different Tests for DoubleRegister: "
+        "<class 'tests.test_test_decorator.test_double_register.<locals>.DoubleRegister'> and "
+        "<class 'tests.test_test_decorator.DoubleRegister'>."
+    )

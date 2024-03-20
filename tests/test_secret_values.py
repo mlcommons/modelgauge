@@ -8,6 +8,7 @@ from newhelm.secret_values import (
     SecretDescription,
     SerializedSecret,
     get_all_secrets,
+    get_secrets_lookup,
 )
 
 
@@ -93,6 +94,14 @@ def test_get_all_secrets():
     # This test can be impacted by other files, so just
     # check that at least one exists.
     assert len(matching) > 1, f"Found secrets: {descriptions}"
+
+
+def test_get_secrets_lookup():
+    secrets = get_secrets_lookup()
+    # We can't know what other secrets might exist, so assert
+    # these were found.
+    assert secrets["SomeRequiredSecret"] == SomeRequiredSecret
+    assert secrets["SomeOptionalSecret"] == SomeOptionalSecret
 
 
 def test_serialize_secret():

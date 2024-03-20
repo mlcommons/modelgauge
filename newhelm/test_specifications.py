@@ -6,7 +6,6 @@ from newhelm.base_test import BaseTest
 from newhelm.instance_factory import InstanceFactory
 from newhelm.secret_values import InjectSecret, get_secrets_lookup
 from newhelm.test_decorator import NEWHELM_TESTS
-from newhelm.test_registry import TESTS
 import newhelm.tests.specifications
 from importlib import resources
 

@@ -44,6 +44,7 @@ def get_all_secrets() -> Sequence[SecretDescription]:
 
 
 def get_secrets_lookup() -> Mapping[str, Type[BaseSecret]]:
+    """Return the Secrets classes, keyed by their name."""
     secrets = get_concrete_subclasses(BaseSecret)  # type: ignore
     return {s.__name__: s for s in secrets}
 
