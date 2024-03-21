@@ -3,6 +3,7 @@ from newhelm.base_test import BaseTest
 from newhelm.sut import SUT
 from newhelm.sut_capabilities import SUTCapability
 
+
 def assert_sut_capabilities(sut: SUT, test: BaseTest):
     """Raise a MissingSUTCapabilities if `sut` can't handle `test."""
     missing = []
@@ -43,4 +44,3 @@ class MissingSUTCapabilities(AssertionError):
             f"Test {self.test_uid} cannot run on {self.sut_uid} because "
             f"it requires the following capabilities: {missing_names}."
         )
-
