@@ -20,6 +20,10 @@ newhelm_together = {version = "*", optional = true}
 newhelm_huggingface = {version = "*", optional = true}
 perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
+scikit-learn = "^1.4.1.post1"
+pandas = "^2.2.1"
+statsmodels = "^0.14.1"
+pandas-stubs = "^2.2.1.240316"
 
 [tool.poetry.group.dev.dependencies]
 demo_plugin = {path = "demo_plugin", develop = true, optional=true}
