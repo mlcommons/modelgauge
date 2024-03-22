@@ -30,7 +30,6 @@ def test_openai_chat_translate_request():
         messages=[OpenAIChatMessage(content="some-text", role="user")],
         max_tokens=100,
         n=1,
-        logprobs=False,
     )
 
 
@@ -45,6 +44,21 @@ def test_openai_chat_translate_request_logprobs():
         n=1,
         logprobs=True,
         top_logprobs=2,
+    )
+
+
+def test_openai_chat_translate_request_excessive_logprobs():
+    client = _make_client()
+    # Set value above limit of 20
+    prompt = TextPrompt(text="some-text", options=SUTOptions(top_logprobs=21))
+    request = client.translate_text_prompt(prompt)
+    assert request == OpenAIChatRequest(
+        model="some-model",
+        messages=[OpenAIChatMessage(content="some-text", role="user")],
+        max_tokens=100,
+        n=1,
+        logprobs=True,
+        top_logprobs=20,
     )
 
 

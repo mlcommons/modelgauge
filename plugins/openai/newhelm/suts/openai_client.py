@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
@@ -130,6 +130,10 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
     def _translate_request(
         self, messages: List[OpenAIChatMessage], options: SUTOptions
     ):
+        optional_kwargs: Dict[str, Any] = {}
+        if options.top_logprobs is not None:
+            optional_kwargs["logprobs"] = True
+            optional_kwargs["top_logprobs"] = min(options.top_logprobs, 20)
         return OpenAIChatRequest(
             messages=messages,
             model=self.model,
@@ -140,8 +144,7 @@ class OpenAIChat(PromptResponseSUT[OpenAIChatRequest, ChatCompletion]):
             stop=options.stop_sequences,
             temperature=options.temperature,
             top_p=options.top_p,
-            logprobs=options.top_logprobs is not None,
-            top_logprobs=options.top_logprobs,
+            **optional_kwargs,
         )
 
     def evaluate(self, request: OpenAIChatRequest) -> ChatCompletion:
