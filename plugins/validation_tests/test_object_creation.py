@@ -4,10 +4,9 @@ import pytest
 from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.load_plugins import load_plugins
-from newhelm.record_init import get_initialization_record
+from newhelm.record_init import InitializationRecord
 from newhelm.sut_registry import SUTS
 from newhelm.test_registry import TESTS
-from newhelm.test_specifications import TestSpecification, load_test_specification_files
 from tests.fake_secrets import fake_all_secrets
 from tests.utilities import expensive_tests
 
@@ -19,8 +18,10 @@ _FAKE_SECRETS = fake_all_secrets()
 @pytest.mark.parametrize("test_name", [key for key, _ in TESTS.items()])
 def test_all_tests_construct_and_record_init(test_name):
     test = TESTS.make_instance(test_name, secrets=_FAKE_SECRETS)
-    # This throws if things are set up incorrectly.
-    get_initialization_record(test)
+    assert hasattr(
+        test, "initialization_record"
+    ), "Test is probably missing @newhelm_test() decorator."
+    assert isinstance(test.initialization_record, InitializationRecord)
 
 
 def _assert_some_contain(values: Sequence[str], target: str):
@@ -28,21 +29,6 @@ def _assert_some_contain(values: Sequence[str], target: str):
         raise AssertionError(
             f"Expected '{target}' to be part of at least one of the following: {values}."
         )
-
-
-def test_plugin_test_specifications():
-    specifications = load_test_specification_files()
-    paths = [spec.source for spec in specifications.values()]
-    # Check that it loaded some plugin directories.
-    _assert_some_contain(paths, "newhelm/demo_plugin/newhelm/tests/specifications")
-    _assert_some_contain(paths, "newhelm/plugins/standard_tests")
-    # Check for a specific specification
-    assert "demo_01" in specifications
-    for uid, spec in specifications.items():
-        assert isinstance(
-            spec, TestSpecification
-        ), f"Expected {uid} to load a TestSpecification."
-        assert spec.identity.uid == uid
 
 
 # Some tests require such large downloads / complex processing
@@ -76,5 +62,7 @@ def test_all_tests_make_test_items(test_name, tmpdir):
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
 def test_all_suts_construct_and_record_init(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=_FAKE_SECRETS)
-    # This throws if things are set up incorrectly.
-    get_initialization_record(sut)
+    assert hasattr(
+        sut, "initialization_record"
+    ), "SUT is probably missing @newhelm_sut() decorator."
+    assert isinstance(sut.initialization_record, InitializationRecord)

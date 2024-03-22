@@ -5,13 +5,13 @@ from requests.adapters import HTTPAdapter, Retry
 from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.record_init import record_init
 from newhelm.secret_values import (
     InjectSecret,
     RequiredSecret,
     SecretDescription,
 )
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
+from newhelm.sut_decorator import newhelm_sut
 
 from newhelm.sut_registry import SUTS
 
@@ -42,7 +42,15 @@ def _retrying_post(url, headers, json_payload):
     retries = Retry(
         total=6,
         backoff_factor=2,
-        status_forcelist=[429, 503, 524],
+        status_forcelist=[
+            408,  # Request Timeout
+            421,  # Misdirected Request
+            423,  # Locked
+            424,  # Failed Dependency
+            425,  # Too Early
+            429,  # Too Many Requests
+        ]
+        + list(range(500, 599)),  # Add all 5XX.
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
@@ -87,12 +95,12 @@ class TogetherCompletionsResponse(BaseModel):
     object: str
 
 
+@newhelm_sut()
 class TogetherCompletionsSUT(
     PromptResponseSUT[TogetherCompletionsRequest, TogetherCompletionsResponse]
 ):
     _URL = "https://api.together.xyz/v1/completions"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model
@@ -179,10 +187,10 @@ class TogetherChatResponse(BaseModel):
     object: str
 
 
+@newhelm_sut()
 class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatResponse]):
     _URL = "https://api.together.xyz/v1/chat/completions"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model
@@ -289,12 +297,12 @@ class TogetherInferenceResponse(BaseModel):
     output: Output
 
 
+@newhelm_sut()
 class TogetherInferenceSUT(
     PromptResponseSUT[TogetherInferenceRequest, TogetherInferenceResponse]
 ):
     _URL = "https://api.together.xyz/inference"
 
-    @record_init
     def __init__(self, uid: str, model, api_key: TogetherApiKey):
         super().__init__(uid)
         self.model = model
