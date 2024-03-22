@@ -22,6 +22,8 @@ from newhelm.single_turn_prompt_response import (
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
+_PROMPT_TYPES = ["explicit", "implicit"]
+
 
 class DiscrimEvalTestItemContext(BaseModel):
     question_template_id: int
@@ -53,7 +55,7 @@ class DiscrimEvalResult(BaseModel):
 class DiscrimEval(BasePromptResponseTest):
     def __init__(self, uid: str, prompt_type: str):
         super().__init__(uid)
-        assert prompt_type in ["explicit", "implicit"], f"Invalid prompt_type"
+        assert prompt_type in _PROMPT_TYPES, f"Invalid prompt_type {prompt_type}"
         self.prompt_type = prompt_type
 
     def get_metadata(self) -> TestMetadata:
@@ -63,11 +65,12 @@ class DiscrimEval(BasePromptResponseTest):
         )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
-        return {
-            f"prompts_jsonl": WebData(
-                source_url=f"https://huggingface.co/datasets/Anthropic/discrim-eval/raw/main/{self.prompt_type}.jsonl"
-            ),
-        }
+        dependencies = {}
+        for prompt_type in _PROMPT_TYPES:
+            dependencies[prompt_type] = WebData(
+                source_url=f"https://huggingface.co/datasets/Anthropic/discrim-eval/raw/main/{prompt_type}.jsonl"
+            )
+        return dependencies
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         # Original paper's default prompt for generating decisions
@@ -76,7 +79,7 @@ class DiscrimEval(BasePromptResponseTest):
         )
 
         test_items: List[TestItem] = []
-        data_file = dependency_helper.get_local_path("prompts_jsonl")
+        data_file = dependency_helper.get_local_path(self.prompt_type)
         with open(data_file, "r") as f:
             for i, line in enumerate(f):
                 parsed_line = json.loads(line)
