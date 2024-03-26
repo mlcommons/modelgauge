@@ -34,7 +34,7 @@ class DemoYesNoResponse(BaseModel):
     text: str
 ```
 
-Note that in this example inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
+Note that in this example we inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
 
 To tell NewHELM what your native representations are, we use Python [Generics](https://mypy.readthedocs.io/en/stable/generics.html).
 
