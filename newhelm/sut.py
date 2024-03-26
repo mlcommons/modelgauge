@@ -29,8 +29,14 @@ class SUTCompletion(BaseModel):
     """All data about a single completion in the response."""
 
     text: str
-    # This is only accessible via SUT capabilities
     top_logprobs: Optional[Sequence[TopTokens]] = None
+    """For each position, list the probabilities for each of the most likely tokens.
+
+    A Test will see this field as None unless it specifies it requires
+    ProducesPerTokenLogProbabilities. SUTs that set this value must specify
+    they have the ProducesPerTokenLogProbabilities capability. This value
+    may be conditional on SUTOptions.top_logprobs being not None.
+    """
 
 
 class SUTResponse(BaseModel):
