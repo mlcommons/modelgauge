@@ -34,13 +34,22 @@ class DemoYesNoResponse(BaseModel):
     text: str
 ```
 
-Note that in this example inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
+Note that in this example we inherit from [Pydantic](https://docs.pydantic.dev/latest/)'s `BaseModel` to aid in serialization and caching. This isn't strictly necessary, but we highly recommend doing so.
 
 To tell NewHELM what your native representations are, we use Python [Generics](https://mypy.readthedocs.io/en/stable/generics.html).
 
 ```py
 class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
 ```
+
+Finally we want to tell NewHELM that this class is a SUT, and describe its capabilities:
+
+```py
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
+```
+
+We'll explore capabilities more in a later tutorial. For now we are saying that this SUT can process two kinds of prompts: Text and Chat.
 
 With that setup out of the way, we can move into the three steps mentioned earlier. First we need to translate the different kinds of Prompts into our native representation:
 
@@ -182,7 +191,7 @@ def translate_text_prompt(self, prompt: TextPrompt) -> DemoRandomWordsRequest:
 Many APIs allow you to interact with different models as easily as switching a request parameter. For example, TogetherAI and OpenAI both take the `model`'s name in the request. To handle this situation, NewHELM allows a single SUT class to be reused with different configuration. To illustrate, let's create a SUT that always returns a predefined response.
 
 ```py
-@newhelm_sut()
+@newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
 class DemoConstantSUT(PromptResponseSUT[DemoConstantRequest, DemoConstantResponse]):
     def __init__(self, uid: str, response_text: str):
         super().__init__(uid)
@@ -199,6 +208,10 @@ SUTS.register(DemoConstantSUT, "demo_always_sorry", response_text="Sorry, I can'
 ```
 
 Reminder: when using NewHELM as a library you can always skip the registration step and construct SUTs directly. Registration is only needed to make something accessible via command line.
+
+## Capabilities
+
+Coming soon!
 
 ## Adding your own SUT
 
