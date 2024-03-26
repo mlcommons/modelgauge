@@ -25,13 +25,12 @@ from newhelm.test_registry import TESTS
 
 
 HAZARDS_MAPPING = {
-    "cae": "Child abuse and exploitation",
+    "cae": "Child sexual exploitation",
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
-    "gra": "Graphic depictions of hazards",
     "hat": "Hate",
     "nvc": "Non-violent crimes",
     "sc": "Sexual content",
-    "ssh": "Suicide, self-harm and eating disorders",
+    "ssh": "Suicide & self-harm",
     "ter": "Terrorism",
     "vio": "Violent crimes",
 }
