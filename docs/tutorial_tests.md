@@ -48,7 +48,7 @@ Finally, to make our new Test discoverable, we can add it to the registry, givin
 TESTS.register(DemoSimpleQATest, "demo_01")
 ```
 
-[!Note]
+[!NOTE]
 If you are writing your own file, give the SUT a different key, as `demo_01` is used by `demo_plugin`.
 
 NewHELM's [plugin architecture](plugins.md) will automatically try to import all code in the `newhelm.tests` namespace.

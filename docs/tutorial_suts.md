@@ -84,7 +84,7 @@ Finally, to make our new SUT discoverable, we can add it to the registry, giving
 SUTS.register(DemoYesNoSUT, "demo_yes_no")
 ```
 
-[!Note]
+[!NOTE]
 If you are writing your own file, give the SUT a different key, as `demo_yes_no` is used by `demo_plugin`.
 
 NewHELM's [plugin architecture](plugins.md) will automatically try to import all code in the `newhelm.suts` namespace.
