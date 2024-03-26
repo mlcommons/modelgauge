@@ -28,9 +28,14 @@ HAZARDS_MAPPING = {
     "cae": "Child abuse and exploitation",
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
     "gra": "Graphic depictions of hazards",
+    "hat": "Hate",
+    "nvc": "Non-violent crimes",
+    "sc": "Sexual content",
     "ssh": "Suicide, self-harm and eating disorders",
     "ter": "Terrorism",
+    "vio": "Violent crimes",
 }
+_PERSONA_TYPES = ["typical", "malicious", "vulnerable"]
 
 
 class SafeTestResult(BaseModel):
@@ -45,28 +50,29 @@ class SafeTest(BasePromptResponseTest):
         hazard: str,
         folder_name: str,
         together_api_key: TogetherApiKey,
-        benign_prompts: bool = False,
+        persona_type: str = "typical",
     ):
         super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
+        assert persona_type in _PERSONA_TYPES, f"Invalid persona type {persona_type}."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
         self.folder_name = folder_name
         self.together_api_key = together_api_key
-        self.prompt_type = "hazardous" if not benign_prompts else "benign"
-        self.dependency_key = f"{self.folder_name}_{self.hazard}_{self.prompt_type}"
+        self.persona_type = persona_type
+        self.dependency_key = f"{self.folder_name}_{self.hazard}_{self.persona_type}"
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
             name=f"SafeTest",
-            description=f"Safe AI with Flexible Evaluation for {self.hazard_name} with {self.prompt_type} prompts",
+            description=f"Safe AI with Flexible Evaluation for {self.hazard_name} with {self.persona_type} prompts",
         )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             f"{self.dependency_key}": GDriveData(
                 data_source="https://drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
-                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{self.prompt_type}.csv",
+                file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{self.persona_type}-user.csv",
             ),
         }
 
@@ -112,15 +118,75 @@ class SafeTest(BasePromptResponseTest):
         return SafeTestResult(frac_safe=mean_of_measurement("is_safe", items))
 
 
-FOLDER_NAME = "data_08mar2024"
+FOLDER_NAME = "data_22mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
-# Hazardous Prompts
 TESTS.register(
     SafeTest,
     "safe-cae",
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
+)
+TESTS.register(
+    SafeTest,
+    "safe-cae-mal",
+    "cae",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
+)
+TESTS.register(
+    SafeTest,
+    "safe-cbr-mal",
+    "cbr",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
+)
+TESTS.register(
+    SafeTest,
+    "safe-hat",
+    "hat",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+)
+TESTS.register(
+    SafeTest,
+    "safe-hat-mal",
+    "hat",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
+)
+TESTS.register(
+    SafeTest,
+    "safe-nvc",
+    "nvc",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+)
+TESTS.register(
+    SafeTest,
+    "safe-nvc-mal",
+    "nvc",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
+)
+TESTS.register(
+    SafeTest,
+    "safe-sc",
+    "sc",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+)
+TESTS.register(
+    SafeTest,
+    "safe-sc-mal",
+    "sc",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
 )
 TESTS.register(
     SafeTest,
@@ -131,6 +197,14 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
+    "safe-ssh-vul",
+    "ssh",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="vulnerable",
+)
+TESTS.register(
+    SafeTest,
     "safe-ter",
     "ter",
     FOLDER_NAME,
@@ -138,40 +212,17 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-cbr",
-    "cbr",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-)
-TESTS.register(
-    SafeTest,
-    "safe-gra",
-    "gra",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-)
-# Benign prompts
-TESTS.register(
-    SafeTest,
-    "safe-cae-benign",
-    "cae",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-    benign_prompts=True,
-)
-TESTS.register(
-    SafeTest,
-    "safe-ssh-benign",
-    "ssh",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-    benign_prompts=True,
-)
-TESTS.register(
-    SafeTest,
-    "safe-ter-benign",
+    "safe-ter-mal",
     "ter",
     FOLDER_NAME,
     API_KEY_SECRET,
-    benign_prompts=True,
+    persona_type="malicious",
+)
+TESTS.register(
+    SafeTest,
+    "safe-vio-mal",
+    "vio",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_type="malicious",
 )
