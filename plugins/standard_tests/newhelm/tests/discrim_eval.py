@@ -84,7 +84,7 @@ class DiscrimEval(BasePromptResponseTest):
                     prompt=TextPrompt(
                         text=text, options=SUTOptions(max_tokens=1, echo_prompt=False)
                     ),
-                    source_id=str(i),
+                    source_id=None,
                 )
                 test_items.append(
                     TestItem(
