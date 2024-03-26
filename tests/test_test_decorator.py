@@ -11,9 +11,6 @@ class SomeTest(BaseTest):
         self.uid = uid
         self.arg1 = arg1
 
-    def get_metadata(self) -> TestMetadata:
-        raise NotImplementedError()
-
 
 def test_basic():
     result = SomeTest(1234, 2)
