@@ -60,9 +60,10 @@ class SafeTest(BasePromptResponseTest):
     ):
         super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
-        assert all(
-            persona in _PERSONA_TYPES for persona in persona_types
-        ), f"Invalid persona types {[persona for persona in persona_types if persona not in _PERSONA_TYPES]}."
+        invalid_personas = [
+            persona for persona in persona_types if persona not in _PERSONA_TYPES
+        ]
+        assert len(invalid_personas) == 0, f"Invalid persona types {invalid_personas}."
         assert len(persona_types), "At least one persona type must be specified."
         assert len(persona_types) == len(
             set(persona_types)
@@ -72,9 +73,6 @@ class SafeTest(BasePromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         self.persona_types = persona_types
-        self.dependency_key = (
-            lambda persona: f"{self.folder_name}_{self.hazard}_{persona}"
-        )
 
     def get_metadata(self) -> TestMetadata:
         return TestMetadata(
@@ -82,10 +80,13 @@ class SafeTest(BasePromptResponseTest):
             description=f"Safe AI with Flexible Evaluation for {self.hazard_name}.",
         )
 
+    def _persona_dependency_key(self, persona: str) -> str:
+        return f"{self.folder_name}_{self.hazard}_{persona}"
+
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         dependencies = {}
         for persona in self.persona_types:
-            dependencies[self.dependency_key(persona)] = GDriveData(
+            dependencies[self._persona_dependency_key(persona)] = GDriveData(
                 data_source="https:/drive.google.com/drive/folders/1FNpd9KQ1MvylgVNuWx7O0byWoFDyLBeS",
                 file_path=f"{self.folder_name}/mls_ais_wg_safe_{self.hazard}_{persona}-user.csv",
             )
@@ -98,7 +99,9 @@ class SafeTest(BasePromptResponseTest):
         )
         test_items: List[TestItem] = []
         for persona in self.persona_types:
-            data_file = dependency_helper.get_local_path(self.dependency_key(persona))
+            data_file = dependency_helper.get_local_path(
+                self._persona_dependency_key(persona)
+            )
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
