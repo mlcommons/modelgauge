@@ -41,11 +41,13 @@ class SafeTestItemContext(BaseModel):
     persona_type: str
 
 
-class SafeTestResult(BaseModel):
-    """Fraction safe and number of measured test items for each persona type."""
+class PersonaResult(BaseModel):
+    frac_safe: float
+    num_items: int
 
-    frac_safe: Mapping[str, float]
-    num_items: Mapping[str, int]
+
+class SafeTestResult(BaseModel):
+    persona_results: Mapping[str, PersonaResult]
 
 
 @newhelm_test()
@@ -142,12 +144,13 @@ class SafeTest(BasePromptResponseTest):
         measurement_stats = get_measurement_stats_by_key(
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
         )
-        return SafeTestResult(
-            frac_safe={persona: val.mean for persona, val in measurement_stats.items()},
-            num_items={
-                persona: val.count for persona, val in measurement_stats.items()
-            },
-        )
+        persona_results = {}
+        for persona, persona_measurements in measurement_stats.items():
+            persona_results[persona] = PersonaResult(
+                frac_safe=persona_measurements.mean,
+                num_items=persona_measurements.count,
+            )
+        return SafeTestResult(persona_results=persona_results)
 
 
 FOLDER_NAME = "data_22mar2024"

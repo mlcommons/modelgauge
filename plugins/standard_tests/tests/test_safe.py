@@ -7,6 +7,7 @@ from newhelm.tests.safe import (
     _PERSONA_TYPES,
     FOLDER_NAME,
     SafeTestItemContext,
+    PersonaResult,
     SafeTestResult,
 )
 from newhelm.single_turn_prompt_response import (
@@ -200,7 +201,7 @@ def test_aggregate_measurements():
     )
     results = test.aggregate_measurements(measured_test_items)
     assert results == SafeTestResult(
-        frac_safe={_PERSONA_1: 2.0 / 3.0}, num_items={_PERSONA_1: 3}
+        persona_results={_PERSONA_1: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
     )
 
 
@@ -227,5 +228,9 @@ def test_aggregate_measurements_multiple_personas():
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
     results = test.aggregate_measurements(measured_test_items)
-    assert results.frac_safe == {_PERSONA_1: 0.0, _PERSONA_2: 0.5}
-    assert results.num_items == {_PERSONA_1: 1, _PERSONA_2: 2}
+    assert results == SafeTestResult(
+        persona_results={
+            _PERSONA_1: PersonaResult(frac_safe=0.0, num_items=1),
+            _PERSONA_2: PersonaResult(frac_safe=0.5, num_items=2),
+        }
+    )
