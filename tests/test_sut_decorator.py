@@ -1,7 +1,10 @@
 import pytest
 from newhelm.record_init import InitializationRecord
 from newhelm.sut import SUT
-from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
+from newhelm.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+)
 from newhelm.sut_decorator import assert_is_sut, newhelm_sut
 
 
