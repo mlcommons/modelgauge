@@ -1,9 +1,10 @@
 from functools import wraps
 import inspect
 from typing import Sequence, Type
+from newhelm.not_implemented import is_not_implemented
 from newhelm.record_init import add_initialization_record
-from newhelm.sut import SUT
-from newhelm.sut_capabilities import SUTCapability
+from newhelm.sut import SUT, PromptResponseSUT
+from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt, SUTCapability
 
 
 def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
@@ -15,6 +16,8 @@ def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
         ), "Decorator can only be applied to classes that inherit from SUT."
         cls.capabilities = capabilities
         cls.__init__ = _wrap_init(cls.__init__)
+        if issubclass(cls, PromptResponseSUT):
+            _assert_prompt_types(cls)
         cls._newhelm_sut = True
         return cls
 
@@ -42,3 +45,21 @@ def _wrap_init(init):
 def _validate_init_signature(init):
     params = list(inspect.signature(init).parameters.values())
     assert params[1].name == "uid", "All SUTs must have UID as the first parameter."
+
+
+def _assert_prompt_types(cls: Type[PromptResponseSUT]):
+    _assert_prompt_type(cls, AcceptsTextPrompt, cls.translate_text_prompt)
+    _assert_prompt_type(cls, AcceptsChatPrompt, cls.translate_chat_prompt)
+
+
+def _assert_prompt_type(cls, capability, method):
+    accepts_text = capability in cls.capabilities
+    implements_text = not is_not_implemented(method)
+    if accepts_text and not implements_text:
+        raise AssertionError(
+            f"{cls.__name__} says it {capability.__name__}, but it does not implement {method.__name__}."
+        )
+    if not accepts_text and implements_text:
+        raise AssertionError(
+            f"{cls.__name__} implements {method.__name__}, but it does not say it {capability.__name__}."
+        )
