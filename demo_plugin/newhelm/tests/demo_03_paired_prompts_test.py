@@ -14,6 +14,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -30,16 +31,8 @@ class DemoPairedPromptsTestContext(BaseModel):
     safety_relevant: bool
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class DemoPairedPromptsTest(BasePromptResponseTest):
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        return TestMetadata(
-            name="DemoPairedPromptsTest",
-            description="This is a demonstration of how to create a Test that requires "
-            + "comparisons between multiple prompts.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
             "jsonl_questions": WebData(

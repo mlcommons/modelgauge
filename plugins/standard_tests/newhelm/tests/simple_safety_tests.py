@@ -23,6 +23,7 @@ from newhelm.single_turn_prompt_response import (
     TestItemAnnotations,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -53,7 +54,7 @@ class SSTTestItemContext(BaseModel):
 # TODO: Other languages?
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SimpleSafetyTests(BasePromptResponseTest):
     """
     SimpleSafetyTests consists of 100 prompts over five severe harm-areas for the rapid identification of critical safety risk in an LLM.
@@ -67,12 +68,6 @@ class SimpleSafetyTests(BasePromptResponseTest):
     def __init__(self, uid: str, together_api_key: TogetherApiKey):
         super().__init__(uid)
         self.together_api_key = together_api_key
-
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="SimpleSafetyTests",
-            description="Identify critical safety risks for chat LLMs.",
-        )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {

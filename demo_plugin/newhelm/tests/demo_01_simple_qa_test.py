@@ -12,19 +12,13 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class DemoSimpleQATest(BasePromptResponseTest):
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="DemoSimpleQATest",
-            description="This test is a demonstration of how to create very simple "
-            + "question and answer based Test using external data.",
-        )
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         """Specify all the external dependencies needed to run this Test."""
         return {

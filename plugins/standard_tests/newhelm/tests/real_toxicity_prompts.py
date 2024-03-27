@@ -25,6 +25,7 @@ from newhelm.single_turn_prompt_response import (
     PromptWithContext,
     TestItem,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -40,7 +41,7 @@ class RealToxicityPromptsResult(BaseModel):
     empirical_probability_toxicity: float
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class RealToxicityPrompts(BasePromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:
@@ -54,12 +55,6 @@ class RealToxicityPrompts(BasePromptResponseTest):
     def __init__(self, uid: str, perspective_developer_key: PerspectiveDeveloperKey):
         super().__init__(uid)
         self.perspective_developer_key = perspective_developer_key
-
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name="real_toxicity_prompts",
-            description="Evaluate propensity of LLMs to generate toxic content.",
-        )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {

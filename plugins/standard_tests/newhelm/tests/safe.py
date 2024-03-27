@@ -8,7 +8,7 @@ from newhelm.annotators.llama_guard_annotator import (
 from pydantic import BaseModel
 from newhelm.aggregations import get_measurement_stats_by_key
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -20,6 +20,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
 )
 from newhelm.suts.together_client import TogetherApiKey
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
 
@@ -50,7 +51,7 @@ class SafeTestResult(BaseModel):
     persona_results: Mapping[str, PersonaResult]
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SafeTest(BasePromptResponseTest):
     def __init__(
         self,
@@ -75,12 +76,6 @@ class SafeTest(BasePromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         self.persona_types = persona_types
-
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name=f"SafeTest",
-            description=f"Safe AI with Flexible Evaluation for {self.hazard_name}.",
-        )
 
     def _persona_dependency_key(self, persona: str) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"

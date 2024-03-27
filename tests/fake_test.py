@@ -12,6 +12,7 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
 )
+from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 
 
@@ -26,7 +27,7 @@ class FakeTestResult(BaseModel):
     count_test_items: int
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class FakeTest(BasePromptResponseTest):
     """Test that lets the user override almost all of the behavior."""
 
@@ -44,10 +45,6 @@ class FakeTest(BasePromptResponseTest):
         self.test_items = test_items
         self.annotators = annotators
         self.measurement = measurement
-
-    def get_metadata(self) -> TestMetadata:
-        """Return a description of the test."""
-        return TestMetadata(name="fake-test", description="fake-description")
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return self.dependencies
