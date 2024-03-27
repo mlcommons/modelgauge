@@ -1,6 +1,6 @@
 from typing import List
 from pydantic import BaseModel
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
@@ -8,7 +8,7 @@ class FakeAnnotation(BaseModel):
     sut_text: str
 
 
-class FakeAnnotator(BaseAnnotator[FakeAnnotation]):
+class FakeAnnotator(CompletionAnnotator[FakeAnnotation]):
     """Fake annotator that just returns the first completion from the SUT."""
 
     def __init__(self):

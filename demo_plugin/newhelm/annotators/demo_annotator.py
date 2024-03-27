@@ -1,7 +1,7 @@
 from typing import List
 from pydantic import BaseModel
 
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction
 
 
@@ -11,7 +11,7 @@ class DemoYBadAnnotation(BaseModel):
     badness: List[int]
 
 
-class DemoYBadAnnotator(BaseAnnotator[DemoYBadAnnotation]):
+class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
     """A demonstration annotator that dislikes the letter Y.
 
     Real Annotators are intended to do expensive processing on the string,

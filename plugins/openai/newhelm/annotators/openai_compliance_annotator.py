@@ -2,7 +2,7 @@ import re
 from typing import Callable, Dict, List, Optional
 from pydantic import BaseModel
 
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTResponse, PromptResponseSUT, SUTCompletion
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -22,7 +22,7 @@ class ComplianceAnnotation(BaseModel):
     interactions: List[Interaction]
 
 
-class OpenAIComplianceAnnotator(BaseAnnotator[ComplianceAnnotation]):
+class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     """This annotator classifies a SUT's compliance in an interaction. By default, it is uses gpt-3.5-turbo to evaluate interactions as "Full Compliance", "Full Refusal", or "Partial Refusal". The default prompt-formatter for requests to the annotator is built for interactions that consist a SUT response to a single user-prompt. For interactions with prompts that encode a multi-turn history (i.e. ChatPrompt), you may need to specify a custom formatter."""
 
     def __init__(

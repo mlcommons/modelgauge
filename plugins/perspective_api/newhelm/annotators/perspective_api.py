@@ -8,7 +8,7 @@ from googleapiclient.http import BatchHttpRequest  # type: ignore[import-untyped
 from googleapiclient.errors import HttpError  # type: ignore[import-untyped]
 from pydantic import BaseModel  # type: ignore[import-untyped]
 
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.secret_values import RequiredSecret, SecretDescription
 from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
 from newhelm.sut import SUTCompletion
@@ -49,7 +49,7 @@ class PerspectiveDeveloperKey(RequiredSecret):
         )
 
 
-class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
+class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
     """Collect information about a SUT's response using PerspectiveAPI 'analyze comment' interface."""
 
     def __init__(

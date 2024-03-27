@@ -8,7 +8,7 @@ from newhelm.annotators.openai_compliance_annotator import (
     OpenAIComplianceAnnotator,
     ComplianceAnnotation,
 )
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
 from newhelm.base_test import BasePromptResponseTest, TestMetadata
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
@@ -201,7 +201,7 @@ class XSTest(BasePromptResponseTest):
         )
 
 
-class StrMatchAnnotator(BaseAnnotator[ComplianceAnnotation]):
+class StrMatchAnnotator(CompletionAnnotator[ComplianceAnnotation]):
     """Simple annotator class that classifies SUT compliance to a prompt by string_matching. Does not distringuish between Partial and Full Refusal."""
 
     def annotate_test_item(
