@@ -4,7 +4,7 @@ import subprocess
 all_paths = pathlib.Path(__file__).parent.glob("**/pyproject.toml")
 
 for path in all_paths:
-    if '.venv' in str(path):
+    if ".venv" in str(path):
         continue
     build_command = [
         "poetry",
