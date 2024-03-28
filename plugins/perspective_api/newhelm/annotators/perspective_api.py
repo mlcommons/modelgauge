@@ -202,10 +202,10 @@ class PerspectiveAPIAnnotator(BaseAnnotator[PerspectiveAPIAnnotation]):
         return AnalyzeCommentRequest(
             # TODO: Consider what to do if text is too long.
             comment=AnalyzeCommentRequest.Comment(text=completion),
+            # TODO: Consider setting the "context" field based on the prompt's text.
             requestedAttributes=requested_attributes,
             languages=self.languages,
             # HELM sets spanAnnotations=True
-            # TODO: Consider setting the "context" field based on the prompt's text.
         )
 
     def _process_analyze_comment_response(
