@@ -51,7 +51,7 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         return self.model.evaluate(annotation_request)
 
     def translate_response(
-        self, response: TogetherCompletionsResponse
+        self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> LlamaGuardAnnotation:
         assert len(response.choices) == 1
         lines = response.choices[0].text.split()
@@ -166,6 +166,6 @@ if __name__ == "__main__":
     print("Request:", request)
     response = annotator.annotate(request)
     print("Response:", response)
-    annotation = annotator.translate_response(response)
+    annotation = annotator.translate_response(request, response)
 
     print("Annotation:", annotation)

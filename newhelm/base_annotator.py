@@ -29,5 +29,5 @@ class CompletionAnnotator(BaseAnnotator, Generic[AnnotationType]):
         pass
 
     @abstractmethod
-    def translate_response(self, response) -> AnnotationType:
+    def translate_response(self, request, response) -> AnnotationType:
         pass

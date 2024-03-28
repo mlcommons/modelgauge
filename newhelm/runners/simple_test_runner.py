@@ -148,15 +148,19 @@ def _process_test_item(
             annotations = {}
             for annotator_data in annotators:
                 annotator = annotator_data.annotator
-                request = annotator.translate_request(prompt, completion)
+                annotator_request = annotator.translate_request(prompt, completion)
                 try:
                     with annotator_data.cache as cache:
-                        response = cache.get_or_call(request, annotator.annotate)
+                        annotator_response = cache.get_or_call(
+                            annotator_request, annotator.annotate
+                        )
                 except Exception as e:
                     raise Exception(
-                        f"Exception while handling annotation for {annotator_data.key} on {interactions}"
+                        f"Exception while handling annotation for {annotator_data.key} on {response}"
                     ) from e
-                annotation = annotator.translate_response(response)
+                annotation = annotator.translate_response(
+                    annotator_request, annotator_response
+                )
                 annotations[annotator_data.key] = Annotation.from_instance(annotation)
             annotated_completions.append(
                 SUTCompletionAnnotations(completion=completion, annotations=annotations)

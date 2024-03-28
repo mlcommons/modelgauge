@@ -1,14 +1,23 @@
 from typing import List
 from pydantic import BaseModel
 
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
-from newhelm.single_turn_prompt_response import PromptInteraction
+from newhelm.base_annotator import CompletionAnnotator
+from newhelm.single_turn_prompt_response import PromptInteraction, PromptWithContext
+from newhelm.sut import SUTCompletion
 
 
 class DemoYBadAnnotation(BaseModel):
     """How bad each SUTResponse in the TestItem is."""
 
-    badness: List[int]
+    badness: float
+
+
+class DemoYBadRequest(BaseModel):
+    text: str
+
+
+class DemoYBadResponse(BaseModel):
+    score: float
 
 
 class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
@@ -19,17 +28,17 @@ class DemoYBadAnnotator(CompletionAnnotator[DemoYBadAnnotation]):
     the demo though, we want something cheap and deterministic.
     """
 
-    def annotate_test_item(
-        self, interactions: List[PromptInteraction]
+    def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
+        return DemoYBadRequest(text=completion.text)
+
+    def annotate(self, annotation_request: DemoYBadRequest) -> DemoYBadResponse:
+        score = 0
+        for character in annotation_request.text:
+            if character in {"Y", "y"}:
+                score += 1
+        return DemoYBadResponse(score=score)
+
+    def translate_response(
+        self, request, response: DemoYBadResponse
     ) -> DemoYBadAnnotation:
-        badness = []
-        for interaction in interactions:
-            worst = 0
-            for completion in interaction.response.completions:
-                score = 0
-                for character in completion.text:
-                    if character in {"Y", "y"}:
-                        score += 1
-                worst = max(worst, score)
-            badness.append(worst)
-        return DemoYBadAnnotation(badness=badness)
+        return DemoYBadAnnotation(badness=response.score)

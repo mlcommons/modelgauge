@@ -112,6 +112,8 @@ class TestItemAnnotations(BaseModel):
 
     interactions: List[PromptInteractionAnnotations]
 
+    __test__ = False
+
 
 class MeasuredTestItem(BaseModel):
     """A TestItem with its measurement of quality.

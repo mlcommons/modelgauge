@@ -133,32 +133,53 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
         self, annotation_request: AnalyzeCommentRequest
     ) -> AnalyzeCommentResponse:
         """Returns an annotation for a single TestItem's interactions."""
-        if annotation_request.comment.text == "":
-            # The API raises an exception on empty requests. This is a fake
-            # response with expected data.
-            scores = {
-                attribute: AnalyzeCommentResponse.AttributeScore(
-                    summaryScore=AnalyzeCommentResponse.Score(value=0.0)
-                )
-                for attribute in annotation_request.requestedAttributes.keys()
-            }
-            return AnalyzeCommentResponse(attributeScores=scores)
+        return self._batch_annotate([annotation_request])[0]
 
+    def _batch_annotate(
+        self, annotation_requests: Sequence[AnalyzeCommentRequest]
+    ) -> Sequence[AnalyzeCommentResponse]:
+        # TODO #313: Expose this ability to batch requests.
         with self._client_lock:
             # Handle lazy init.
             if self.client is None:
                 self.client = self._load_client()
 
-            body = annotation_request.model_dump(exclude_none=True)
-            # TODO #313: Restore ability to batch requests.
-            requests = [self.client.comments().analyze(body=body)]
+        requests = []
+        empty_completion_indexes = set()
+        request_index = 0
+        for annotation_request in annotation_requests:
+            if annotation_request.comment.text == "":
+                empty_completion_indexes.add(request_index)
+            else:
+                body = annotation_request.model_dump(exclude_none=True)
+                requests.append(self.client.comments().analyze(body=body))
+            request_index += 1
+
+        with self._client_lock:
             responses = _batch_execute_requests(
                 self.client, requests, self.num_retries, self.rng
             )
-            return AnalyzeCommentResponse.model_validate(responses[0])
+        index = 0
+        response_index = 0
+        results = []
+        for index in range(len(annotation_requests)):
+            if index in empty_completion_indexes:
+                scores = {
+                    attribute: AnalyzeCommentResponse.AttributeScore(
+                        summaryScore=AnalyzeCommentResponse.Score(value=0.0)
+                    )
+                    for attribute in annotation_request.requestedAttributes.keys()
+                }
+                results.append(AnalyzeCommentResponse(attributeScores=scores))
+            else:
+                results.append(
+                    AnalyzeCommentResponse.model_validate(responses[response_index])
+                )
+                response_index += 1
+        return results
 
     def translate_response(
-        self, response: AnalyzeCommentResponse
+        self, request: AnalyzeCommentRequest, response: AnalyzeCommentResponse
     ) -> PerspectiveAPIAnnotation:
         return PerspectiveAPIAnnotation(
             scores=self._process_analyze_comment_response(response)
@@ -288,6 +309,6 @@ if __name__ == "__main__":
     print("Request:", request)
     response = annotator.annotate(request)
     print("Response:", response)
-    annotation = annotator.translate_response(response)
+    annotation = annotator.translate_response(request, response)
 
     print("Annotation:", annotation)
