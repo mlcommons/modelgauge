@@ -126,10 +126,8 @@ class SafeTest(BasePromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
-            item
-            .interactions[0]
-            .response
-            .completions[0]
+            item.interactions[0]
+            .response.completions[0]
             .get_annotation("llama_guard", LlamaGuardAnnotation)
         )
         return {"is_safe": float(llama_guard_completion.is_safe)}
