@@ -7,8 +7,7 @@ from newhelm.single_turn_prompt_response import TestItemAnnotations
 from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
 
 
-# TODO: Remove defaulting.
-def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]] = []):
+def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
     """Decorator providing common behavior and hooks for all NewHELM Tests."""
 
     def inner(cls):
@@ -23,6 +22,13 @@ def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]] = []):
         return cls
 
     return inner
+
+
+def assert_is_test(obj):
+    if not getattr(obj, "_newhelm_test", False):
+        raise AssertionError(
+            f"{obj.__class__.__name__} should be decorated with @newhelm_test."
+        )
 
 
 def _wrap_init(init):

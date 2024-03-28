@@ -6,8 +6,7 @@ from newhelm.sut import SUT, PromptResponseSUT, SUTResponse
 from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
 
 
-# TODO: Remove defaulting.
-def newhelm_sut(capabilities: Sequence[Type[SUTCapability]] = []):
+def newhelm_sut(capabilities: Sequence[Type[SUTCapability]]):
     """Decorator providing common behavior and hooks for all NewHELM SUTs."""
 
     def inner(cls):
@@ -22,6 +21,13 @@ def newhelm_sut(capabilities: Sequence[Type[SUTCapability]] = []):
         return cls
 
     return inner
+
+
+def assert_is_sut(obj):
+    if not getattr(obj, "_newhelm_sut", False):
+        raise AssertionError(
+            f"{obj.__class__.__name__} should be decorated with @newhelm_sut."
+        )
 
 
 def _wrap_init(init):

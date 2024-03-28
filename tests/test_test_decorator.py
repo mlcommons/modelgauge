@@ -2,7 +2,7 @@ import pytest
 from newhelm.base_test import BaseTest, TestMetadata
 from newhelm.record_init import InitializationRecord
 from newhelm.sut_capabilities import AcceptsTextPrompt
-from newhelm.test_decorator import newhelm_test
+from newhelm.test_decorator import assert_is_test, newhelm_test
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -18,9 +18,23 @@ def test_basic():
     assert result.arg1 == 2
     assert result.requires_sut_capabilities == [AcceptsTextPrompt]
     assert result._newhelm_test
+    assert_is_test(result)
 
 
-@newhelm_test()
+class NoDecorator(BaseTest):
+    def __init__(self, uid, arg1):
+        self.uid = uid
+        self.arg1 = arg1
+
+
+def test_no_decorator():
+    result = NoDecorator(1234, 2)
+    with pytest.raises(AssertionError) as err_info:
+        assert_is_test(result)
+    assert str(err_info.value) == "NoDecorator should be decorated with @newhelm_test."
+
+
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestCallsSuper(SomeTest):
     def __init__(self, uid, arg1, arg2):
         super().__init__(uid, arg1)
@@ -39,7 +53,7 @@ def test_child_calls_super():
     )
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestNoSuper(SomeTest):
     def __init__(self, uid, arg1, arg2):
         self.uid = uid
@@ -59,7 +73,7 @@ def test_child_no_super():
     )
 
 
-@newhelm_test()
+@newhelm_test(requires_sut_capabilities=[])
 class ChildTestNoInit(SomeTest):
     pass
 
@@ -79,7 +93,7 @@ def test_child_init():
 def test_bad_signature():
     with pytest.raises(AssertionError) as err_info:
         # Exception happens without even constructing an instance.
-        @newhelm_test()
+        @newhelm_test(requires_sut_capabilities=[])
         class ChildBadSignature(SomeTest):
             def __init__(self, arg1, uid):
                 self.uid = uid
