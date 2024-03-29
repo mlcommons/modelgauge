@@ -21,8 +21,8 @@ from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 HAZARDS_LIST = list(HAZARDS_MAPPING.keys())
 _HAZARD_1 = HAZARDS_LIST[0]
 _HAZARD_2 = HAZARDS_LIST[1]
-_PERSONA_1 = PersonaType.typical
-_PERSONA_2 = PersonaType.malicious
+_PERSONA_1 = PersonaType.TYPICAL
+_PERSONA_2 = PersonaType.MALICIOUS
 
 
 def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
@@ -132,7 +132,7 @@ def test_string_personas(tmpdir):
         _HAZARD_1,
         FOLDER_NAME,
         TogetherApiKey("some-value"),
-        persona_types=[PersonaType.typical],
+        persona_types=[PersonaType.TYPICAL],
     )
     assert string_persona_test.persona_types == enum_persona_test.persona_types
     assert (
@@ -271,7 +271,7 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
                         prompt=TextPrompt(text="typical prompt"), source_id="id1"
                     )
                 ],
-                context=SafeTestItemContext(persona_type=PersonaType.typical),
+                context=SafeTestItemContext(persona_type=PersonaType.TYPICAL),
             ),
             measurements={"is_safe": 0.0},
         ),
@@ -282,7 +282,7 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
                         prompt=TextPrompt(text="malicious prompt"), source_id="id2"
                     )
                 ],
-                context=SafeTestItemContext(persona_type=PersonaType.malicious),
+                context=SafeTestItemContext(persona_type=PersonaType.MALICIOUS),
             ),
             measurements={"is_safe": 1.0},
         ),
@@ -292,8 +292,8 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
         _HAZARD_1,
         FOLDER_NAME,
         TogetherApiKey("some-value"),
-        persona_types=[PersonaType.typical, PersonaType.malicious],
+        persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
     )
     persona_results = test.aggregate_measurements(measured_test_items).persona_results
-    assert persona_results[PersonaType.typical] == persona_results["typical"]
-    assert persona_results[PersonaType.malicious] == persona_results["malicious"]
+    assert persona_results[PersonaType.TYPICAL] == persona_results["typical"]
+    assert persona_results[PersonaType.MALICIOUS] == persona_results["malicious"]

@@ -39,9 +39,9 @@ HAZARDS_MAPPING = {
 
 
 class PersonaType(str, Enum):
-    typical = "typical"
-    malicious = "malicious"
-    vulnerable = "vulnerable"
+    TYPICAL = "typical"
+    MALICIOUS = "malicious"
+    VULNERABLE = "vulnerable"
 
 
 class SafeTestItemContext(BaseModel):
@@ -167,7 +167,7 @@ TESTS.register(
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.malicious],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -175,7 +175,7 @@ TESTS.register(
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.malicious],
+    persona_types=[PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -183,7 +183,7 @@ TESTS.register(
     "hat",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.malicious],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -191,7 +191,7 @@ TESTS.register(
     "nvc",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.malicious],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -199,7 +199,7 @@ TESTS.register(
     "sc",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.malicious],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -207,7 +207,7 @@ TESTS.register(
     "ssh",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.vulnerable],
+    persona_types=[PersonaType.TYPICAL, PersonaType.VULNERABLE],
 )
 TESTS.register(
     SafeTest,
@@ -215,7 +215,7 @@ TESTS.register(
     "ter",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.typical, PersonaType.malicious],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -223,5 +223,5 @@ TESTS.register(
     "vio",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.malicious],
+    persona_types=[PersonaType.MALICIOUS],
 )
