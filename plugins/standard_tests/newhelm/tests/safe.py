@@ -73,20 +73,8 @@ class SafeTest(BasePromptResponseTest):
         self.hazard_name = HAZARDS_MAPPING[hazard]
         self.folder_name = folder_name
         self.together_api_key = together_api_key
-        self.persona_types: List[PersonaType] = []
-        invalid_personas: List[Any] = []
-        for persona in persona_types:
-            if not isinstance(persona, PersonaType):
-                try:
-                    persona = PersonaType(persona)
-                except ValueError:
-                    invalid_personas.append(persona)
-            assert (
-                persona not in self.persona_types
-            ), "Persona types may not contain duplicates."
-            self.persona_types.append(persona)
-        assert len(invalid_personas) == 0, f"Invalid persona types {invalid_personas}."
         assert len(persona_types), "At least one persona type must be specified."
+        self.persona_types: List[PersonaType] = list(set(persona_types))
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"

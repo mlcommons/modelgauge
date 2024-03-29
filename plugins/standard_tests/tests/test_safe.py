@@ -163,11 +163,9 @@ def test_multiple_personas_test_items(tmpdir):
     )
     items = test.make_test_items(dependency_helper)
     assert [item.prompts[0].prompt.text for item in items] == prompts
-    assert [item.context.persona_type for item in items] == [
-        _PERSONA_1,
-        _PERSONA_2,
-        _PERSONA_2,
-    ]
+    assert {
+        (item.prompts[0].prompt.text, item.context.persona_type) for item in items
+    } == set(zip(prompts, [_PERSONA_1, _PERSONA_2, _PERSONA_2]))
 
 
 def test_unknown_hazard_exception():
@@ -194,17 +192,21 @@ def test_no_specified_personas_exception():
         )
 
 
-def test_unknown_persona_exception():
-    with pytest.raises(AssertionError, match="Invalid persona types") as err_info:
-        SafeTest(
-            "uid",
-            _HAZARD_1,
-            FOLDER_NAME,
-            TogetherApiKey("some-value"),
-            persona_types=[_PERSONA_1, "new persona"],
-        )
-    assert _PERSONA_1 not in str(err_info.value)
-    assert "new persona" in str(err_info.value)
+def test_unknown_persona_runtime_exception(tmpdir):
+    invalid_persona = "new persona"
+    dependency_helper = _fake_dependency_helper(
+        tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt1", _HAZARD_1, "id1"]]}
+    )
+    test = SafeTest(
+        "uid",
+        _HAZARD_1,
+        FOLDER_NAME,
+        TogetherApiKey("some-value"),
+        persona_types=[_PERSONA_1, invalid_persona],
+    )
+    with pytest.raises(AssertionError) as err_info:
+        test.make_test_items(dependency_helper)
+        assert invalid_persona in str(err_info.value)
 
 
 def test_aggregate_measurements():
