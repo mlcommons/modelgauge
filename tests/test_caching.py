@@ -106,30 +106,27 @@ def test_slashes_in_file_identifier(tmpdir):
         assert cache.get_cached_response(request) == response
 
 
-def test_non_exisiting_directory(parent_directory):
+def test_non_existing_directory(tmpdir):
     """Tests that the directory given to SUTResponseCache is created if it does not already exist."""
-    cache_dir = str(parent_directory.joinpath("data", "new_dir"))
+    cache_dir = os.path.join(tmpdir, "data", "new_dir")
     assert not os.path.exists(cache_dir)
     request = SimpleClass(value="request")
     response = SimpleClass(value="response")
     # Create new cache
-    with SqlDictCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample") as cache:
         assert len(cache.cached_responses) == 0
         cache.update_cache(request, response)
     # Confirm the cache persists.
-    with SqlDictCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample") as cache:
         assert len(cache.cached_responses) == 1
         assert cache.get_cached_response(request) == response
-    # Delete newly-created cache file and directory
-    os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
-    os.rmdir(cache_dir)
 
 
 @pytest.mark.skip(reason="Comment out this skip to rebuild the cache file.")
 def test_rewrite_sample_cache(parent_directory):
     cache_dir = str(parent_directory.joinpath("data"))
     os.remove(os.path.join(cache_dir, "sample_cache.sqlite"))
-    with SqlDictCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample") as cache:
         cache.update_cache(
             SimpleClass(value="request 1"), ParentClass(parent_value="response 1")
         )
@@ -142,7 +139,7 @@ def test_rewrite_sample_cache(parent_directory):
 def test_format_stability(parent_directory):
     """Reads from existing sample_cache.sqlite and checks deserialization."""
     cache_dir = str(parent_directory.joinpath("data"))
-    with SqlDictCache(cache_dir, "sample_cache") as cache:
+    with SqlDictCache(cache_dir, "sample") as cache:
         assert len(cache.cached_responses) == 2
         response_1 = cache.get_cached_response(SimpleClass(value="request 1"))
         assert isinstance(response_1, ParentClass)
