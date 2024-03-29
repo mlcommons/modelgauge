@@ -241,7 +241,7 @@ class LogprobsInheritsNotRequested(LogprobsNotRequiredNotRequested):
     pass
 
 
-def test_logprobs_inherits_requested():
+def test_logprobs_inherits_not_requested():
     test = LogprobsInheritsNotRequested("some-test")
     with pytest.raises(AssertionError) as err_info:
         test.make_test_items(None)
