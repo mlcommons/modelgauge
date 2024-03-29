@@ -62,19 +62,21 @@ def _override_translate_response(cls: Type[PromptResponseSUT]) -> None:
         # Already wrapped, no need to do any work.
         return
 
-    if ProducesPerTokenLogProbabilities in cls.capabilities:
-        # No checking needs to be performed, since returning log probabilities
-        # is conditional on the request.
-        return
-
     @wraps(original)
-    def assert_no_logprobs(self, request, response) -> SUTResponse:
+    def inner(self, request, response) -> SUTResponse:
         response = original(self, request, response)
+        logprob_capable = ProducesPerTokenLogProbabilities in self.capabilities
+        logprob_produced = False
         for completion in response.completions:
-            assert (
-                completion.top_logprobs is None
-            ), f"{self.__class__.__name__} does not specify it provides logprobs, but values were given."
+            logprob_produced |= completion.top_logprobs is not None
+        if not logprob_capable and logprob_produced:
+            raise AssertionError(
+                f"{self.__class__.__name__} does not list capability "
+                f"ProducesPerTokenLogProbabilities, but it sets the top_logprobs field."
+            )
+        # We can't assert the other way, as if the SUTOption isn't set, the SUT may
+        # not return top_logprobs.
         return response
 
-    cls.translate_response = assert_no_logprobs  # type: ignore [method-assign]
-    cls.translate_response._newhelm_wrapped = True  # type: ignore [attr-defined]
+    inner._newhelm_wrapped = True  # type: ignore [attr-defined]
+    cls.translate_response = inner  # type: ignore [method-assign]

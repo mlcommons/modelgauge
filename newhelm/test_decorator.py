@@ -1,9 +1,10 @@
 from functools import wraps
 import inspect
-from typing import Dict, Sequence, Type
+from typing import Dict, List, Sequence, Type
 from newhelm.base_test import BasePromptResponseTest, BaseTest
+from newhelm.dependency_helper import DependencyHelper
 from newhelm.record_init import add_initialization_record
-from newhelm.single_turn_prompt_response import TestItemAnnotations
+from newhelm.single_turn_prompt_response import TestItem, TestItemAnnotations
 from newhelm.sut_capabilities import ProducesPerTokenLogProbabilities, SUTCapability
 
 
@@ -17,7 +18,7 @@ def newhelm_test(requires_sut_capabilities: Sequence[Type[SUTCapability]]):
         cls.requires_sut_capabilities = requires_sut_capabilities
         cls.__init__ = _wrap_init(cls.__init__)
         if issubclass(cls, BasePromptResponseTest):
-            _override_measure_quality(cls)
+            _override_make_test_items(cls)
         cls._newhelm_test = True
         return cls
 
@@ -54,45 +55,42 @@ def _validate_init_signature(init):
     assert params[1].name == "uid", "All Tests must have UID as the first parameter."
 
 
-def _override_measure_quality(cls: Type[BasePromptResponseTest]) -> None:
-    """Wrap the Test measure_quality function to verify it behaves as expected."""
+def _override_make_test_items(cls: Type[BasePromptResponseTest]) -> None:
+    """Wrap the Test make_test_items function to verify it behaves as expected."""
 
-    original = cls.measure_quality
+    original = cls.make_test_items
 
     if hasattr(original, "_newhelm_wrapped"):
         # Already wrapped, no need to do any work.
         return
 
     @wraps(original)
-    def require_logprobs(self, item: TestItemAnnotations) -> Dict[str, float]:
-        for interaction in item.interactions:
-            for completion in interaction.response.completions:
-                assert (
-                    completion.top_logprobs is not None
-                ), f"{self.__class__.__name__} specifies it requires logprobs, but none were given."
-        return original(self, item)
+    def inner(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        items: List[TestItem] = original(self, dependency_helper)
+        requires_logprobs = (
+            ProducesPerTokenLogProbabilities in self.requires_sut_capabilities
+        )
+        any_request_logprobs = False
+        for item in items:
+            for prompt in item.prompts:
+                any_request_logprobs |= prompt.prompt.options.top_logprobs is not None
 
-    @wraps(original)
-    def remove_logprobs(self, item: TestItemAnnotations) -> Dict[str, float]:
-        modified_interactions = []
-        for interaction in item.interactions:
-            modified_completions = []
-            for completion in interaction.response.completions:
-                modified_completions.append(
-                    completion.model_copy(update={"top_logprobs": None})
-                )
-            modified_response = interaction.response.model_copy(
-                update={"completions": modified_completions}
+        if any_request_logprobs and not requires_logprobs:
+            raise AssertionError(
+                f"{self.__class__.__name__} specified the SUT option top_logprobs, "
+                f"but did not list ProducesPerTokenLogProbabilities as a "
+                f"required capability. If it doesn't actually need top_logprobs, "
+                f"remove setting the option."
             )
-            modified_interactions.append(
-                interaction.model_copy(update={"response": modified_response})
+
+        if not any_request_logprobs and requires_logprobs:
+            raise AssertionError(
+                f"{self.__class__.__name__} lists ProducesPerTokenLogProbabilities "
+                f"as required, but did not request the SUT option top_logprobs. "
+                f"If it doesn't actually need top_logprobs, remove specifying the capability."
             )
-        modified = item.model_copy(update={"interactions": modified_interactions})
-        return original(self, modified)
 
-    if ProducesPerTokenLogProbabilities in cls.requires_sut_capabilities:
-        cls.measure_quality = require_logprobs  # type: ignore [method-assign]
-    else:
-        cls.measure_quality = remove_logprobs  # type: ignore [method-assign]
+        return items
 
-    cls.measure_quality._newhelm_wrapped = True  # type: ignore [attr-defined]
+    inner._newhelm_wrapped = True  # type: ignore [attr-defined]
+    cls.make_test_items = inner  # type: ignore [method-assign]
