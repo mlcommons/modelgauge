@@ -4,9 +4,9 @@ from newhelm.prompt import TextPrompt
 from newhelm.tests.safe import (
     SafeTest,
     HAZARDS_MAPPING,
-    _PERSONA_TYPES,
     FOLDER_NAME,
     SafeTestItemContext,
+    PersonaType,
     PersonaResult,
     SafeTestResult,
 )
@@ -21,8 +21,8 @@ from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 HAZARDS_LIST = list(HAZARDS_MAPPING.keys())
 _HAZARD_1 = HAZARDS_LIST[0]
 _HAZARD_2 = HAZARDS_LIST[1]
-_PERSONA_1 = _PERSONA_TYPES[0]
-_PERSONA_2 = _PERSONA_TYPES[1]
+_PERSONA_1 = PersonaType.typical
+_PERSONA_2 = PersonaType.malicious
 
 
 def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
@@ -99,11 +99,11 @@ def test_different_hazards(tmpdir):
 def test_different_persona_dependency_keys(tmpdir):
     """Test uses correct dependency key mapping for each persona."""
     dependencies = {}
-    for persona in _PERSONA_TYPES:
+    for persona in PersonaType:
         dependencies[persona] = [[f"{persona} prompt", _HAZARD_1, "id1"]]
     dependency_helper = _fake_dependency_helper(tmpdir, _HAZARD_1, dependencies)
 
-    for persona in _PERSONA_TYPES:
+    for persona in PersonaType:
         test = SafeTest(
             "uid",
             _HAZARD_1,
@@ -113,6 +113,32 @@ def test_different_persona_dependency_keys(tmpdir):
         )
         item = test.make_test_items(dependency_helper)[0]
         assert item.prompts[0].prompt.text == f"{persona} prompt"
+
+
+def test_string_personas(tmpdir):
+    """Check that valid strings can be used instead of PersonaType enum members."""
+    dependency_helper = _fake_dependency_helper(
+        tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt", _HAZARD_1, "id"]]}
+    )
+    string_persona_test = SafeTest(
+        "uid",
+        _HAZARD_1,
+        FOLDER_NAME,
+        TogetherApiKey("some-value"),
+        persona_types=["typical"],
+    )
+    enum_persona_test = SafeTest(
+        "uid",
+        _HAZARD_1,
+        FOLDER_NAME,
+        TogetherApiKey("some-value"),
+        persona_types=[PersonaType.typical],
+    )
+    assert string_persona_test.persona_types == enum_persona_test.persona_types
+    assert (
+        string_persona_test.make_test_items(dependency_helper)[0]
+        == enum_persona_test.make_test_items(dependency_helper)[0]
+    )
 
 
 def test_multiple_personas_test_items(tmpdir):
@@ -234,3 +260,40 @@ def test_aggregate_measurements_multiple_personas():
             _PERSONA_2: PersonaResult(frac_safe=0.5, num_items=2),
         }
     )
+
+
+def test_result_keyable_with_string_or_enum_persona(tmpdir):
+    measured_test_items = [
+        MeasuredTestItem(
+            test_item=TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="typical prompt"), source_id="id1"
+                    )
+                ],
+                context=SafeTestItemContext(persona_type=PersonaType.typical),
+            ),
+            measurements={"is_safe": 0.0},
+        ),
+        MeasuredTestItem(
+            test_item=TestItem(
+                prompts=[
+                    PromptWithContext(
+                        prompt=TextPrompt(text="malicious prompt"), source_id="id2"
+                    )
+                ],
+                context=SafeTestItemContext(persona_type=PersonaType.malicious),
+            ),
+            measurements={"is_safe": 1.0},
+        ),
+    ]
+    test = SafeTest(
+        "uid",
+        _HAZARD_1,
+        FOLDER_NAME,
+        TogetherApiKey("some-value"),
+        persona_types=[PersonaType.typical, PersonaType.malicious],
+    )
+    persona_results = test.aggregate_measurements(measured_test_items).persona_results
+    assert persona_results[PersonaType.typical] == persona_results["typical"]
+    assert persona_results[PersonaType.malicious] == persona_results["malicious"]
