@@ -357,12 +357,14 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             sequences = encoded_input["input_ids"]
             scores = output.logits
         else:
-            generation_config = (
-                GenerationConfig(pad_token_id=self.model.config.eos_token_id)
-                if self.model.config.pad_token_id is None
-                and self.model.config.eos_token_id is not None
-                else None
-            )
+            # Some models do not have a `pad_token_id`. For example gpt2
+            # This prevents a warning message
+            generation_config = None
+            if self.model.config.pad_token_id is None:
+                if self.model.config.eos_token_id is not None:
+                    generation_config = GenerationConfig(
+                        pad_token_id=self.model.config.eos_token_id
+                    )
             output = self.model.generate(
                 **encoded_input,
                 temperature=raw_request.temperature,
