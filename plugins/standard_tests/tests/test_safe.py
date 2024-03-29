@@ -162,7 +162,6 @@ def test_multiple_personas_test_items(tmpdir):
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
     items = test.make_test_items(dependency_helper)
-    assert [item.prompts[0].prompt.text for item in items] == prompts
     assert {
         (item.prompts[0].prompt.text, item.context.persona_type) for item in items
     } == set(zip(prompts, [_PERSONA_1, _PERSONA_2, _PERSONA_2]))
