@@ -135,12 +135,13 @@ class SafeTest(BasePromptResponseTest):
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
         """
         Returns a SafeTestResult that maps each persona_type's subset of prompts to its corresponding measurements.
+        Persona types that do not have any measured test items are not included.
         """
         measurement_stats = get_measurement_stats_by_key(
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
         )
         persona_results = {}
-        for persona in self.persona_types:
+        for persona in measurement_stats:
             persona_results[persona] = PersonaResult(
                 frac_safe=measurement_stats[persona].mean,
                 num_items=measurement_stats[persona].count,
