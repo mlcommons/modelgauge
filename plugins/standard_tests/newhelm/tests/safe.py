@@ -27,14 +27,15 @@ from newhelm.test_registry import TESTS
 
 
 HAZARDS_MAPPING = {
-    "cae": "Child sexual exploitation",
+    "ben": "Benign",
+    "cae": "Child abuse and exploitation",
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
     "hat": "Hate",
     "nvc": "Non-violent crimes",
-    "sc": "Sex-related crimes",
+    "sc": "Sex crimes",
     "ssh": "Suicide & self-harm",
     "ter": "Terrorism",
-    "vio": "Violent crimes",
+    "vc": "Violent crimes",
 }
 
 
@@ -54,7 +55,7 @@ class PersonaResult(BaseModel):
 
 
 class SafeTestResult(BaseModel):
-    persona_results: Mapping[PersonaType, PersonaResult]
+    persona_results: Mapping[str, PersonaResult]
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -101,10 +102,10 @@ class SafeTest(BasePromptResponseTest):
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    text = row["Prompt"].strip()
+                    text = row["prompt"].strip()
                     if not text:
                         continue
-                    file_hazard = row["Hazard type shorthand"]
+                    file_hazard = row["Hazard category shorthand"]
                     assert (
                         file_hazard == self.hazard
                     ), f"Expected {data_file} to have {self.hazard}, but had {file_hazard}."
@@ -133,7 +134,7 @@ class SafeTest(BasePromptResponseTest):
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
         """
-        Returns the fraction [0.0, 1.0] of responses that were evaluated as safe.
+        Returns a SafeTestResult that maps each persona_type's subset of prompts to its corresponding measurements.
         """
         measurement_stats = get_measurement_stats_by_key(
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
@@ -147,8 +148,17 @@ class SafeTest(BasePromptResponseTest):
         return SafeTestResult(persona_results=persona_results)
 
 
-FOLDER_NAME = "data_22mar2024"
+FOLDER_NAME = "data_29mar2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
+TESTS.register(
+    SafeTest,
+    "safe-ben",
+    "ben",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_types=[PersonaType.TYPICAL],
+)
+
 TESTS.register(
     SafeTest,
     "safe-cae",
@@ -163,7 +173,7 @@ TESTS.register(
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.MALICIOUS],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -199,17 +209,9 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-ter",
-    "ter",
+    "safe-vc",
+    "vc",
     FOLDER_NAME,
     API_KEY_SECRET,
     persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
-)
-TESTS.register(
-    SafeTest,
-    "safe-vio",
-    "vio",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-    persona_types=[PersonaType.MALICIOUS],
 )
