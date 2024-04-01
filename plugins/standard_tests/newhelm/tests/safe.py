@@ -55,7 +55,7 @@ class PersonaResult(BaseModel):
 
 
 class SafeTestResult(BaseModel):
-    persona_results: Mapping[str, PersonaResult]
+    persona_results: Mapping[PersonaType, PersonaResult]
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
@@ -141,11 +141,12 @@ class SafeTest(PromptResponseTest):
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
         )
         persona_results = {}
-        for persona in measurement_stats:
-            persona_results[persona] = PersonaResult(
-                frac_safe=measurement_stats[persona].mean,
-                num_items=measurement_stats[persona].count,
-            )
+        for persona in self.persona_types:
+            if persona in measurement_stats:
+                persona_results[persona] = PersonaResult(
+                    frac_safe=measurement_stats[persona].mean,
+                    num_items=measurement_stats[persona].count,
+                )
         return SafeTestResult(persona_results=persona_results)
 
 
