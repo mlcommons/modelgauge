@@ -4,6 +4,7 @@ import pytest
 
 from newhelm.caching import SqlDictCache
 from tests.utilities import parent_directory
+from sqlitedict import SqliteDict  # type: ignore
 
 
 class SimpleClass(BaseModel):
@@ -120,6 +121,17 @@ def test_non_existing_directory(tmpdir):
     with SqlDictCache(cache_dir, "sample") as cache:
         assert len(cache.cached_responses) == 1
         assert cache.get_cached_response(request) == response
+
+
+def test_fails_on_unexpected_table(tmpdir):
+    cache_location = os.path.join(tmpdir, "sample_cache.sqlite")
+    SqliteDict(cache_location, tablename="some_table")
+    with pytest.raises(AssertionError) as err_info:
+        SqlDictCache(tmpdir, "sample")
+    assert "Expected only table to be v1, but found ['some_table', 'v1']" in str(
+        err_info.value
+    )
+    assert "sample_cache.sqlite" in str(err_info.value)
 
 
 @pytest.mark.skip(reason="Comment out this skip to rebuild the cache file.")
