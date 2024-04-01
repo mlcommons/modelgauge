@@ -1,12 +1,11 @@
 import os
 import random
-from typing import Dict, List, Optional
-from pydantic import BaseModel
+from typing import List, Optional
 from tqdm import tqdm
 from newhelm.annotation import Annotation
-from newhelm.base_annotator import BaseAnnotator, CompletionAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestResult
-from newhelm.caching import BaseCache, NoCache, SqlDictCache
+from newhelm.annotator import CompletionAnnotator
+from newhelm.base_test import PromptResponseTest, TestResult
+from newhelm.caching import Cache, NoCache, SqlDictCache
 from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.records import TestItemRecord, TestRecord
@@ -17,7 +16,6 @@ from newhelm.single_turn_prompt_response import (
     TestItem,
     TestItemAnnotations,
     MeasuredTestItem,
-    PromptInteraction,
 )
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_capabilities_verification import assert_sut_capabilities
@@ -26,7 +24,7 @@ from newhelm.test_decorator import assert_is_test
 
 
 def run_prompt_response_test(
-    test: BasePromptResponseTest,
+    test: PromptResponseTest,
     sut: PromptResponseSUT,
     data_dir: str,
     max_test_items: Optional[int] = None,
@@ -44,14 +42,14 @@ def run_prompt_response_test(
     sut_initialization = sut.initialization_record
     test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
-    sut_cache: BaseCache
+    sut_cache: Cache
     if use_caching:
         sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
     else:
         sut_cache = NoCache()
     annotators = []
     for key, annotator in test.get_annotators().items():
-        annotator_cache: BaseCache
+        annotator_cache: Cache
         if use_caching:
             annotator_cache = SqlDictCache(
                 os.path.join(test_data_path, "annotators"), key
@@ -108,23 +106,17 @@ def run_prompt_response_test(
 class AnnotatorData:
     """Container to hold data about an annotator."""
 
-    def __init__(self, key: str, annotator: CompletionAnnotator, cache: BaseCache):
+    def __init__(self, key: str, annotator: CompletionAnnotator, cache: Cache):
         self.key = key
         self.annotator = annotator
         self.cache = cache
 
 
-class AnnotateTestItemRequest(BaseModel):
-    """Wrapper to make annotate_test_item's request cacheable."""
-
-    interactions: List[PromptInteraction]
-
-
 def _process_test_item(
     item: TestItem,
-    test: BasePromptResponseTest,
+    test: PromptResponseTest,
     sut: PromptResponseSUT,
-    sut_cache: BaseCache,
+    sut_cache: Cache,
     annotators: List[AnnotatorData],
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []

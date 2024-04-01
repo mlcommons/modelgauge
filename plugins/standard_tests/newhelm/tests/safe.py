@@ -1,5 +1,6 @@
 import csv
-from typing import List, Dict, Mapping
+from enum import Enum
+from typing import Any, List, Dict, Mapping
 
 from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
@@ -7,8 +8,8 @@ from newhelm.annotators.llama_guard_annotator import (
 )
 from pydantic import BaseModel
 from newhelm.aggregations import get_measurement_stats_by_key
-from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest
+from newhelm.annotator import Annotator
+from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -35,11 +36,16 @@ HAZARDS_MAPPING = {
     "ter": "Terrorism",
     "vio": "Violent crimes",
 }
-_PERSONA_TYPES = ["typical", "malicious", "vulnerable"]
+
+
+class PersonaType(str, Enum):
+    TYPICAL = "typical"
+    MALICIOUS = "malicious"
+    VULNERABLE = "vulnerable"
 
 
 class SafeTestItemContext(BaseModel):
-    persona_type: str
+    persona_type: PersonaType
 
 
 class PersonaResult(BaseModel):
@@ -48,36 +54,29 @@ class PersonaResult(BaseModel):
 
 
 class SafeTestResult(BaseModel):
-    persona_results: Mapping[str, PersonaResult]
+    persona_results: Mapping[PersonaType, PersonaResult]
 
 
 @newhelm_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SafeTest(BasePromptResponseTest):
+class SafeTest(PromptResponseTest):
     def __init__(
         self,
         uid: str,
         hazard: str,
         folder_name: str,
         together_api_key: TogetherApiKey,
-        persona_types: List[str],
+        persona_types: List[PersonaType],
     ):
         super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
-        invalid_personas = [
-            persona for persona in persona_types if persona not in _PERSONA_TYPES
-        ]
-        assert len(invalid_personas) == 0, f"Invalid persona types {invalid_personas}."
-        assert len(persona_types), "At least one persona type must be specified."
-        assert len(persona_types) == len(
-            set(persona_types)
-        ), "Persona types may not contain duplicates."
         self.hazard = hazard
         self.hazard_name = HAZARDS_MAPPING[hazard]
         self.folder_name = folder_name
         self.together_api_key = together_api_key
-        self.persona_types = persona_types
+        assert len(persona_types), "At least one persona type must be specified."
+        self.persona_types: List[PersonaType] = list(set(persona_types))
 
-    def _persona_dependency_key(self, persona: str) -> str:
+    def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
@@ -121,7 +120,7 @@ class SafeTest(BasePromptResponseTest):
                     )
         return test_items
 
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         return {"llama_guard": LlamaGuardAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
@@ -140,10 +139,10 @@ class SafeTest(BasePromptResponseTest):
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
         )
         persona_results = {}
-        for persona, persona_measurements in measurement_stats.items():
+        for persona in self.persona_types:
             persona_results[persona] = PersonaResult(
-                frac_safe=persona_measurements.mean,
-                num_items=persona_measurements.count,
+                frac_safe=measurement_stats[persona].mean,
+                num_items=measurement_stats[persona].count,
             )
         return SafeTestResult(persona_results=persona_results)
 
@@ -156,7 +155,7 @@ TESTS.register(
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "malicious"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -164,7 +163,7 @@ TESTS.register(
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["malicious"],
+    persona_types=[PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -172,7 +171,7 @@ TESTS.register(
     "hat",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "malicious"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -180,7 +179,7 @@ TESTS.register(
     "nvc",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "malicious"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -188,7 +187,7 @@ TESTS.register(
     "sc",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "malicious"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -196,7 +195,7 @@ TESTS.register(
     "ssh",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "vulnerable"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.VULNERABLE],
 )
 TESTS.register(
     SafeTest,
@@ -204,7 +203,7 @@ TESTS.register(
     "ter",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["typical", "malicious"],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -212,5 +211,5 @@ TESTS.register(
     "vio",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=["malicious"],
+    persona_types=[PersonaType.MALICIOUS],
 )

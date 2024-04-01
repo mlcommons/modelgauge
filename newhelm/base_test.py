@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Mapping, Sequence, Type
 
 from pydantic import BaseModel
-from newhelm.base_annotator import BaseAnnotator
+from newhelm.annotator import Annotator
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.record_init import InitializationRecord
@@ -17,17 +17,6 @@ from newhelm.tracked_object import TrackedObject
 from newhelm.typed_data import Typeable, TypedData
 
 
-class TestMetadata(BaseModel):
-    """Structured information about the Test which we can use in the UI to list available tests
-    as well as for filtering to specific kinds of tests."""
-
-    name: str
-    description: str
-
-    # Convince pytest to ignore this class.
-    __test__ = False
-
-
 class BaseTest(TrackedObject):
     """This is the placeholder base class for all tests."""
 
@@ -40,7 +29,7 @@ class BaseTest(TrackedObject):
         self.initialization_record: InitializationRecord
 
 
-class BasePromptResponseTest(BaseTest, ABC):
+class PromptResponseTest(BaseTest, ABC):
     """This is the base class for all tests that are single turn."""
 
     @abstractmethod
@@ -55,7 +44,7 @@ class BasePromptResponseTest(BaseTest, ABC):
 
     # TODO: Consider making this method default to returning an empty dict.
     @abstractmethod
-    def get_annotators(self) -> Mapping[str, BaseAnnotator]:
+    def get_annotators(self) -> Mapping[str, Annotator]:
         pass
 
     @abstractmethod

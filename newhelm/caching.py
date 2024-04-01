@@ -8,7 +8,7 @@ from newhelm.typed_data import TypedData
 from newhelm.general import normalize_filename
 
 
-class BaseCache(ABC):
+class Cache(ABC):
     @abstractmethod
     def __enter__(self):
         pass
@@ -36,7 +36,7 @@ class CacheEntry(BaseModel):
     payload: TypedData
 
 
-class SqlDictCache(BaseCache):
+class SqlDictCache(Cache):
     """Cache the response from a method using the request as the key.
 
     Will create a `file_identifier`.sqlite file in `data_dir` to persist
@@ -103,7 +103,7 @@ class SqlDictCache(BaseCache):
         ).hexdigest()
 
 
-class NoCache(BaseCache):
+class NoCache(Cache):
     """Implements the caching interface, but never actually caches."""
 
     def __enter__(self):

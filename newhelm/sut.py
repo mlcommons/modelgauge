@@ -3,6 +3,7 @@ from typing import Generic, List, Optional, Sequence, Type, TypeVar
 
 from pydantic import BaseModel
 
+from newhelm.not_implemented import not_implemented
 from newhelm.prompt import ChatPrompt, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.sut_capabilities import SUTCapability
@@ -29,8 +30,14 @@ class SUTCompletion(BaseModel):
     """All data about a single completion in the response."""
 
     text: str
-    # This is only accessible via SUT capabilities
     top_logprobs: Optional[Sequence[TopTokens]] = None
+    """For each position, list the probabilities for each of the most likely tokens.
+
+    To guarantee this field is not None, the Test must specify SUTOptions.top_logprobs
+    and that it requires_sut_capabilities ProducesPerTokenLogProbabilities.
+    SUTs that set this value must specify they have the ProducesPerTokenLogProbabilities
+    capability. They may conditional setting the field on on SUTOptions.top_logprobs being not None.
+    """
 
 
 class SUTResponse(BaseModel):
@@ -54,13 +61,17 @@ class SUT(TrackedObject):
 class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
     """The base class for any SUT that is designed for handling a single-turn."""
 
-    @abstractmethod
+    @not_implemented
     def translate_text_prompt(self, prompt: TextPrompt) -> RequestType:
-        pass
+        raise NotImplementedError(
+            f"SUT {self.__class__.__name__} does not implement translate_text_prompt."
+        )
 
-    @abstractmethod
+    @not_implemented
     def translate_chat_prompt(self, prompt: ChatPrompt) -> RequestType:
-        pass
+        raise NotImplementedError(
+            f"SUT {self.__class__.__name__} does not implement translate_chat_prompt."
+        )
 
     @abstractmethod
     def evaluate(self, request: RequestType) -> ResponseType:
