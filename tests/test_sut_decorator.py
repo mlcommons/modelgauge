@@ -1,9 +1,12 @@
 import pytest
+from newhelm.not_implemented import not_implemented
+from newhelm.prompt import ChatPrompt
 from newhelm.record_init import InitializationRecord
-from newhelm.sut import SUT
+from newhelm.sut import SUT, PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import (
     AcceptsChatPrompt,
     AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
 )
 from newhelm.sut_decorator import assert_is_sut, newhelm_sut
 
@@ -103,3 +106,148 @@ def test_bad_signature():
                 self.arg1 = arg1
 
     assert "All SUTs must have UID as the first parameter." in str(err_info.value)
+
+
+class SomePromptResponseSUT(PromptResponseSUT):
+    # Define abstract methods to make subclasses easier to make.
+    def translate_text_prompt(self, prompt):
+        pass
+
+    def evaluate(self, request):
+        pass
+
+    def translate_response(self, request, response):
+        pass
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsNoCapabilitiesNotSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+
+
+def test_logprobs_no_capabilities_not_set():
+    sut = LogprobsNoCapabilitiesNotSet("some-sut")
+    # Mostly here to ensure no exceptions
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsNoCapabilitiesAndSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(
+            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
+        )
+
+
+def test_logprobs_no_capabilities_and_set():
+    sut = LogprobsNoCapabilitiesAndSet("some-sut")
+    with pytest.raises(AssertionError) as err_info:
+        sut.translate_response(None, None)
+    assert (
+        "LogprobsNoCapabilitiesAndSet does not list capability ProducesPerTokenLogProbabilities"
+        in str(err_info.value)
+    )
+
+
+@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+class LogprobsHasCapabilitiesNotSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(completions=[SUTCompletion(text="some-text")])
+
+
+def test_logprobs_has_capabilities_not_set():
+    sut = LogprobsHasCapabilitiesNotSet("some-sut")
+    # This is allowed because SUTOption might not be set
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
+class LogprobsHasCapabilitiesAndSet(SomePromptResponseSUT):
+    def translate_response(self, request, response):
+        return SUTResponse(
+            completions=[SUTCompletion(text="some-text", top_logprobs=[])]
+        )
+
+
+def test_logprobs_has_capabilities_and_set():
+    sut = LogprobsHasCapabilitiesAndSet("some-sut")
+    assert sut.translate_response(None, None).completions[0].text == "some-text"
+
+
+@newhelm_sut(capabilities=[AcceptsTextPrompt])
+class LogprobsInheritsSet(LogprobsHasCapabilitiesAndSet):
+    pass
+
+
+def test_logprobs_inherits_set():
+    sut = LogprobsInheritsSet("some-sut")
+    with pytest.raises(AssertionError) as err_info:
+        sut.translate_response(None, None)
+    assert (
+        "LogprobsInheritsSet does not list capability ProducesPerTokenLogProbabilities"
+        in str(err_info.value)
+    )
+
+
+def test_both_capabilities_both_implemented():
+    @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+    class BothCapabilitiesBothImplmented(SomePromptResponseSUT):
+        def translate_text_prompt(self, prompt):
+            pass
+
+        def translate_chat_prompt(self, prompt):
+            pass
+
+    # Verify you can make an instance
+    BothCapabilitiesBothImplmented("some-sut")
+
+
+def test_chat_capabilities_not_implemented():
+    with pytest.raises(AssertionError) as err_info:
+
+        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
+            def translate_text_prompt(self, prompt):
+                pass
+
+    assert str(err_info.value) == (
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
+        "but it does not implement translate_chat_prompt."
+    )
+
+
+def test_chat_capabilities_not_implemented_override():
+    with pytest.raises(AssertionError) as err_info:
+
+        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
+            def translate_text_prompt(self, prompt):
+                pass
+
+            @not_implemented
+            def translate_chat_prompt(self, prompt: ChatPrompt):
+                pass
+
+    assert str(err_info.value) == (
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
+        "but it does not implement translate_chat_prompt."
+    )
+
+
+def test_text_capabilities_not_implemented():
+    with pytest.raises(AssertionError) as err_info:
+
+        @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+        class TextCapabilitiesNotImplemented(SomePromptResponseSUT):
+            @not_implemented
+            def translate_text_prompt(self, prompt):
+                pass
+
+            def translate_chat_prompt(self, prompt: ChatPrompt):
+                pass
+
+    assert str(err_info.value) == (
+        "TextCapabilitiesNotImplemented says it AcceptsTextPrompt, "
+        "but it does not implement translate_text_prompt."
+    )
