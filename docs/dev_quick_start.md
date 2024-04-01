@@ -8,6 +8,9 @@ poetry install
 
 This will instruct [poetry](https://python-poetry.org/docs/) to install the default dependencies into this project's environment. After you install, future `poetry run` commands will use that environment.
 
+> [!WARNING]
+> Poetry and other python virtual environment tooling [may not play nicely together](https://github.com/orgs/python-poetry/discussions/7767). As such we recommend you let Poetry manage the venv, and not try to run it within a venv.
+
 For example, you can run our command line tool with:
 
 ```
