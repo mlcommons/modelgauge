@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler  # type: ignore
 from typing import List, Dict, Mapping
 
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -52,12 +52,6 @@ class DiscrimEval(BasePromptResponseTest):
         super().__init__(uid)
         assert prompt_type in _PROMPT_TYPES, f"Invalid prompt_type {prompt_type}"
         self.prompt_type = prompt_type
-
-    def get_metadata(self) -> TestMetadata:
-        return TestMetadata(
-            name=f"DiscrimEval-{self.prompt_type}",
-            description=f"Evaluate potential discriminatory impact with {self.prompt_type} demographics.",
-        )
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         dependencies = {}
@@ -105,7 +99,7 @@ class DiscrimEval(BasePromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         """Process SUT decision."""
-        response = item.interactions[0].response.completions[0].text.strip()
+        response = item.interactions[0].response.completions[0].completion.text.strip()
         # Remove any punctuation at the end of the string
         response = re.sub(r"[^\w\s]+$", "", response).lower()
         # TODO: return logprobs

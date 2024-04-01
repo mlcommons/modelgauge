@@ -4,7 +4,7 @@ from typing import Dict, List, Mapping
 from newhelm.annotators.demo_annotator import DemoYBadAnnotation, DemoYBadAnnotator
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData
 from newhelm.prompt import TextPrompt
@@ -61,8 +61,12 @@ class DemoUsingAnnotationTest(BasePromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         # Retrieve the annotation we asked for in `get_annotators`
-        annotation = item.get_annotation("badness", DemoYBadAnnotation)
-        is_bad = annotation.badness[0] > 0
+        annotation = (
+            item.interactions[0]
+            .response.completions[0]
+            .get_annotation("badness", DemoYBadAnnotation)
+        )
+        is_bad = annotation.badness > 0
         return {"is_bad": 1 if is_bad else 0}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> Dict[str, float]:

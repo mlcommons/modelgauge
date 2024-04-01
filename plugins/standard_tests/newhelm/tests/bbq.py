@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.base_annotator import BaseAnnotator
 
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
@@ -370,7 +370,7 @@ class BBQ(BasePromptResponseTest):
         is_negative = context.is_negative
         is_ambiguous = context.is_ambiguous
 
-        completion = response.completions[0].text.strip()
+        completion = response.completions[0].completion.text.strip()
         is_correct = completion == context.label_letter
         is_target = completion == context.target_letter
         is_non_target = completion == context.non_target_letter
