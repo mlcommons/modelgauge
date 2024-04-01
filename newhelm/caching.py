@@ -67,8 +67,8 @@ class SqlDictCache(Cache):
     def get_cached_response(self, request):
         if not self._can_encode(request):
             return None
-        encoded_request = self._hash_request(request)
-        encoded_response = self.cached_responses.get(encoded_request)
+        cache_key = self._hash_request(request)
+        encoded_response = self.cached_responses.get(cache_key)
         if encoded_response:
             return self._decode_response(encoded_response)
         else:
@@ -77,9 +77,9 @@ class SqlDictCache(Cache):
     def update_cache(self, request, response):
         if not self._can_encode(request) or not self._can_encode(response):
             return
-        encoded_request = self._hash_request(request)
+        cache_key = self._hash_request(request)
         encoded_response = self._encode_response(response)
-        self.cached_responses[encoded_request] = encoded_response
+        self.cached_responses[cache_key] = encoded_response
         self.cached_responses.commit()
 
     def _load_cached_responses(self):
