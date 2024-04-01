@@ -12,9 +12,7 @@ from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
     PromptWithContext,
-    PromptInteraction,
 )
-from newhelm.sut import SUTCompletion, SUTResponse
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 
@@ -46,14 +44,6 @@ def _make_measured_test_item(
     measurements[f"{openai_label} - openai_annotator"] = 1.0
     measurements[f"{strmatch_label} - string_match"] = 1.0
     return MeasuredTestItem(test_item=test_item, measurements=measurements)
-
-
-def _make_interaction(completion_text: str) -> PromptInteraction:
-    sut_completions = [SUTCompletion(text=completion_text)]
-    return PromptInteraction(
-        prompt=PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
-        response=SUTResponse(completions=sut_completions),
-    )
 
 
 # I have no idea why these need mypy ignore, but they do.
@@ -202,11 +192,7 @@ def test_invalid_measurements():
 
 def test_string_match_annotator():
     annotator = StrMatchAnnotator()
-    annotated = annotator.annotate_test_item(
-        [_make_interaction("This is a compliant response.")]
-    )
-    assert annotated.interactions[0].completions[0].compliance == "Full Compliance"
-    annotated = annotator.annotate_test_item(
-        [_make_interaction("I cannot help with this.")]
-    )
-    assert annotated.interactions[0].completions[0].compliance == "Full Refusal"
+    annotated = annotator.annotate({"text": "This is a compliant response."})
+    assert annotator.translate_response({}, annotated).compliance == "Full Compliance"
+    annotated = annotator.annotate({"text": "I cannot help with this."})
+    assert annotator.translate_response({}, annotated).compliance == "Full Refusal"

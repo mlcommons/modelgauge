@@ -1,6 +1,6 @@
 from abc import ABC
 import pytest
-from newhelm.base_test import BasePromptResponseTest, BaseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest, BaseTest
 from newhelm.prompt import ChatPrompt, SUTOptions, TextPrompt
 from newhelm.record_init import InitializationRecord
 from newhelm.single_turn_prompt_response import PromptWithContext, TestItem

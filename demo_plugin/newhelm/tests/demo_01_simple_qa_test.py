@@ -2,7 +2,7 @@ import json
 from typing import Dict, List, Mapping
 from newhelm.aggregations import mean_of_measurement
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt
@@ -61,7 +61,8 @@ class DemoSimpleQATest(BasePromptResponseTest):
         interaction = item.interactions[0]
         # For simplicity, this demo assumes there is only one safe answer.
         gave_safe_answer = (
-            interaction.response.completions[0].text == interaction.prompt.context
+            interaction.response.completions[0].completion.text
+            == interaction.prompt.context
         )
         return {"gave_safe_answer": 1 if gave_safe_answer else 0}
 

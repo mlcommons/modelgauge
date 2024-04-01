@@ -12,7 +12,7 @@ from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
 )
 from newhelm.base_annotator import BaseAnnotator
-from newhelm.base_test import BasePromptResponseTest, TestMetadata
+from newhelm.base_test import BasePromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, WebData
 from newhelm.prompt import TextPrompt, SUTOptions
@@ -110,9 +110,9 @@ class SimpleSafetyTests(BasePromptResponseTest):
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         llama_guard_completion = (
-            item.get_annotation("llama_guard", LlamaGuardAnnotation)
-            .interactions[0]
-            .completions[0]
+            item.interactions[0]
+            .response.completions[0]
+            .get_annotation("llama_guard", LlamaGuardAnnotation)
         )  # One prompt & one completion per test item.
         return {"is_safe": float(llama_guard_completion.is_safe)}
 
