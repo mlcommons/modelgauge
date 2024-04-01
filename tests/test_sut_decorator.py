@@ -121,62 +121,62 @@ class SomePromptResponseSUT(PromptResponseSUT):
 
 
 @newhelm_sut(capabilities=[AcceptsTextPrompt])
-class LogprobsNoCapNotSet(SomePromptResponseSUT):
+class LogprobsNoCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(completions=[SUTCompletion(text="some-text")])
 
 
-def test_logprobs_no_cap_not_set():
-    sut = LogprobsNoCapNotSet("some-sut")
+def test_logprobs_no_capabilities_not_set():
+    sut = LogprobsNoCapabilitiesNotSet("some-sut")
     # Mostly here to ensure no exceptions
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
 @newhelm_sut(capabilities=[AcceptsTextPrompt])
-class LogprobsNoCapAndSet(SomePromptResponseSUT):
+class LogprobsNoCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(
             completions=[SUTCompletion(text="some-text", top_logprobs=[])]
         )
 
 
-def test_logprobs_no_cap_and_set():
-    sut = LogprobsNoCapAndSet("some-sut")
+def test_logprobs_no_capabilities_and_set():
+    sut = LogprobsNoCapabilitiesAndSet("some-sut")
     with pytest.raises(AssertionError) as err_info:
         sut.translate_response(None, None)
     assert (
-        "LogprobsNoCapAndSet does not list capability ProducesPerTokenLogProbabilities"
+        "LogprobsNoCapabilitiesAndSet does not list capability ProducesPerTokenLogProbabilities"
         in str(err_info.value)
     )
 
 
 @newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
-class LogprobsHasCapNotSet(SomePromptResponseSUT):
+class LogprobsHasCapabilitiesNotSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(completions=[SUTCompletion(text="some-text")])
 
 
-def test_logprobs_has_cap_not_set():
-    sut = LogprobsHasCapNotSet("some-sut")
+def test_logprobs_has_capabilities_not_set():
+    sut = LogprobsHasCapabilitiesNotSet("some-sut")
     # This is allowed because SUTOption might not be set
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
 @newhelm_sut(capabilities=[ProducesPerTokenLogProbabilities, AcceptsTextPrompt])
-class LogprobsHasCapAndSet(SomePromptResponseSUT):
+class LogprobsHasCapabilitiesAndSet(SomePromptResponseSUT):
     def translate_response(self, request, response):
         return SUTResponse(
             completions=[SUTCompletion(text="some-text", top_logprobs=[])]
         )
 
 
-def test_logprobs_has_cap_and_set():
-    sut = LogprobsHasCapAndSet("some-sut")
+def test_logprobs_has_capabilities_and_set():
+    sut = LogprobsHasCapabilitiesAndSet("some-sut")
     assert sut.translate_response(None, None).completions[0].text == "some-text"
 
 
 @newhelm_sut(capabilities=[AcceptsTextPrompt])
-class LogprobsInheritsSet(LogprobsHasCapAndSet):
+class LogprobsInheritsSet(LogprobsHasCapabilitiesAndSet):
     pass
 
 
@@ -190,9 +190,9 @@ def test_logprobs_inherits_set():
     )
 
 
-def test_both_cap_both_implemented():
+def test_both_capabilities_both_implemented():
     @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-    class BothCapBothImplmented(SomePromptResponseSUT):
+    class BothCapabilitiesBothImplmented(SomePromptResponseSUT):
         def translate_text_prompt(self, prompt):
             pass
 
@@ -200,28 +200,28 @@ def test_both_cap_both_implemented():
             pass
 
     # Verify you can make an instance
-    BothCapBothImplmented("some-sut")
+    BothCapabilitiesBothImplmented("some-sut")
 
 
-def test_chat_cap_not_implemented():
+def test_chat_capabilities_not_implemented():
     with pytest.raises(AssertionError) as err_info:
 
         @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-        class ChatCapNotImplemented(SomePromptResponseSUT):
+        class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
             def translate_text_prompt(self, prompt):
                 pass
 
     assert str(err_info.value) == (
-        "ChatCapNotImplemented says it AcceptsChatPrompt, "
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
         "but it does not implement translate_chat_prompt."
     )
 
 
-def test_chat_cap_not_implemented_override():
+def test_chat_capabilities_not_implemented_override():
     with pytest.raises(AssertionError) as err_info:
 
         @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-        class ChatCapNotImplemented(SomePromptResponseSUT):
+        class ChatCapabilitiesNotImplemented(SomePromptResponseSUT):
             def translate_text_prompt(self, prompt):
                 pass
 
@@ -230,16 +230,16 @@ def test_chat_cap_not_implemented_override():
                 pass
 
     assert str(err_info.value) == (
-        "ChatCapNotImplemented says it AcceptsChatPrompt, "
+        "ChatCapabilitiesNotImplemented says it AcceptsChatPrompt, "
         "but it does not implement translate_chat_prompt."
     )
 
 
-def test_text_cap_not_implemented():
+def test_text_capabilities_not_implemented():
     with pytest.raises(AssertionError) as err_info:
 
         @newhelm_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
-        class TextCapNotImplemented(SomePromptResponseSUT):
+        class TextCapabilitiesNotImplemented(SomePromptResponseSUT):
             @not_implemented
             def translate_text_prompt(self, prompt):
                 pass
@@ -248,6 +248,6 @@ def test_text_cap_not_implemented():
                 pass
 
     assert str(err_info.value) == (
-        "TextCapNotImplemented says it AcceptsTextPrompt, "
+        "TextCapabilitiesNotImplemented says it AcceptsTextPrompt, "
         "but it does not implement translate_text_prompt."
     )
