@@ -37,20 +37,6 @@ def value_or_default(value: Optional[_InT], default: _InT) -> _InT:
     return default
 
 
-def subset_dict(dictionary: Dict, keys) -> Dict:
-    """Return a new dictionary with only specific keys.
-
-    If a key does not exist in `dictionary`, it is ignored.
-    """
-    subset = {}
-    for key in keys:
-        try:
-            subset[key] = dictionary[key]
-        except KeyError:
-            pass
-    return subset
-
-
 def shell(args: List[str]):
     """Executes the shell command in `args`."""
     cmd = shlex.join(args)
