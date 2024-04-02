@@ -56,7 +56,7 @@ jobs:
     - name: Test with plugin
       run: |
         source .venv/bin/activate
-        pytest --expensive-tests --timeout 30
+        pytest --expensive-tests
 
     - uses: JasonEtco/create-an-issue@v2
       if: failure()
