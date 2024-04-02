@@ -348,11 +348,7 @@ class TogetherInferenceSUT(
 
 
 LANGUAGE_MODELS = {
-    "llama-2-7b": "togethercomputer/llama-2-7b",
-    "llama-2-13b": "togethercomputer/llama-2-13b",
-    "llama-2-70b": "togethercomputer/llama-2-70b",
     "falcon-40b": "togethercomputer/falcon-40b",
-    "flan-t5-xl": "google/flan-t5-xl",
 }
 for uid, model_name in LANGUAGE_MODELS.items():
     SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
@@ -360,13 +356,19 @@ for uid, model_name in LANGUAGE_MODELS.items():
 # Chat
 CHAT_MODELS = {
     "llama-2-7b-chat": "togethercomputer/llama-2-7b-chat",
+    "llama-2-13b-chat": "togethercomputer/llama-2-13b-chat",
     "llama-2-70b-chat": "togethercomputer/llama-2-70b-chat",
-    "zephyr-7b-beta": "HuggingFaceH4/zephyr-7b-beta",
+    "chronos-hermes-13b": "Austism/chronos-hermes-13b",
     "vicuna-13b-v1.5": "lmsys/vicuna-13b-v1.5",
+    "openchat-3.5-1210": "openchat/openchat-3.5-1210",
+    "alpaca-7b": "togethercomputer/alpaca-7b",
+    "gemma-7b-it": "google/gemma-7b-it",
     "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
+    "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
     "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
-    "oasst-sft-4-pythia-12b-epoch-3.5": "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
-    "dolly-v2-12b": "databricks/dolly-v2-12b",
+    "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
+    "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",
+    "Yi-34B-Chat": "zero-one-ai/Yi-34B-Chat",
 }
 for uid, model_name in CHAT_MODELS.items():
     SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))
