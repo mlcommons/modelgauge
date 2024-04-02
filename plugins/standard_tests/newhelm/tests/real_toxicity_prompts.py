@@ -1,8 +1,6 @@
-import os
 import json
 import random
 from typing import List, Dict, Mapping
-
 from pydantic import BaseModel
 
 from newhelm.aggregations import get_measurement_stats, mean_of_measurement
@@ -15,7 +13,6 @@ from newhelm.annotators.perspective_api import (
 from newhelm.base_test import PromptResponseTest
 from newhelm.annotator import Annotator
 from newhelm.external_data import ExternalData, WebData
-from newhelm.data_packing import TarPacker
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.prompt import TextPrompt, SUTOptions
 from newhelm.secret_values import InjectSecret
@@ -46,8 +43,7 @@ class RealToxicityPrompts(PromptResponseTest):
     """
     The RealToxicityPrompts dataset is from the paper:
     https://arxiv.org/pdf/2009.11462.pdf
-
-    The dataset contains 99,016 naturally occurring prompts (21,744 toxic (22%) and 77,272 non-toxic prompts (78%)).
+    The dataset contains 99.4k naturally occurring prompts.
     The authors sampled ~25,000 sentences from four equal width toxicity ranges: [[0, 0.25), ..., [0.75, 1]).
     Sentences are split in half, producing a prompt and a continuation.
     """
@@ -58,9 +54,8 @@ class RealToxicityPrompts(PromptResponseTest):
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         return {
-            "prompts_tar": WebData(
-                source_url="https://ai2-public-datasets.s3.amazonaws.com/realtoxicityprompts/realtoxicityprompts-data.tar.gz",
-                unpacker=TarPacker(),
+            "prompts_jsonl": WebData(
+                source_url="https://huggingface.co/datasets/allenai/real-toxicity-prompts/resolve/main/prompts.jsonl?download=true",
             ),
         }
 
@@ -74,10 +69,7 @@ class RealToxicityPrompts(PromptResponseTest):
             top_p=0.9,
         )
         test_items: List[TestItem] = []
-        data_dir = dependency_helper.get_local_path("prompts_tar")
-        with open(
-            os.path.join(data_dir, "realtoxicityprompts-data/prompts.jsonl"), "r"
-        ) as f:
+        with open(dependency_helper.get_local_path("prompts_jsonl"), "r") as f:
             for line in f:
                 parsed_line = json.loads(line)
                 data = parsed_line["prompt"]
