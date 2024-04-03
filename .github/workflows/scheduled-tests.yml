@@ -62,6 +62,9 @@ jobs:
 
           [openai]
           api_key = "${{ secrets.OPENAI_API_KEY }}"
+
+          [demo]
+          api_key="12345"
       run: |
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml
