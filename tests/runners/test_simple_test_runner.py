@@ -271,7 +271,7 @@ def test_run_prompt_response_test_invalid_test(tmpdir):
             tmpdir,
         )
     assert (
-            str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
+        str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
     )
 
 
