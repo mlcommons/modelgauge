@@ -64,7 +64,7 @@ class SafeTest(PromptResponseTest):
         hazard: str,
         folder_name: str,
         together_api_key: TogetherApiKey,
-        persona_types: Set[PersonaType],
+        persona_types: List[PersonaType],
     ):
         super().__init__(uid)
         assert hazard in HAZARDS_MAPPING, f"Invalid hazard type {hazard}."
@@ -73,7 +73,10 @@ class SafeTest(PromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         assert len(persona_types), "At least one persona type must be specified."
-        self.persona_types: List[PersonaType] = sorted(persona_types)
+        assert len(set(persona_types)) == len(
+            persona_types
+        ), f"Must specify a unique set of persona types, but got {persona_types}"
+        self.persona_types = persona_types
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"
@@ -156,7 +159,7 @@ TESTS.register(
     "ben",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL},
+    persona_types=[PersonaType.TYPICAL],
 )
 
 TESTS.register(
@@ -165,7 +168,7 @@ TESTS.register(
     "cae",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -173,7 +176,7 @@ TESTS.register(
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -181,7 +184,7 @@ TESTS.register(
     "hat",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -189,7 +192,7 @@ TESTS.register(
     "nvc",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -197,7 +200,7 @@ TESTS.register(
     "scr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -213,5 +216,5 @@ TESTS.register(
     "vcr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types={PersonaType.TYPICAL, PersonaType.MALICIOUS},
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
