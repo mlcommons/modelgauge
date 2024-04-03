@@ -1,4 +1,5 @@
 import pytest
+
 from newhelm.annotation import Annotation
 from newhelm.records import TestItemRecord
 from newhelm.runners.simple_test_runner import run_prompt_response_test
@@ -150,6 +151,7 @@ def test_run_prompt_response_test_ignore_caching(tmpdir):
     assert record_1.test_item_records == record_2.test_item_records
     assert record_1.result == record_2.result
 
+
 def fake_run(max_test_items, tmpdir):
     # Lots of test items
     test_items = [fake_test_item(str(i)) for i in range(100)]
@@ -185,9 +187,6 @@ def test_run_prompt_response_test_max_test_items_stable(tmpdir):
 
     for p in prompts3:
         assert p in prompts4
-
-
-
 
 
 def test_run_prompt_response_test_max_test_items_zero(tmpdir):
@@ -272,7 +271,7 @@ def test_run_prompt_response_test_invalid_test(tmpdir):
             tmpdir,
         )
     assert (
-        str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
+            str(err_info.value) == "NotATestOrSut should be decorated with @newhelm_test."
     )
 
 
