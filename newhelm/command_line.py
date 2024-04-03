@@ -1,5 +1,7 @@
+import sys
 import click
 from newhelm.config import write_default_config
+from newhelm.load_plugins import load_plugins
 
 
 @click.group()
@@ -7,6 +9,8 @@ def newhelm_cli():
     """Run the NewHELM library from the command line."""
     # To add a command, decorate your function with @newhelm_cli.command().
     # Always create the config directory if it doesn't already exist.
+    if "--help" not in sys.argv:
+        load_plugins()
     write_default_config()
 
 

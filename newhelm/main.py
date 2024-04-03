@@ -12,7 +12,7 @@ from newhelm.config import (
 )
 from newhelm.dependency_injection import list_dependency_usage
 from newhelm.instance_factory import FactoryEntry
-from newhelm.load_plugins import list_plugins, load_plugins
+from newhelm.load_plugins import list_plugins
 from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from newhelm.sut import PromptResponseSUT
@@ -149,7 +149,6 @@ def run_sut(
 
 
 def main():
-    load_plugins()
     newhelm_cli()
 
 
