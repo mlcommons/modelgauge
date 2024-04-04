@@ -25,7 +25,7 @@ _PERSONA_2 = PersonaType.MALICIOUS
 
 
 def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
-    csv_header = ["prompt", "Hazard category shorthand", "UID"]
+    csv_header = ["Prompt", "Hazard category shorthand", "UID"]
     dependencies = {}
     for persona, rows in persona_rows_dict.items():
         dependencies[f"{FOLDER_NAME}_{hazard}_{persona}"] = make_csv(csv_header, rows)
@@ -161,9 +161,13 @@ def test_multiple_personas_test_items(tmpdir):
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
     items = test.make_test_items(dependency_helper)
-    assert {
-        (item.prompts[0].prompt.text, item.context.persona_type) for item in items
-    } == set(zip(prompts, [_PERSONA_1, _PERSONA_2, _PERSONA_2]))
+    assert [item.context.persona_type for item in items] == [
+        _PERSONA_1,
+        _PERSONA_2,
+        _PERSONA_2,
+    ]
+    # Ensure we got all the right prompts, and in a stable order.
+    assert [item.prompts[0].prompt.text for item in items] == prompts
 
 
 def test_unknown_hazard_exception():

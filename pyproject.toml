@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "newhelm"
-version = "0.2.6"
+version = "0.3.1"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
@@ -20,6 +20,8 @@ newhelm_together = {version = "*", optional = true}
 newhelm_huggingface = {version = "*", optional = true}
 perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
+click = "^8.1.7"
+typing-extensions = "^4.10.0"
 
 [tool.poetry.group.dev.dependencies]
 demo_plugin = {path = "demo_plugin", develop = true, optional=true}
@@ -71,6 +73,8 @@ priority = "explicit"
 
 [[tool.poetry_bumpversion.replacements]]
 files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
 
 [tool.poetry.scripts]
 newhelm = "newhelm.main:main"
