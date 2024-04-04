@@ -6,16 +6,11 @@ import logging
 import shlex
 import subprocess
 import time
-import uuid
 from tqdm import tqdm
 from typing import Dict, List, Optional, Set, Type, TypeVar
 
 # Type vars helpful in defining templates.
 _InT = TypeVar("_InT")
-
-
-def get_unique_id() -> str:
-    return uuid.uuid4().hex
 
 
 def current_timestamp_millis() -> int:
