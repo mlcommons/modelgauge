@@ -44,7 +44,7 @@ interaction.response.completions[0].text == interaction.prompt.context
 
 ### 3. Aggregate the measurements
 
-We can then use one of the provided [aggregation functions](../newhelm/aggregations.py) to determine how often the SUT responded correctly in **`aggregate_measurements`**.
+Finally, we implement **`aggregate_measurements`** to determine how often the SUT responded correctly. You can write your own custom code here, but we make use of one of the provided [aggregation functions](../newhelm/aggregations.py).
 
 ### 4. Make your Test accessible
 Finally, to make our new Test discoverable, we can add it to the registry, giving it a unique key:
