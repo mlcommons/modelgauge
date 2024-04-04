@@ -1,10 +1,8 @@
-from collections import defaultdict
 import math
-from typing import Callable, List, Mapping, Sequence
-
-from pydantic import BaseModel
-
+from collections import defaultdict
 from newhelm.single_turn_prompt_response import MeasuredTestItem
+from pydantic import BaseModel
+from typing import Callable, List, Mapping, Sequence, TypeVar
 
 
 def get_measurements(
@@ -54,12 +52,15 @@ def get_measurement_stats(
     return MeasurementStats.calculate(values)
 
 
+_T = TypeVar("_T")
+
+
 def get_measurement_stats_by_key(
     measurement_name: str,
     items: List[MeasuredTestItem],
     *,
-    key: Callable[[MeasuredTestItem], str]
-) -> Mapping[str, MeasurementStats]:
+    key: Callable[[MeasuredTestItem], _T]
+) -> Mapping[_T, MeasurementStats]:
     """Calculate statistics grouping by `key`."""
     groups = defaultdict(list)
     for item in items:

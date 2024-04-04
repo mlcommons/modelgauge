@@ -1,37 +1,29 @@
 import json
 import random
-from typing import List, Dict, Mapping, Tuple
-
-from pydantic import BaseModel
 from newhelm.aggregations import mean_of_measurement, sum_measurements
 from newhelm.annotator import Annotator
-
 from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
+from newhelm.external_data import ExternalData, WebData
 from newhelm.multiple_choice_questions import (
     MultipleChoiceFormatting,
     MultipleChoiceQuestion,
-    sample_examples,
     question_with_training_to_text,
+    sample_examples,
 )
-from newhelm.external_data import ExternalData, WebData
-from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.single_turn_prompt_response import (
-    TestItemAnnotations,
     MeasuredTestItem,
     PromptWithContext,
     TestItem,
+    TestItemAnnotations,
 )
 from newhelm.sut_capabilities import AcceptsTextPrompt
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
+from pydantic import BaseModel
+from typing import Dict, List, Mapping, Tuple
 
-
-AMBIGUOUS_TAG = "ambiguous"
-NON_AMBIGUOUS_TAG = "non-ambiguous"
-NEGATIVE_TAG = "negative"
-NON_NEGATIVE_TAG = "non-negative"
-UNKNOWN_TAG = "unknown"
 NUM_TEST_ITEMS: int = 1000
 ERROR_SCORE = 0.0  # fallback value after experiencing a divide-by-0 error when computing BBQMetric
 
@@ -294,7 +286,6 @@ class BBQ(PromptResponseTest):
             top_k_per_token=5,
             max_tokens=1,
             stop_sequences=[],
-            echo_prompt=False,
             top_p=1,
         )
         test_items = []

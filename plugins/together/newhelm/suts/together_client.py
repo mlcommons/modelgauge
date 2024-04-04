@@ -1,20 +1,15 @@
-from typing import Any, List, Optional
-from pydantic import BaseModel, Field
 import requests
-from requests.adapters import HTTPAdapter, Retry
-from together.utils import response_status_exception  # type: ignore
 from newhelm.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from newhelm.prompt_formatting import format_chat
-from newhelm.secret_values import (
-    InjectSecret,
-    RequiredSecret,
-    SecretDescription,
-)
+from newhelm.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from newhelm.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from newhelm.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from newhelm.sut_decorator import newhelm_sut
-
 from newhelm.sut_registry import SUTS
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry
+from together.utils import response_status_exception  # type: ignore
+from typing import Any, List, Optional
 
 
 class TogetherApiKey(RequiredSecret):
@@ -55,7 +50,7 @@ def _retrying_post(url, headers, json_payload):
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
-    response = session.post(url, headers=headers, json=json_payload)
+    response = session.post(url, headers=headers, json=json_payload, timeout=120)
     try:
         response_status_exception(response)
     except Exception as e:
@@ -352,64 +347,29 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
-API_KEY_SECRET = InjectSecret(TogetherApiKey)
-
-# Language
-SUTS.register(
-    TogetherCompletionsSUT, "llama-2-7b", "togethercomputer/llama-2-7b", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherCompletionsSUT,
-    "llama-2-70b",
-    "togethercomputer/llama-2-70b",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherCompletionsSUT, "falcon-40b", "togethercomputer/falcon-40b", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherCompletionsSUT,
-    "llama-2-13b",
-    "togethercomputer/llama-2-13b",
-    API_KEY_SECRET,
-)
-SUTS.register(TogetherCompletionsSUT, "flan-t5-xl", "google/flan-t5-xl", API_KEY_SECRET)
-
+LANGUAGE_MODELS = {
+    "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+}
+for uid, model_name in LANGUAGE_MODELS.items():
+    SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
 # Chat
-SUTS.register(
-    TogetherChatSUT,
-    "llama-2-7b-chat",
-    "togethercomputer/llama-2-7b-chat",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT,
-    "llama-2-70b-chat",
-    "togethercomputer/llama-2-70b-chat",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "zephyr-7b-beta", "HuggingFaceH4/zephyr-7b-beta", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT, "vicuna-13b-v1.5", "lmsys/vicuna-13b-v1.5", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT,
-    "Mistral-7B-Instruct-v0.2",
-    "mistralai/Mistral-7B-Instruct-v0.2",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "WizardLM-13B-V1.2", "WizardLM/WizardLM-13B-V1.2", API_KEY_SECRET
-)
-SUTS.register(
-    TogetherChatSUT,
-    "oasst-sft-4-pythia-12b-epoch-3.5",
-    "OpenAssistant/oasst-sft-4-pythia-12b-epoch-3.5",
-    API_KEY_SECRET,
-)
-SUTS.register(
-    TogetherChatSUT, "dolly-v2-12b", "databricks/dolly-v2-12b", API_KEY_SECRET
-)
+CHAT_MODELS = {
+    "llama-2-7b-chat": "meta-llama/Llama-2-7b-chat-hf",
+    "llama-2-13b-chat": "meta-llama/Llama-2-13b-chat-hf",
+    "llama-2-70b-chat": "meta-llama/Llama-2-70b-chat-hf",
+    "chronos-hermes-13b": "Austism/chronos-hermes-13b",
+    "vicuna-13b-v1.5": "lmsys/vicuna-13b-v1.5",
+    "openchat-3.5-1210": "openchat/openchat-3.5-1210",
+    "alpaca-7b": "togethercomputer/alpaca-7b",
+    "gemma-7b-it": "google/gemma-7b-it",
+    "Mistral-7B-Instruct-v0.2": "mistralai/Mistral-7B-Instruct-v0.2",
+    "Mixtral-8x7B-Instruct-v0.1": "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "deepseek-llm-67b-chat": "deepseek-ai/deepseek-llm-67b-chat",
+    "WizardLM-13B-V1.2": "WizardLM/WizardLM-13B-V1.2",
+    "StripedHyena-Nous-7B": "togethercomputer/StripedHyena-Nous-7B",
+    "Qwen1.5-72B-Chat": "Qwen/Qwen1.5-72B-Chat",
+    "Yi-34B-Chat": "zero-one-ai/Yi-34B-Chat",
+}
+for uid, model_name in CHAT_MODELS.items():
+    SUTS.register(TogetherChatSUT, uid, model_name, InjectSecret(TogetherApiKey))

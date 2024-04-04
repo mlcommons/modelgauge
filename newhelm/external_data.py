@@ -1,14 +1,12 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Optional
-import os
+import gdown  # type: ignore
 import shutil
 import tempfile
 import urllib.request
-import gdown  # type: ignore
-
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from newhelm.data_packing import DataDecompressor, DataUnpacker
 from newhelm.general import UrlRetrieveProgressBar
+from typing import Optional
 
 
 @dataclass(frozen=True, kw_only=True)

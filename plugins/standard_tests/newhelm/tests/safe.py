@@ -1,40 +1,39 @@
 import csv
 from enum import Enum
-from typing import Any, List, Dict, Mapping
-
+from newhelm.aggregations import get_measurement_stats_by_key
+from newhelm.annotator import Annotator
 from newhelm.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
 )
-from pydantic import BaseModel
-from newhelm.aggregations import get_measurement_stats_by_key
-from newhelm.annotator import Annotator
 from newhelm.base_test import PromptResponseTest
 from newhelm.dependency_helper import DependencyHelper
 from newhelm.external_data import ExternalData, GDriveData
-from newhelm.prompt import TextPrompt, SUTOptions
+from newhelm.prompt import SUTOptions, TextPrompt
 from newhelm.secret_values import InjectSecret
 from newhelm.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptWithContext,
-    TestItemAnnotations,
     TestItem,
+    TestItemAnnotations,
 )
-from newhelm.suts.together_client import TogetherApiKey
 from newhelm.sut_capabilities import AcceptsTextPrompt
+from newhelm.suts.together_client import TogetherApiKey
 from newhelm.test_decorator import newhelm_test
 from newhelm.test_registry import TESTS
-
+from pydantic import BaseModel
+from typing import Dict, List, Mapping
 
 HAZARDS_MAPPING = {
-    "cae": "Child sexual exploitation",
+    "ben": "Benign",
+    "cae": "Child abuse and exploitation",
     "cbr": "Chemical, biological, radioloigcal, nuclear and high-yield explosives weapons",
     "hat": "Hate",
     "nvc": "Non-violent crimes",
-    "sc": "Sex-related crimes",
+    "scr": "Sex crimes",
     "ssh": "Suicide & self-harm",
     "ter": "Terrorism",
-    "vio": "Violent crimes",
+    "vcr": "Violent crimes",
 }
 
 
@@ -74,7 +73,10 @@ class SafeTest(PromptResponseTest):
         self.folder_name = folder_name
         self.together_api_key = together_api_key
         assert len(persona_types), "At least one persona type must be specified."
-        self.persona_types: List[PersonaType] = list(set(persona_types))
+        assert len(set(persona_types)) == len(
+            persona_types
+        ), f"Must specify a unique set of persona types, but got {persona_types}"
+        self.persona_types = persona_types
 
     def _persona_dependency_key(self, persona: PersonaType) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona}"
@@ -104,7 +106,7 @@ class SafeTest(PromptResponseTest):
                     text = row["Prompt"].strip()
                     if not text:
                         continue
-                    file_hazard = row["Hazard type shorthand"]
+                    file_hazard = row["Hazard category shorthand"]
                     assert (
                         file_hazard == self.hazard
                     ), f"Expected {data_file} to have {self.hazard}, but had {file_hazard}."
@@ -133,22 +135,33 @@ class SafeTest(PromptResponseTest):
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
         """
-        Returns the fraction [0.0, 1.0] of responses that were evaluated as safe.
+        Returns a SafeTestResult that maps each persona_type's subset of prompts to its corresponding measurements.
+        Persona types that do not have any measured test items are not included.
         """
         measurement_stats = get_measurement_stats_by_key(
             "is_safe", items, key=lambda item: item.test_item.context.persona_type
         )
         persona_results = {}
         for persona in self.persona_types:
-            persona_results[persona] = PersonaResult(
-                frac_safe=measurement_stats[persona].mean,
-                num_items=measurement_stats[persona].count,
-            )
+            if persona in measurement_stats:
+                persona_results[persona] = PersonaResult(
+                    frac_safe=measurement_stats[persona].mean,
+                    num_items=measurement_stats[persona].count,
+                )
         return SafeTestResult(persona_results=persona_results)
 
 
-FOLDER_NAME = "data_22mar2024"
+FOLDER_NAME = "data_02apr2024"
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
+TESTS.register(
+    SafeTest,
+    "safe-ben",
+    "ben",
+    FOLDER_NAME,
+    API_KEY_SECRET,
+    persona_types=[PersonaType.TYPICAL],
+)
+
 TESTS.register(
     SafeTest,
     "safe-cae",
@@ -163,7 +176,7 @@ TESTS.register(
     "cbr",
     FOLDER_NAME,
     API_KEY_SECRET,
-    persona_types=[PersonaType.MALICIOUS],
+    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -183,8 +196,8 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-sc",
-    "sc",
+    "safe-scr",
+    "scr",
     FOLDER_NAME,
     API_KEY_SECRET,
     persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
@@ -199,17 +212,9 @@ TESTS.register(
 )
 TESTS.register(
     SafeTest,
-    "safe-ter",
-    "ter",
+    "safe-vcr",
+    "vcr",
     FOLDER_NAME,
     API_KEY_SECRET,
     persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
-)
-TESTS.register(
-    SafeTest,
-    "safe-vio",
-    "vio",
-    FOLDER_NAME,
-    API_KEY_SECRET,
-    persona_types=[PersonaType.MALICIOUS],
 )

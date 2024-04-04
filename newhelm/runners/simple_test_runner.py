@@ -1,7 +1,5 @@
 import os
 import random
-from typing import List, Optional
-from tqdm import tqdm
 from newhelm.annotation import Annotation
 from newhelm.annotator import CompletionAnnotator
 from newhelm.base_test import PromptResponseTest, TestResult
@@ -10,17 +8,19 @@ from newhelm.dependency_helper import FromSourceDependencyHelper
 from newhelm.prompt import TextPrompt
 from newhelm.records import TestItemRecord, TestRecord
 from newhelm.single_turn_prompt_response import (
+    MeasuredTestItem,
     PromptInteractionAnnotations,
     SUTCompletionAnnotations,
     SUTResponseAnnotations,
     TestItem,
     TestItemAnnotations,
-    MeasuredTestItem,
 )
 from newhelm.sut import PromptResponseSUT
 from newhelm.sut_capabilities_verification import assert_sut_capabilities
 from newhelm.sut_decorator import assert_is_sut
 from newhelm.test_decorator import assert_is_test
+from tqdm import tqdm
+from typing import List, Optional
 
 
 def run_prompt_response_test(
@@ -40,12 +40,11 @@ def run_prompt_response_test(
     # Ensure we can record what these objects are
     test_initialization = test.initialization_record
     sut_initialization = sut.initialization_record
-    test_data_path = os.path.join(data_dir, test.__class__.__name__)
+    test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
     sut_cache: Cache
     if use_caching:
-        directory = os.path.join(test_data_path, "cached_responses")
-        sut_cache = SqlDictCache(directory, sut.uid)
+        sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
     else:
         sut_cache = NoCache()
     annotators = []
@@ -53,7 +52,7 @@ def run_prompt_response_test(
         annotator_cache: Cache
         if use_caching:
             annotator_cache = SqlDictCache(
-                os.path.join(test_data_path, "cached_annotations"), key
+                os.path.join(test_data_path, "annotators"), key
             )
         else:
             annotator_cache = NoCache()
@@ -64,7 +63,7 @@ def run_prompt_response_test(
 
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
-        test_data_path,
+        os.path.join(test_data_path, "dependency_data"),
         test.get_dependencies(),
         required_versions={},
     )
@@ -75,7 +74,8 @@ def run_prompt_response_test(
         if max_test_items < len(test_items):
             rng = random.Random()
             rng.seed(0)
-            test_items = rng.sample(test_items, max_test_items)
+            rng.shuffle(test_items)
+            test_items = test_items[:max_test_items]
     test_item_records = []
     measured_test_items = []
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"

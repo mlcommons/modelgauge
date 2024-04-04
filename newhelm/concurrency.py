@@ -1,7 +1,6 @@
 from contextlib import AbstractContextManager
 from threading import Lock
-from typing import TypeVar, Generic
-
+from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
@@ -29,4 +28,3 @@ class ThreadSafeWrapper(AbstractContextManager, Generic[T]):
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
         self._lock.__exit__(exc_type, exc_value, traceback)
-        pass

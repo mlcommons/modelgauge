@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
-
-from pydantic import BaseModel
-
 from newhelm.general import get_concrete_subclasses
+from pydantic import BaseModel
+from typing import Generic, List, Mapping, Optional, Sequence, Type, TypeVar
 
 
 class SecretDescription(BaseModel):
@@ -151,3 +149,6 @@ class InjectSecret(Injector, Generic[SecretType]):
 
     def inject(self, raw_secrets: RawSecrets) -> SecretType:
         return self.secret_class.make(raw_secrets)
+
+    def __repr__(self):
+        return f"InjectSecret({self.secret_class.__name__})"

@@ -10,16 +10,18 @@ To see this in action:
 
 The demo plugin modules will only print on the second run.
 """
+
 import importlib
+
+from tqdm import tqdm
+import newhelm
+import newhelm.annotators
+import newhelm.runners
+import newhelm.suts
+import newhelm.tests
 import pkgutil
 from types import ModuleType
 from typing import Iterator, List
-
-import newhelm
-import newhelm.annotators
-import newhelm.suts
-import newhelm.tests
-import newhelm.runners
 
 
 def _iter_namespace(ns_pkg: ModuleType) -> Iterator[pkgutil.ModuleInfo]:
@@ -34,6 +36,8 @@ def list_plugins() -> List[str]:
     return module_names
 
 
-def load_plugins() -> None:
-    for module_name in list_plugins():
+def load_plugins(disable_progress_bar: bool = False) -> None:
+    for module_name in tqdm(
+        list_plugins(), desc="Loading plugins", disable=disable_progress_bar
+    ):
         importlib.import_module(module_name)
