@@ -27,8 +27,8 @@ def _make_response(text: str) -> TogetherCompletionsResponse:
     )
 
 
-def _annotate_test_item(annotator, completion_text):
-    prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
+def _annotate_test_item(annotator, completion_text, prompt_text="The prompt"):
+    prompt = PromptWithContext(prompt=TextPrompt(text=prompt_text), source_id=None)
     completion = SUTCompletion(text=completion_text)
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(prompt, completion)
@@ -66,6 +66,16 @@ def test_unsafe():
     assert result == LlamaGuardAnnotation(
         is_safe=False, violation_categories=["Violence and Hate"]
     )
+
+
+def test_empty_response():
+    responses = [_make_response("")]
+    annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
+    annotator.model = MockTogetherSUT(responses)
+
+    result = _annotate_test_item(annotator, "first")
+
+    assert result == LlamaGuardAnnotation(is_safe=True, violation_categories=[])
 
 
 def test_unsafe_multiple_categories():

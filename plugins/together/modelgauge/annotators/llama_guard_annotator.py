@@ -54,7 +54,7 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         assert len(response.choices) == 1
         lines = response.choices[0].text.split()
         # This is all very strict, might want to be less so.
-        if lines[0] == "safe":
+        if len(lines) == 0 or lines[0] == "safe":
             return LlamaGuardAnnotation(is_safe=True, violation_categories=[])
         elif lines[0] == "unsafe":
             categories = []
