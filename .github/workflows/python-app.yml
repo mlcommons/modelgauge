@@ -70,3 +70,8 @@ jobs:
       run: |
         source .venv/bin/activate
         pytest
+
+    - name: Test with notebook
+      run: |
+        pip install nbmake
+        pytest --nbmake *.ipynb

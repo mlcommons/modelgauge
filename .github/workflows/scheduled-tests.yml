@@ -74,6 +74,11 @@ jobs:
         source .venv/bin/activate
         pytest --expensive-tests
 
+    - name: Test with notebook
+      run: |
+        pip install nbmake
+        pytest --nbmake *.ipynb
+
     - name: Test dependency installation
       run: |
         mkdir ../installation
