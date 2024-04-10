@@ -1,6 +1,6 @@
 # Plugins
 
-ModelGauge is designed to be extensible using [namespace package plugins](https://packaging.python.org/en/latest/guides/creating-and-discovering-plugins/#using-namespace-packages). This allows you to write code which interacts with the core of NewHELM which can live only in your local file system or in your own separate package.
+ModelGauge is designed to be extensible using [namespace package plugins](https://packaging.python.org/en/latest/guides/creating-and-discovering-plugins/#using-namespace-packages). This allows you to write code which interacts with the core of ModelGauge which can live only in your local file system or in your own separate package.
 
 ## Basics of plugins
 
@@ -30,7 +30,7 @@ pip install modelgauge
 pip install mycoolplugins
 ```
 
-Now any runs of ModelGauge will automatically discover every plugin you wrote in `mycoolplugins`. Furthermore, other plugin writers can import your plugins just like they were written in core NewHELM. To make this magic work:
+Now any runs of ModelGauge will automatically discover every plugin you wrote in `mycoolplugins`. Furthermore, other plugin writers can import your plugins just like they were written in core ModelGauge. To make this magic work:
 
 1. In your package, recreate the `modelgauge/<namespace>` directory structure.
 1. Do **NOT** create any `__init__.py` files in those directories. The absence of those files tells python these are namespaces.

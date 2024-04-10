@@ -14,7 +14,7 @@ To run these questions as a Test in ModelGauge, we need (for now) to create a cl
 Since this fits as a [Prompt Response Test](prompt_response_tests.md) we can have it inherit from `BasePromptResponseTest`. We now have several abstract methods we need to define.
 
 ### 1. Make the test items
-The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. ModelGauge uses [DependencyHelper](../modelgauge/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell NewHELM that we have a dependency on that file by listing it in `get_dependencies`:
+The first phase in a PromptResponseTest is making the `TestItem`s. We want these to be our questions from `an_example.jsonl`. ModelGauge uses [DependencyHelper](../modelgauge/dependency_helper.py) to ensure good hygiene of data dependencies (e.g. versioning). So we first need to tell ModelGauge that we have a dependency on that file by listing it in `get_dependencies`:
 
 ```py
 def get_dependencies(self):
