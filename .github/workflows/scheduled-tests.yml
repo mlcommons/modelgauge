@@ -72,12 +72,7 @@ jobs:
     - name: Test with plugin
       run: |
         source .venv/bin/activate
-        pytest --expensive-tests
-
-    - name: Test with notebook
-      run: |
-        pip install nbmake
-        pytest --nbmake *.ipynb
+        pytest --nbmake --expensive-tests
 
     - name: Test dependency installation
       run: |
