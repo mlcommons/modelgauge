@@ -73,5 +73,4 @@ jobs:
 
     - name: Test with notebook
       run: |
-        pip install nbmake
         pytest --nbmake *.ipynb
