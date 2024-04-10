@@ -2,9 +2,9 @@
 name = "perspective_api"
 version = "0.3.3"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 readme = "README.md"
-packages = [{include = "newhelm"}]
+packages = [{include = "modelgauge"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
