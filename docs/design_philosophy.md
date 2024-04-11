@@ -18,6 +18,12 @@ While the lines between these strategies can be blurry, some signs of a good lib
 
 Libraries are fundamentally easier to reuse for multiple purposes, but with that comes extra design work. We think that for ModelGauge, that tradeoff is worth it.
 
+### Examples in practice
+
+* The interface for SUTs is designed to allow them to be reused by applications that ignore the Tests, Annotators, and Runners defined by Model Gauge.
+* We refactored secrets management to remove global state. This allowed for more pure functions, and made the setup needed to use a class/method more explicit.
+* All the logic for a Test is encapsulated into a single interface, such that to use that class you do not need to set up any other part of the infrastructure to be useful.
+
 
 ## Separate the required from the optional
 
@@ -29,12 +35,23 @@ We have approached this problem via the [plugin architecture](plugins.md). Anyth
 * Only the transitive dependencies you actually want.
 * Individual users to decide what code they want to trust.
 
+### Examples in practice
+
+* The Transformers library is enormous, but you only have to install it if you include the optional plugin (e.g. `huggingface`).
+
 ## Be extensible
 
 The AI community is inventing and discarding use cases faster than we could hope to support in-house. Researchers will always want bespoke features we didn't forsee. So where possible, we should let users extend what we've built to suit their purposes. For example:
 
 * A user should be able to add their Test/SUT without editing any code they don't own.
 * Where possible, we should leave the door open to people adding new categories of Test/SUT.
+
+### Examples in practice
+
+* Users can define a new SUT in a notebook and run Tests against it using normal imports.
+* A Test creator can add new ways of downloading prompts that can still track versioning without editing core libraries.
+* A project can define its own cloud-based runner, reusing the existing Tests/SUTs.
+
 
 ## Make it hard to do the wrong thing
 
