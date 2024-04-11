@@ -1,13 +1,13 @@
 # Design Philosophy
 
-This document tries to capture the high level principles we use in designing NewHELM. Hopefully this can help answer questions like "why do it this way" or "how should I trade off these priorities".
+This document tries to capture the high level principles we use in designing ModelGauge. Hopefully this can help answer questions like "why do it this way" or "how should I trade off these priorities".
 
 ## Be a library, not a framework
 
-NewHELM's primary objective is to facilitate the interaction of many Tests with many SUTs. There are two high level approaches you could take for doing so:
+ModelGauge's primary objective is to facilitate the interaction of many Tests with many SUTs. There are two high level approaches you could take for doing so:
 
-* Framework: NewHELM owns the top of the process, with Tests/SUTs fitting into predefined boxes.
-* Library: NewHELM owns the bottom of the process, providing building blocks that can be assembled by others.
+* Framework: ModelGauge owns the top of the process, with Tests/SUTs fitting into predefined boxes.
+* Library: ModelGauge owns the bottom of the process, providing building blocks that can be assembled by others.
 
 While the lines between these strategies can be blurry, some signs of a good library are that:
 
@@ -16,13 +16,14 @@ While the lines between these strategies can be blurry, some signs of a good lib
   * Example: Choosing to call a method in their code vs defining a no-op method that must exist.
 * Most functions are [pure functions](https://en.wikipedia.org/wiki/Pure_function).
 
-Libraries are fundamentally easier to reuse for multiple purposes, but with that comes extra design work. We think that for NewHELM, that tradeoff is worth it.
+Libraries are fundamentally easier to reuse for multiple purposes, but with that comes extra design work. We think that for ModelGauge, that tradeoff is worth it.
+
 
 ## Separate the required from the optional
 
-We want NewHELM to scale to hundreds of Tests and SUTs. We want those Tests and SUTs to be written by the community. That will invariably bring in lots of transitive dependencies, and potential trust issues, that aren't really needed by most/all users. Therefore we want to put a boundary between the core code that all users must have to use NewHELM, and all the extras people might want.
+We want ModelGauge to scale to hundreds of Tests and SUTs. We want those Tests and SUTs to be written by the community. That will invariably bring in lots of transitive dependencies, and potential trust issues, that aren't really needed by most/all users. Therefore we want to put a boundary between the core code that all users must have to use ModelGauge, and all the extras people might want.
 
-We have approached this problem via the [plugin architecture](plugins.md). Anything not needed by (almost) all users of NewHELM should be moved to plugins. This allows:
+We have approached this problem via the [plugin architecture](plugins.md). Anything not needed by (almost) all users of ModelGauge should be moved to plugins. This allows:
 
 * The common code to be relatively small, and requiring infrequent updates.
 * Only the transitive dependencies you actually want.
