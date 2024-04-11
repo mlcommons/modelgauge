@@ -57,16 +57,18 @@ The AI community is inventing and discarding use cases faster than we could hope
 
 We expect there to be great diversity of programming skill across our community members. While good documentation and examples can help you do the right thing, it takes a little more effort to keep people from doing the wrong thing. In general:
 
-* Try to make runtime errors into coding time errors:
-  * Abstract methods instead of defaults / duck typing.
-  * Automated tests of desired behavior.
-  * Automated type checking.
-* If there is only one right way to do something, don't ask users to do it:
-  * Connecting a response to a request shouldn't be up to the Test, it should be done by the runner.
+* Try to make runtime errors into coding time errors.
+* If there is only one right way to do something, don't ask users to do it.
 * If a method doesn't need a value, don't give it that value.
-  * We don't want Tests treating SUTs differently, so don't let Tests know what SUT is being used.
 * Try to make all data objects immutable.
-  * This ensures users aren't surprised that some values aren't set yet, or that they are responsible for mutating arguments.
+
+### Examples in practice
+
+* A Test never knows what SUT it is testing, and a SUT never knows what Test is being run, as that could only lead to undesirable behavior.
+* Utilize `mypy` checking.
+* We define interfaces and use `@abstractmethod` to enforce implementing all the features.
+* Pull as much common work as possible out of Test definition and into the runner.
+* There are a lot of classes to represent different stages of a TestItem instead of having a single object that gets built up over time. This makes it clear what must be set at each stage, and hides information that isn't needed at others.
 
 ## As always, the zen of Python
 
@@ -75,3 +77,7 @@ While all [19 aphorisms](https://peps.python.org/pep-0020/) are great, a few tha
 * Explicit is better than implicit.
 * There should be one-- and preferably only one --obvious way to do it.
 * If the implementation is hard to explain, it's a bad idea.
+
+### Examples in practice
+
+* We discarded several "hard to explain" ways of managing secrets and ensuring compatibility between a Test and a SUT, even though they arguably met other design philosophy goals better.
