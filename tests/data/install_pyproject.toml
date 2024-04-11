@@ -2,11 +2,11 @@
 name = "nhshell"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-newhelm = { version = "^0.3.1", extras = ["all_plugins"] }
+modelgauge = { version = "^0.3.1", extras = ["all_plugins"] }
 
 [[tool.poetry.source]]
 name = "mlcommons"
