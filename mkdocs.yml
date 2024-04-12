@@ -3,14 +3,15 @@ repo_url: https://github.com/mlcommons/modelgauge/
 edit_uri: blob/main/docs/
 theme:
   name: readthedocs
-  highlightjs: false
 plugins:
   - search
 nav:
+  - index.md
   - dev_quick_start.md
-  - plugins.md
+  - prompt_response_tests.md
   - tutorial.md
   - tutorial_tests.md
   - tutorial_suts.md
-  - prompt_response_tests.md
+  - plugins.md
+  - design_philosophy.md
   - publishing.md
