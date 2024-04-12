@@ -9,6 +9,7 @@ from modelgauge.secret_values import (
     SerializedSecret,
     get_all_secrets,
 )
+from tests.fake_secrets import FakeRequiredSecret
 
 
 class SomeRequiredSecret(RequiredSecret):
