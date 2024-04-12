@@ -1,3 +1,4 @@
+import pytest
 from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
     LlamaGuardAnnotator,
@@ -69,13 +70,15 @@ def test_unsafe():
 
 
 def test_empty_response():
-    responses = [_make_response("")]
     annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
-    annotator.model = MockTogetherSUT(responses)
 
-    result = _annotate_test_item(annotator, "first")
+    with pytest.raises(AssertionError):
+        annotator.translate_request(
+            PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
+            SUTCompletion(text=""),
+        )
 
-    assert result == LlamaGuardAnnotation(is_safe=True, violation_categories=[])
+
 
 
 def test_unsafe_multiple_categories():
