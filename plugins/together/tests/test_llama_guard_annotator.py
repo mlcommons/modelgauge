@@ -28,8 +28,8 @@ def _make_response(text: str) -> TogetherCompletionsResponse:
     )
 
 
-def _annotate_test_item(annotator, completion_text, prompt_text="The prompt"):
-    prompt = PromptWithContext(prompt=TextPrompt(text=prompt_text), source_id=None)
+def _annotate_test_item(annotator, completion_text):
+    prompt = PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None)
     completion = SUTCompletion(text=completion_text)
     # TODO: Remove this and test on actual interface
     request = annotator.translate_request(prompt, completion)
@@ -77,8 +77,6 @@ def test_empty_response():
             PromptWithContext(prompt=TextPrompt(text="The prompt"), source_id=None),
             SUTCompletion(text=""),
         )
-
-
 
 
 def test_unsafe_multiple_categories():
