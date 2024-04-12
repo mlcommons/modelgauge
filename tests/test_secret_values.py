@@ -9,7 +9,6 @@ from modelgauge.secret_values import (
     SerializedSecret,
     get_all_secrets,
 )
-from tests.fake_secrets import FakeRequiredSecret
 
 
 class SomeRequiredSecret(RequiredSecret):
@@ -93,7 +92,7 @@ def test_get_all_secrets():
 
     # This test can be impacted by other files, so just
     # check that at least one exists.
-    assert len(matching) > 1, f"Found secrets: {descriptions}"
+    assert len(matching) > 0, f"Found secrets: {descriptions}"
 
 
 def test_serialize_secret():
