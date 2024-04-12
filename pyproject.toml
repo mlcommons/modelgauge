@@ -48,17 +48,23 @@ types-tqdm = "^4.66.0.0"
 pydantic = "^2.6.0"
 sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
+demo_plugin = {version = "*", optional = true}
+standard_tests = {version = "*", optional = true}
+modelgauge_openai = {version = "*", optional = true}
+modelgauge_together = {version = "*", optional = true}
+modelgauge_huggingface = {version = "*", optional = true}
+perspective_api = {version = "*", optional = true}
+tomli = "^2.0.1"
+click = "^8.1.7"
+typing-extensions = "^4.10.0"
+
+[tool.poetry.group.dev.dependencies]
 demo_plugin = {path = "demo_plugin", develop = true, optional=true}
 standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_together = {path = "plugins/together", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
-tomli = "^2.0.1"
-click = "^8.1.7"
-typing-extensions = "^4.10.0"
-
-[tool.poetry.group.dev.dependencies]
 pytest-datafiles = "^3.0.0"
 pytest = "^7.4.3"
 mypy = "^1.7.1"
@@ -66,6 +72,7 @@ black = "^23.11.0"
 pytest-mock = "^3.12.0"
 pytest-timeout = "^2.3.1"
 flaky = "^3.8.1"
+nbmake = "^1.5.3"
 
 [tool.pytest.ini_options]
 # Ignore the main source that might have things named "test"
