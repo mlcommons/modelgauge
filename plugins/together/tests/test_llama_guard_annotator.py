@@ -69,7 +69,7 @@ def test_unsafe():
     )
 
 
-def test_empty_response():
+def test_empty_completion():
     annotator = LlamaGuardAnnotator(TogetherApiKey("some-value"))
 
     with pytest.raises(AssertionError):
