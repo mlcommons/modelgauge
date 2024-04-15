@@ -11,9 +11,7 @@ To discover plugins, ModelGauge searches special namespaces within `modelgauge`.
 
 The `load_plugins()` call will import all modules in all namespace directories. This makes any code in that module accessible via reflection (e.g. finding all subclasses of a base class) and will run [InstanceFactory.register](../modelgauge/instance_factory.py) calls. This lets the ModelGauge command line list all Tests/SUTs without having to edit any core library code.
 
-## Adding a plugin to a local checkout of ModelGauge
-
-If you have a local checkout of ModelGauge, you can add your module by creating a new file in the desired namespace. For example, if you want to add a Test, you can create a new file in `modelgauge/tests/`.
+## Creating your own plugin package
 
 ### Adding a plugin to ModelGauge's repository
 
@@ -38,3 +36,14 @@ Now any runs of ModelGauge will automatically discover every module you wrote in
 1. You can now distribute your package however you want.
 
 For an example of how this works, see the [demo_plugin](https://github.com/mlcommons/modelgauge/tree/main/demo_plugin) directory.
+
+
+## Adding a plugin to a local checkout of ModelGauge
+
+If you have a local checkout of ModelGauge, you can add your module by creating a new file in the desired namespace. For example, if you want to add a Test, you can create a new file in `modelgauge/tests/`.
+
+### Adding a plugin to ModelGauge's repository
+
+If you would like to create a plugin that is distributed as part of the ModelGauge repository, there are a few points of guidance. First, if you are adding a Test that doesn't require any additional poetry dependencies, you can put your files in `plugins/standard_tests/modelgauge/tests/`, and skip the rest of this section.
+
+TODO: Write the guidance for adding a plugin requiring a dependency.
