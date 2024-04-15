@@ -39,31 +39,37 @@ modelgauge list
 ModelGauge uses a [plugin architecture](plugins.md), so by default the list should be pretty empty. To see this in action, we can instruct poetry to install the `demo` plugin:
 
 ```sh
-pip install modelgauge-demo-plugin@git+https://github.com/mlcommons/modelgauge#subdirectory=demo_plugin
+pip install modelgauge[demo]
 ```
 
 After installing the demo plugin, run `modelgauge list` again. You should now see a list of all the modules in from the `demo` plugin.
 
-The `plugins/` directory contains many useful plugins. However, those have a lot of transitive dependencies, so they can take a while to install. Here is a list of officially supported plugins, as well as the commands to install them:
+Many SUTs and tests are provided by ModelGauge plugins. Here is a list of officially supported plugins, as well as the commands to install them:
 
 ```sh
-# OpenAI SUTs
-pip install modelgauge-openai@git+https://github.com/mlcommons/modelgauge#subdirectory=plugins/openai
-
 # Hugging Face SUTs
-pip install modelgauge-huggingface@git+https://github.com/mlcommons/modelgauge#subdirectory=plugins/huggingface
+pip install modelgauge[huggingface]
+
+# OpenAI SUTs
+pip install modelgauge[openai]
 
 # Together SUTs
-pip install modelgauge-together@git+https://github.com/mlcommons/modelgauge#subdirectory=plugins/together
+pip install modelgauge[together]
 
 # Perspective API
-pip install modelgauge-perspective-api@git+https://github.com/mlcommons/modelgauge#subdirectory=plugins/perspective_api
+pip install modelgauge[perspective-api]
 
-# Tests used by AI Safety
-pip install modelgauge-standard-tests@git+https://github.com/mlcommons/modelgauge#subdirectory=plugins/standard_tests
+# Tests used by the AI Safety Benchmark
+pip install modelgauge[standard-tests]
 ```
 
-After installing these plugins, running `modelgauge list` again will display a list of all installed modules.
+You can also install all plugins with the following command. Some plugins have a lot of transitive dependencies, so installation can take a while:
+
+```sh
+pip install modelgauge[all]
+```
+
+After installing these plugins, running `modelgauge list` will display a list of all installed modules.
 
 ## Running a Test
 
@@ -83,10 +89,6 @@ To obtain detailed information about the existing Systems Under Test (SUTs) in y
 ```sh
 modelgauge list-suts
 ```
-
-## Next steps
-
-
 
 # Further Questions
 
