@@ -1,7 +1,7 @@
 # User Quick Start
 
 > [!NOTE]
-> This guide assumes that you only want to use ModelGauge as a library to run evaluations, and that you do not want to contribute code to ModelGauge. If you do want to contribute code, please read the [Developer Quick Start](developer.md) instead.
+> This guide assumes that you only want to use ModelGauge as a library to run evaluations, and that you do not want to contribute code to ModelGauge. If you do want to contribute code, please read the [Developer Quick Start](dev_quick_start.md) instead.
 
 ## Prerequisites
 
