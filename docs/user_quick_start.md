@@ -81,6 +81,6 @@ To obtain detailed information about the existing Systems Under Test (SUTs) in y
 modelgauge list-suts
 ```
 
-# Further Questions
+## Further Questions
 
 If you have any further questions, please feel free to ask them in the #engineering discord / file a github issue. Also if you see a way to make our documentation better, please submit a pull request. We'd love your help!
