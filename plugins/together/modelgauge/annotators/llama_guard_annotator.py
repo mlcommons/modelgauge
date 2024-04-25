@@ -90,6 +90,7 @@ class SafetyCategory:
     description: str
 
 
+# Categories and prompt formatting taken from https://github.com/meta-llama/llama-recipes/blob/main/src/llama_recipes/inference/prompt_format_utils.py
 LLAMA_GUARD_1_CATEGORY = [
     SafetyCategory(
         "Violence and Hate.",
