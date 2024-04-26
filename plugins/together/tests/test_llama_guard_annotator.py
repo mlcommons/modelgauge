@@ -54,7 +54,7 @@ class MockTogetherSUT:
 def test_safe(llama_guard_version):
     responses = [_make_response("safe")]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), version=llama_guard_version
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
@@ -73,7 +73,7 @@ def test_safe(llama_guard_version):
 def test_unsafe(llama_guard_version, sut_response_category, unsafe_category_name):
     responses = [_make_response("unsafe\n" + sut_response_category)]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), version=llama_guard_version
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
@@ -100,7 +100,7 @@ def test_unsafe_multiple_categories(
 ):
     responses = [_make_response("unsafe\n" + sut_response_categories)]
     annotator = LlamaGuardAnnotator(
-        TogetherApiKey("some-value"), version=llama_guard_version
+        TogetherApiKey("some-value"), llama_guard_version=llama_guard_version
     )
     annotator.model = MockTogetherSUT(responses)
 
@@ -113,7 +113,7 @@ def test_unsafe_multiple_categories(
 
 
 def test_custom_prompt_decoder():
-    def prompt_formatter(prompt):
+    def prompt_formatter(prompt, llama_guard_version):
         return f"Is agent saying bad things?\nagent: {prompt}"
 
     decoder = {"foo": "bar"}
