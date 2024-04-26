@@ -210,8 +210,14 @@ LLAMA_GUARD_2_DATA = LlamaGuardData(
 
 
 class LlamaGuardVersion(Enum):
-    VERSION_1 = LLAMA_GUARD_1_DATA
-    VERSION_2 = LLAMA_GUARD_2_DATA
+    VERSION_1 = "Llama Guard 1"
+    VERSION_2 = "Llama Guard 2"
+
+
+_LLAMA_GUARD_MAP = {
+    LlamaGuardVersion.VERSION_1: LLAMA_GUARD_1_DATA,
+    LlamaGuardVersion.VERSION_2: LLAMA_GUARD_2_DATA,
+}
 
 
 class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
@@ -224,14 +230,14 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         decoder: Optional[Dict[str, str]] = None,
         llama_guard_version: LlamaGuardVersion = LlamaGuardVersion.VERSION_2,
     ):
-        self.llama_guard_version = llama_guard_version
-        self.model_name = llama_guard_version.value.model_name
+        self.llama_guard_data = _LLAMA_GUARD_MAP[llama_guard_version]
+        self.model_name = self.llama_guard_data.model_name
         self.formatter = _default_formatter if formatter is None else formatter
         self.model = TogetherCompletionsSUT(
             "annotator", self.model_name, together_api_key
         )
         self.decoder = (
-            _make_llamaguard_mapping(llama_guard_version.value)
+            _make_llamaguard_mapping(self.llama_guard_data)
             if decoder is None
             else decoder
         )
@@ -241,7 +247,7 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
     ) -> TogetherCompletionsRequest:
         # TODO Consider giving more than just the agent's response
         return TogetherCompletionsRequest(
-            prompt=self.formatter(completion.text, self.llama_guard_version.value),
+            prompt=self.formatter(completion.text, self.llama_guard_data),
             model=self.model_name,
             # This might need to be dynamic if the decoder is complicated.
             max_tokens=20,
