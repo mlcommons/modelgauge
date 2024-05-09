@@ -124,3 +124,26 @@ def test_huggingface_translate_request_prompt_too_large_exception(
     prompt = TextPrompt(text="prompt")
     with pytest.raises(AssertionError):
         client.translate_text_prompt(prompt)
+
+
+def test_huggingface_translate_request_stop_sequences(mocker):
+    def mock_create_tokenizer(*args, **kwargs):
+        return WrappedPreTrainedTokenizer(MockTokenizer([[1, 2, 3], [[4], [5, 6]]]))
+
+    mocker.patch(
+        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
+    )
+    client = _make_client()
+    prompt = TextPrompt(
+        text="prompt", options=SUTOptions(stop_sequences=["stop", "<eos>"])
+    )
+    request = client.translate_text_prompt(prompt)
+    assert request == HuggingFaceRequest(
+        input_ids=[1, 2, 3],
+        model="some-model",
+        num_return_sequences=1,
+        max_new_tokens=100,
+        stop_sequences=["stop", "<eos>"],
+        stop_sequence_ids=[[4], [5, 6]],
+        **_DEFAULT_REQUEST_ARGS
+    )

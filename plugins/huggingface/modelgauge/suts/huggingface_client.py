@@ -108,7 +108,6 @@ class HuggingFaceRequest(BaseModel):
     top_k_per_token: int
     stop_sequences: Optional[List[str]] = None
     stop_sequence_ids: Optional[List[List[int]]] = None
-    optional_args: Dict[str, Any] = {}
 
 
 class HuggingFaceCompletion(BaseModel):
@@ -311,7 +310,6 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             return_dict_in_generate=True,
             output_scores=True,
             generation_config=generation_config,
-            **raw_request.optional_args,
         )
         sequences = output.sequences
         scores = output.scores
@@ -413,24 +411,14 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         if temperature == 0:
             temperature = 1e-7
         # Convert stop sequences to token ids
-        stop_sequences = None
         stop_sequence_ids = None
-        optional_args = {}
         if options.stop_sequences is not None and len(options.stop_sequences) > 0:
             with self.wrapped_tokenizer as tokenizer:
-                stop_sequence_tokenized = tokenizer(
+                stop_sequence_ids = tokenizer(
                     options.stop_sequences,
                     return_token_type_ids=False,
                     add_special_tokens=False,
-                )
-            if (
-                len(stop_sequence_tokenized.input_ids) == 1
-                and len(stop_sequence_tokenized.input_ids[0]) == 1
-            ):
-                optional_args["eos_token_id"] = stop_sequence_tokenized.input_ids[0][0]
-            else:
-                stop_sequence_ids = stop_sequence_tokenized.input_ids
-                stop_sequences = options.stop_sequences
+                ).input_ids
         return HuggingFaceRequest(
             **encoded_input,
             model=self.model_path,
@@ -439,9 +427,8 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             max_new_tokens=max_new_tokens,
             top_p=value_or_default(options.top_p, 1),
             top_k_per_token=value_or_default(options.top_k_per_token, 1),
-            stop_sequences=stop_sequences,
+            stop_sequences=options.stop_sequences,
             stop_sequence_ids=stop_sequence_ids,
-            optional_args=optional_args,
         )
 
     def translate_response(
