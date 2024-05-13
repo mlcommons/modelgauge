@@ -3,6 +3,7 @@ import click
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
+    LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
     SUT_OPTION,
     display_header,
@@ -19,7 +20,6 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
@@ -28,6 +28,7 @@ from typing import List, Optional
 
 
 @modelgauge_cli.command(name="list")
+@LOCAL_PLUGIN_DIR_OPTION
 def list_command() -> None:
     """Overview of Plugins, Tests, and SUTs."""
     plugins = list_plugins()
@@ -74,6 +75,7 @@ def _display_factory_entry(uid: str, entry: FactoryEntry, secrets: RawSecrets):
 
 
 @modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
 def list_tests() -> None:
     """List details about all registered tests."""
     secrets = load_secrets_from_config()
@@ -82,6 +84,7 @@ def list_tests() -> None:
 
 
 @modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
 def list_suts():
     """List details about all registered SUTs (System Under Test)."""
     secrets = load_secrets_from_config()
@@ -90,6 +93,7 @@ def list_suts():
 
 
 @modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
 def list_secrets() -> None:
     """List details about secrets modelgauge might need."""
     descriptions = get_all_secrets()
@@ -101,6 +105,7 @@ def list_secrets() -> None:
 
 
 @modelgauge_cli.command()
+@LOCAL_PLUGIN_DIR_OPTION
 @SUT_OPTION
 @click.option("--prompt", help="The full text to send to the SUT.")
 @click.option(
@@ -155,6 +160,7 @@ def run_sut(
 
 @modelgauge_cli.command()
 @click.option("--test", help="Which registered TEST to run.", required=True)
+@LOCAL_PLUGIN_DIR_OPTION
 @SUT_OPTION
 @DATA_DIR_OPTION
 @MAX_TEST_ITEMS_OPTION
