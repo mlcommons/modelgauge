@@ -11,7 +11,7 @@ from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_serializer
 from transformers import (  # type: ignore
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -98,16 +98,23 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
 class HuggingFaceRequest(BaseModel):
     """Data passed between make_request and serve_request. Used as the cache key."""
 
-    input_ids: List[int]
-    attention_mask: Optional[List[int]] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    input_ids: torch.Tensor
+    attention_mask: Optional[torch.Tensor] = None
     model: str  # Included to help uniquely identify the request (e.g in caching).
     temperature: float
     num_return_sequences: int
     max_new_tokens: int
     top_p: float
     top_k_per_token: int
-    stop_sequences: Optional[List[str]] = None
     stop_sequence_ids: Optional[List[List[int]]] = None
+
+    @field_serializer("input_ids", "attention_mask", when_used="unless-none")
+    def serialize_tensor(self, tensor_attr, _info):
+        """Tensors are serialized as lists by default, unless keep_tensors is set in the context."""
+        if _info.context and _info.context.get("keep_tensors"):
+            return tensor_attr
+        return tensor_attr.tolist()
 
 
 class HuggingFaceCompletion(BaseModel):
@@ -280,36 +287,30 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             self.wrapped_tokenizer = self._load_tokenizer()
         if not self.model:
             self.model = self._load_model()
-        stopping_criteria: Optional[StoppingCriteriaList] = None
-        if (
-            raw_request.stop_sequence_ids is not None
-            and len(raw_request.stop_sequence_ids) > 0
-        ):
+        generate_args = raw_request.model_dump(
+            exclude={"model": True, "top_k_per_token": True, "stop_sequence_ids": True},
+            exclude_none=True,
+            context={"keep_tensors": True},
+        )
+        optional_args = {}
+        if raw_request.stop_sequence_ids and len(raw_request.stop_sequence_ids):
             stopping_criteria = StoppingCriteriaList()
             for stop_sequence_input_ids in raw_request.stop_sequence_ids:
                 stopping_criteria.append(
                     StopAtSpecificTokenCriteria(stop_sequence=stop_sequence_input_ids)
                 )
+            optional_args["stopping_criteria"] = stopping_criteria
         # Some models do not have a `pad_token_id`. For example gpt2
         # This prevents a warning message
-        generation_config = None
         if self.model.config.pad_token_id is None:
             if self.model.config.eos_token_id is not None:
-                generation_config = GenerationConfig(
-                    pad_token_id=self.model.config.eos_token_id
-                )
+                optional_args["pad_token_id"] = self.model.config.eos_token_id
         output = self.model.generate(
-            input_ids=torch.tensor([raw_request.input_ids]),
-            attention_mask=torch.tensor([raw_request.attention_mask]),
-            temperature=raw_request.temperature,
-            num_return_sequences=raw_request.num_return_sequences,
-            max_new_tokens=raw_request.max_new_tokens,
-            top_p=raw_request.top_p,
-            stopping_criteria=stopping_criteria,
+            **generate_args,
             do_sample=True,
             return_dict_in_generate=True,
             output_scores=True,
-            generation_config=generation_config,
+            **optional_args,
         )
         sequences = output.sequences
         scores = output.scores
@@ -391,8 +392,10 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         if not self.wrapped_tokenizer:
             self.wrapped_tokenizer = self._load_tokenizer()
         with self.wrapped_tokenizer as tokenizer:
-            encoded_input = tokenizer(text, return_token_type_ids=False)
-            num_input_tokens = len(encoded_input.input_ids)
+            encoded_input = tokenizer(
+                text, return_tensors="pt", return_token_type_ids=False
+            ).to(self.device)
+            num_input_tokens = encoded_input.input_ids.nelement()
             # Ensure the total tokens is within the model's max length.
             max_new_tokens = min(
                 options.max_tokens,
@@ -427,7 +430,6 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             max_new_tokens=max_new_tokens,
             top_p=value_or_default(options.top_p, 1),
             top_k_per_token=value_or_default(options.top_k_per_token, 1),
-            stop_sequences=options.stop_sequences,
             stop_sequence_ids=stop_sequence_ids,
         )
 
