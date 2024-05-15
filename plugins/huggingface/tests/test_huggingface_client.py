@@ -1,8 +1,8 @@
-from torch import tensor, is_tensor, equal
+from torch import Tensor, tensor, is_tensor, equal
 from transformers.generation.stopping_criteria import StoppingCriteriaList
 from transformers import PreTrainedTokenizerBase
 from transformers.tokenization_utils_base import BatchEncoding
-from typing import List
+from typing import List, Union
 from unittest.mock import Mock, patch, MagicMock
 import pytest
 from modelgauge.caching import SqlDictCache
@@ -20,18 +20,29 @@ from modelgauge.suts.huggingface_client import (
 )
 
 _DEFAULT_REQUEST_ARGS = {
-    "temperature": 1.0,
-    "top_p": 1.0,
-    "top_k_per_token": 1,
-    "num_return_sequences": 1,
     "model": "some-model",
+    "top_k_per_token": 1,
+    "generate_args": {
+        "temperature": 1.0,
+        "num_return_sequences": 1,
+        "top_p": 1.0,
+    },
 }
 
 _INPUT_LIST = [[1, 2, 3, 4, 5]]
-_INPUT_TENSOR = tensor(_INPUT_LIST)
+# _INPUT_TENSOR = tensor(_INPUT_LIST)
+_INPUT_TENSOR = tensor([[1, 2]])
+
 _MASK_LIST = [[1, 1, 1, 0, 0]]
 _MASK_TENSOR = tensor(_MASK_LIST)
 _STOP_SEQUENCES_IDS = [[4], [5, 6]]
+
+_VOCAB_MAP = {
+    "<unk>": 0,
+    "hello": 1,
+    "world": 2,
+    "<stop>": 3,
+}
 
 
 def _make_client():
@@ -42,99 +53,74 @@ def _make_client():
     )
 
 
+def _make_mocked_client(**kwargs):
+    mock_model = MagicMock()
+    client = _make_client()
+    client.wrapped_tokenizer = WrappedPreTrainedTokenizer(MockTokenizer(**kwargs))
+    client.model = mock_model
+    return client
+
+
 class MockTokenizer:
-    def __init__(self, output_id_sequences, model_max_length=512):
+    def __init__(self, model_max_length=512, return_mask=False):
         self.model_max_length = model_max_length
-        outputs = []
-        for ids in output_id_sequences:
-            outputs.append(BatchEncoding({"input_ids": ids}))
-        self.output_stack = list(reversed(outputs))
-        self.text_inputs_receieved = []
+        self.return_mask = return_mask
+        self.vocab = _VOCAB_MAP
+        self.id_to_token = {id: token for token, id in self.vocab.items()}
 
-    def __call__(self, *args, **kwargs) -> BatchEncoding:
-        self.text_inputs_receieved.append(args[0])
-        return self.output_stack.pop()
+    def __call__(self, text: Union[str, List[str]], **kwargs) -> BatchEncoding:
+        if isinstance(text, str):
+            text = [text]
+        token_ids = []
+        mask = []
+        for sequence in text:
+            sequence_ids = [self.vocab.get(token, 0) for token in sequence.split()]
+            token_ids.append(sequence_ids)
+            mask.append([1] * len(sequence_ids))
 
+        if kwargs.get("return_tensors") == "pt":
+            token_ids = tensor(token_ids)
+            mask = tensor(mask)
+        encoding_data = {"input_ids": token_ids}
+        if self.return_mask:
+            encoding_data["attention_mask"] = mask
 
-def test_huggingface_request_serialization():
-    request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR, max_new_tokens=100, **_DEFAULT_REQUEST_ARGS
-    )
-    assert request.model_dump() == {
-        "input_ids": _INPUT_LIST,
-        "attention_mask": None,
-        "max_new_tokens": 100,
-        "stop_sequence_ids": None,
-        **_DEFAULT_REQUEST_ARGS,
-    }
+        return BatchEncoding(encoding_data)
 
+    def decode(self, token_ids: Union[int, List[int], "torch.Tensor"]) -> str:
+        if is_tensor(token_ids):
+            token_ids = token_ids.tolist()
+        decoded_tokens = self.convert_ids_to_tokens(token_ids)
+        if isinstance(decoded_tokens, list):
+            return " ".join(decoded_tokens)
+        return decoded_tokens
 
-def test_huggingface_request_optional_args_serialization():
-    request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR,
-        attention_mask=_MASK_TENSOR,
-        max_new_tokens=100,
-        stop_sequence_ids=_STOP_SEQUENCES_IDS,
-        **_DEFAULT_REQUEST_ARGS
-    )
-    assert request.model_dump()["input_ids"] == _INPUT_LIST
-    assert request.model_dump()["attention_mask"] == _MASK_LIST
-    assert request.model_dump()["stop_sequence_ids"] == _STOP_SEQUENCES_IDS
+    def batch_decode(
+        self, sequences: Union[List[int], List[List[int]], "torch.Tensor"]
+    ) -> List[str]:
+        return [self.decode(sequence) for sequence in sequences]
 
-
-@pytest.mark.parametrize("mask", [None, _MASK_TENSOR])
-def test_huggingface_request_tensor_serialization_generation_context(mask):
-    """Test that model_dump serializes tensors as tensors with generation context."""
-    request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR,
-        attention_mask=mask,
-        max_new_tokens=100,
-        **_DEFAULT_REQUEST_ARGS
-    )
-    serialized_request = request.model_dump(context={"keep_tensors": True})
-    assert is_tensor(serialized_request["input_ids"])
-    assert equal(serialized_request["input_ids"], _INPUT_TENSOR)
-    if mask is None:
-        assert serialized_request["attention_mask"] == None
-    else:
-        assert is_tensor(serialized_request["attention_mask"])
-        assert equal(serialized_request["attention_mask"], mask)
+    def convert_ids_to_tokens(
+        self, ids: Union[int, List[int]]
+    ) -> Union[str, List[str]]:
+        if isinstance(ids, int):
+            return self.id_to_token[ids]
+        return [self.id_to_token[id] for id in ids]
 
 
-def test_huggingface_request_serialization_cacheable(tmpdir):
-    """Test that model_dump_json() does not raise an exception due to tensor serialization errors, for example"""
-    request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR, max_new_tokens=100, **_DEFAULT_REQUEST_ARGS
-    )
-    with SqlDictCache(tmpdir, "sut_name") as cache:
-        cache._hash_request(request)
-
-
-def test_huggingface_translate_text_prompt_request(mocker):
-    def mock_create_tokenizer(*args, **kwargs):
-        return WrappedPreTrainedTokenizer(MockTokenizer([_INPUT_TENSOR]))
-
-    mocker.patch(
-        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
-    )
+def test_huggingface_translate_text_prompt_request():
     client = _make_client()
     prompt = TextPrompt(text="some text prompt")
     request = client.translate_text_prompt(prompt)
     assert request == HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR, max_new_tokens=100, **_DEFAULT_REQUEST_ARGS
+        prompt="some text prompt",
+        max_new_tokens=100,
+        stop_sequences=[],
+        **_DEFAULT_REQUEST_ARGS
     )
 
 
-def test_huggingface_translate_chat_prompt_request(mocker):
-    mock_tokenizer = MockTokenizer([_INPUT_TENSOR])
-
-    def mock_create_tokenizer(*args, **kwargs):
-        return WrappedPreTrainedTokenizer(mock_tokenizer)
-
-    mocker.patch(
-        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
-    )
-
+def test_huggingface_translate_chat_prompt_request():
     client = _make_client()
     prompt = ChatPrompt(
         messages=[
@@ -143,121 +129,127 @@ def test_huggingface_translate_chat_prompt_request(mocker):
         ]
     )
     request = client.translate_chat_prompt(prompt)
-    assert mock_tokenizer.text_inputs_receieved == [format_chat(prompt)]
+    assert request.prompt == format_chat(prompt)
 
 
-def test_huggingface_translate_request_reduce_max_tokens(mocker):
-    """If total num. tokens (max_tokens + prompt length) exceeds model's max length, the max_new_tokens is adjusted."""
-
-    def mock_create_tokenizer(*args, **kwargs):
-        return WrappedPreTrainedTokenizer(
-            MockTokenizer([_INPUT_TENSOR], model_max_length=55)
-        )
-
-    mocker.patch(
-        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
-    )
+def test_huggingface_translate_request_non_default_options():
     client = _make_client()
-    prompt = TextPrompt(text="prompt", options=SUTOptions(max_tokens=75))
-    request = client.translate_text_prompt(prompt)
+    options = SUTOptions(
+        temperature=0.5,
+        num_completions=2,
+        top_p=0.4,
+        max_tokens=15,
+        top_k_per_token=3,
+        stop_sequences=["stop"],
+    )
+    request = client._translate_request("some text prompt", options)
     assert request == HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR, max_new_tokens=50, **_DEFAULT_REQUEST_ARGS
+        prompt="some text prompt",
+        model="some-model",
+        max_new_tokens=15,
+        top_k_per_token=3,
+        stop_sequences=["stop"],
+        generate_args={"temperature": 0.5, "num_return_sequences": 2, "top_p": 0.4},
     )
+    # Test that temperature of 0 is adjusted.
+    request = client._translate_request("some text prompt", SUTOptions(temperature=0.0))
+    assert request.generate_args.temperature == 1e-7
 
 
-def test_huggingface_translate_request_prompt_too_large_exception(
-    mocker,
-):
-    """Exception is raised if the num. of prompt tokens exceeds the the model's max length."""
-
-    def mock_create_tokenizer(*args, **kwargs):
-        return WrappedPreTrainedTokenizer(
-            MockTokenizer(_INPUT_TENSOR, model_max_length=5)
-        )
-
-    mocker.patch(
-        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
+def test_huggingface_request_serialization_cacheable(tmpdir):
+    request = HuggingFaceRequest(
+        prompt="prompt", max_new_tokens=100, stop_sequences=[], **_DEFAULT_REQUEST_ARGS
     )
-    client = _make_client()
-    prompt = TextPrompt(text="prompt")
-    with pytest.raises(AssertionError):
-        client.translate_text_prompt(prompt)
+    with SqlDictCache(tmpdir, "sut_name") as cache:
+        cache._hash_request(request)
 
 
-def test_huggingface_translate_request_stop_sequences(mocker):
-    def mock_create_tokenizer(*args, **kwargs):
-        return WrappedPreTrainedTokenizer(
-            MockTokenizer([_INPUT_TENSOR, _STOP_SEQUENCES_IDS])
-        )
-
-    mocker.patch(
-        "modelgauge.suts.huggingface_client.create_tokenizer", new=mock_create_tokenizer
-    )
-    client = _make_client()
-    prompt = TextPrompt(
-        text="prompt", options=SUTOptions(stop_sequences=["stop", "<eos>"])
-    )
-    request = client.translate_text_prompt(prompt)
-    assert request == HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR,
-        stop_sequence_ids=_STOP_SEQUENCES_IDS,
-        max_new_tokens=100,
-        **_DEFAULT_REQUEST_ARGS
-    )
-
-
-@pytest.mark.parametrize("mask", [None, _MASK_TENSOR])
-def test_huggingface_generate_args(mask):
+def test_huggingface_generate_args():
     """Tests that the expected arguments are passed to the .generate() call in the evaluate method."""
-    client = _make_client()
-    client._load_model = MagicMock()
-    client._load_tokenizer = MagicMock()
-    mask_arg = {}
-    if mask is not None:
-        mask_arg["attention_mask"] = mask
+    client = _make_mocked_client()
     request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR, max_new_tokens=100, **mask_arg, **_DEFAULT_REQUEST_ARGS
-    )
-    # Patching model attribute of the HuggingFaceSUT instance
-    with patch.object(client, "model", autospec=True) as mock_model:
-        client.evaluate(request)
-        generate_call_args, generate_call_kwargs = mock_model.generate.call_args
-        assert generate_call_kwargs == {
-            "input_ids": _INPUT_TENSOR,
-            "temperature": 1.0,
-            "num_return_sequences": 1,
-            "max_new_tokens": 100,
-            "top_p": 1.0,
-            "do_sample": True,
-            "return_dict_in_generate": True,
-            "output_scores": True,
-            **mask_arg,
-        }
-        assert is_tensor(generate_call_kwargs["input_ids"])
-        if mask is not None:
-            assert is_tensor(generate_call_kwargs["attention_mask"])
-
-
-def test_huggingface_generate_stopping_criteria():
-    client = _make_client()
-    client._load_model = MagicMock()
-    client._load_tokenizer = MagicMock()
-    request = HuggingFaceRequest(
-        input_ids=_INPUT_TENSOR,
-        stop_sequence_ids=_STOP_SEQUENCES_IDS,
+        prompt="hello world",
         max_new_tokens=100,
+        stop_sequences=[],
         **_DEFAULT_REQUEST_ARGS
     )
-    # Patching model attribute of the HuggingFaceSUT instance
-    with patch.object(client, "model", autospec=True) as mock_model:
-        client.evaluate(request)
-        generate_call_args, generate_call_kwargs = mock_model.generate.call_args
+    client.evaluate(request)
 
-        assert isinstance(
-            generate_call_kwargs["stopping_criteria"], StoppingCriteriaList
-        )
-        assert len(generate_call_kwargs["stopping_criteria"]) == len(
-            _STOP_SEQUENCES_IDS
-        )
-        for i, token in enumerate(generate_call_kwargs["stopping_criteria"]):
-            assert token.stop_sequence == _STOP_SEQUENCES_IDS[i]
+    _, generate_call_kwargs = client.model.generate.call_args
+    input_ids = generate_call_kwargs.pop("input_ids")
+    assert is_tensor(input_ids)
+    assert equal(input_ids, _INPUT_TENSOR)
+    assert generate_call_kwargs == {
+        **_DEFAULT_REQUEST_ARGS["generate_args"],
+        "max_new_tokens": 100,
+        "do_sample": True,
+        "return_dict_in_generate": True,
+        "output_scores": True,
+    }
+
+
+def test_huggingface_generate_args_mask():
+    """Tests that the expected arguments are passed to the .generate() call in the evaluate method."""
+    client = _make_mocked_client(return_mask=True)
+    request = HuggingFaceRequest(
+        prompt="hello world",
+        max_new_tokens=100,
+        stop_sequences=[],
+        **_DEFAULT_REQUEST_ARGS
+    )
+    client.evaluate(request)
+
+    _, generate_call_kwargs = client.model.generate.call_args
+    mask = generate_call_kwargs.get("attention_mask")
+    assert is_tensor(mask)
+    assert equal(mask, tensor([[1, 1]]))
+
+
+def test_huggingface_generate_stopping_criteria_arg():
+    client = _make_mocked_client()
+    request = HuggingFaceRequest(
+        prompt="hello world",
+        max_new_tokens=100,
+        stop_sequences=["<stop>", "hello <eos>"],
+        **_DEFAULT_REQUEST_ARGS
+    )
+    client.evaluate(request)
+
+    _, generate_call_kwargs = client.model.generate.call_args
+    stopping_criteria = generate_call_kwargs["stopping_criteria"]
+    assert isinstance(stopping_criteria, StoppingCriteriaList)
+    assert [token.stop_sequence for token in stopping_criteria] == [
+        [_VOCAB_MAP["<stop>"]],
+        [_VOCAB_MAP["hello"], _VOCAB_MAP["<unk>"]],
+    ]
+
+
+def test_huggingface_generate_args_with_reduced_max_tokens():
+    """If total num. tokens (max_tokens + prompt length) exceeds model's max length, the max_new_tokens is adjusted."""
+    client = _make_mocked_client(model_max_length=53)
+
+    request = HuggingFaceRequest(
+        prompt="some text prompt",
+        max_new_tokens=75,
+        stop_sequences=[],
+        **_DEFAULT_REQUEST_ARGS
+    )
+    client.evaluate(request)
+    _, generate_call_kwargs = client.model.generate.call_args
+    assert generate_call_kwargs["max_new_tokens"] == 50
+
+
+def test_huggingface_evaluate_prompt_too_large_exception():
+    """Exception is raised if the num. of prompt tokens exceeds the the model's max length."""
+    client = _make_mocked_client(model_max_length=3)
+
+    request = HuggingFaceRequest(
+        prompt="some text prompt",
+        max_new_tokens=75,
+        stop_sequences=[],
+        **_DEFAULT_REQUEST_ARGS
+    )
+    with pytest.raises(
+        AssertionError, match="Prompt has 3 tokens, which is >= max length 3"
+    ):
+        client.evaluate(request)
