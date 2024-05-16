@@ -1,9 +1,9 @@
 import pytest
 import torch
-from transformers.generation.stopping_criteria import StoppingCriteriaList
-from transformers.utils import ModelOutput
+from transformers.generation.stopping_criteria import StoppingCriteriaList  # type: ignore
+from transformers.utils import ModelOutput  # type: ignore
 
-from fake_model import make_client, make_mocked_client
+from fake_model import make_client, make_mocked_client  # type: ignore
 from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens

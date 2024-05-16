@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 from typing import List, Union
 
 import torch
-from transformers.tokenization_utils_base import BatchEncoding
+from transformers import BatchEncoding  # type: ignore
 
 from modelgauge.suts.huggingface_client import (
     HuggingFaceSUT,
@@ -46,27 +46,19 @@ class MockTokenizer:
             token_ids.append(sequence_ids)
             mask.append([1] * len(sequence_ids))
 
-        if kwargs.get("return_tensors") == "pt":
-            token_ids = torch.tensor(token_ids)
-            mask = torch.tensor(mask)
         encoding_data = {"input_ids": token_ids}
         if self.returns_mask:
             encoding_data["attention_mask"] = mask
 
-        return BatchEncoding(encoding_data)
+        return BatchEncoding(encoding_data, tensor_type=kwargs.get("return_tensors"))
 
-    def decode(self, token_ids: Union[int, List[int], torch.Tensor]) -> str:
+    def decode(self, token_ids: Union[int, List[int], "torch.Tensor"]) -> str:
         if torch.is_tensor(token_ids):
-            token_ids = token_ids.tolist()
-        decoded_tokens = self.convert_ids_to_tokens(token_ids)
+            token_ids = token_ids.tolist()  # type: ignore
+        decoded_tokens = self.convert_ids_to_tokens(token_ids)  # type: ignore
         if isinstance(decoded_tokens, list):
             return " ".join(decoded_tokens)
         return decoded_tokens
-
-    def batch_decode(
-        self, sequences: Union[List[int], List[List[int]], torch.Tensor]
-    ) -> List[str]:
-        return [self.decode(sequence) for sequence in sequences]
 
     def convert_ids_to_tokens(
         self, ids: Union[int, List[int]]

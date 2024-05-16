@@ -148,8 +148,6 @@ class HuggingFaceToken(OptionalSecret):
     ]
 )
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
-    """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
-
     def __init__(
         self,
         uid: str,
