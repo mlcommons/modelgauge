@@ -1,21 +1,11 @@
 import logging
 import os
+
 import torch
-from copy import deepcopy
-from modelgauge.concurrency import ThreadSafeWrapper
-from modelgauge.general import value_or_default
-from modelgauge.prompt import ChatPrompt, TextPrompt
-from modelgauge.prompt_formatting import format_chat
-from modelgauge.secret_values import InjectSecret, OptionalSecret, SecretDescription
-from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
-from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
-from modelgauge.sut_decorator import modelgauge_sut
-from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel, ConfigDict, field_serializer
+from pydantic import BaseModel
 from transformers import (  # type: ignore
     AutoModelForCausalLM,
     AutoTokenizer,
-    GenerationConfig,
     PreTrainedTokenizerBase,
 )
 from transformers.generation.stopping_criteria import (  # type: ignore
@@ -23,6 +13,27 @@ from transformers.generation.stopping_criteria import (  # type: ignore
     StoppingCriteriaList,
 )
 from typing import Any, Dict, List, Optional, Tuple
+
+from modelgauge.concurrency import ThreadSafeWrapper
+from modelgauge.general import value_or_default
+from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.prompt_formatting import format_chat
+from modelgauge.secret_values import InjectSecret, OptionalSecret, SecretDescription
+from modelgauge.sut import (
+    PromptResponseSUT,
+    SUTCompletion,
+    SUTResponse,
+    TokenProbability,
+    TopTokens,
+)
+from modelgauge.sut_capabilities import (
+    AcceptsChatPrompt,
+    AcceptsTextPrompt,
+    ProducesPerTokenLogProbabilities,
+)
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
+
 
 WrappedPreTrainedTokenizer = ThreadSafeWrapper[PreTrainedTokenizerBase]
 """Thread safe wrapper around Hugging Face PreTrainedTokenizerBase.
@@ -96,136 +107,27 @@ class StopAtSpecificTokenCriteria(StoppingCriteria):
 
 
 class HuggingFaceRequest(BaseModel):
-    """Data passed between make_request and serve_request. Used as the cache key."""
-
     class GenerateArgs(BaseModel):
         temperature: float
         num_return_sequences: int
         top_p: float
+        top_k: int
 
     prompt: str
     model: str  # Included to help uniquely identify the request (e.g in caching).
     max_new_tokens: int
-    top_k_per_token: int
     stop_sequences: List[str]
     generate_args: GenerateArgs
+    num_top_logprobs: Optional[int] = None
 
 
 class HuggingFaceCompletion(BaseModel):
     text: str
-    tokens: List[str]
-    logprobs: List[float]
-    top_logprobs_dicts: List[Dict[str, float]]
+    top_logprobs_dicts: Optional[List[Dict[str, float]]] = None
 
 
 class HuggingFaceResponse(BaseModel):
     completions: List[HuggingFaceCompletion]
-    input_length: int
-
-
-class Token(BaseModel):
-    """
-    A `Token` represents one token position in a `Sequence`, which has the
-    chosen `text` as well as the top probabilities under the model.
-
-    Note: (text, logprob) could exist or not exist in `top_logprobs`.
-    """
-
-    # Text that was chosen
-    text: str
-
-    # Log probability of generating that
-    logprob: float
-
-    # text -> log probability of generating that
-    top_logprobs: Dict[str, float]
-
-
-class Sequence(BaseModel):
-    """A `Sequence` is a sequence of tokens."""
-
-    # The concatenation of all the tokens
-    text: str
-
-    # The sum of the log probabilities of all tokens
-    logprob: float
-
-    # The tokens
-    tokens: List[Token]
-
-
-def _truncate_sequence(
-    sequence: Sequence, request: HuggingFaceRequest, print_warning: bool = True
-) -> Sequence:
-    """
-    Certain providers have bugs where they aren't respecting max_tokens,
-    stop_sequences and the end of text token, so as a hack, we have to manually
-    truncate the suffix of `sequence` and `tokens` as a post-hoc process.
-    """
-    if request.stop_sequences is not None:
-        for stop in request.stop_sequences:
-            # Find `stop` in the text
-            try:
-                new_text = sequence.text[: sequence.text.index(stop)]
-            except ValueError:
-                # The stop sequence doesn't exist, but it might exist in the list of tokens.
-                new_text = sequence.text
-
-            # Strip `stop` off the tokens
-            new_tokens: List[Token] = []
-            # Need to start
-            for token in sequence.tokens:
-                # Note: we can only strip at token boundaries
-                if token.text.startswith(stop):
-                    break
-                new_tokens.append(token)
-
-            # Recompute log probability
-            new_logprob = sum(token.logprob for token in new_tokens)
-            sequence = Sequence(text=new_text, logprob=new_logprob, tokens=new_tokens)
-
-    # Truncate based on the max number of tokens.
-    if len(sequence.tokens) > request.max_new_tokens:
-        new_tokens = sequence.tokens[: request.max_new_tokens]
-
-        # This is imperfect stitching together of tokens, so just to make sure this is okay
-        # TODO: should use the proper detokenizer since T5-style models.
-        # Usually, in our benchmark, max_tokens is active when it's 1, so hopefully this isn't an issue.
-        new_text = "".join(token.text for token in new_tokens)
-        new_logprob = sum(token.logprob for token in new_tokens)
-
-        sequence = Sequence(text=new_text, logprob=new_logprob, tokens=new_tokens)
-
-    return sequence
-
-
-TORCH_DTYPE_KEY = "torch_dtype"
-TORCH_DTYPE_VALUE_PREFIX = "torch."
-
-
-def _process_huggingface_client_kwargs(raw_kwargs: Dict[str, Any]):
-    """Process the kwargs for HuggingFaceClient.
-
-    The kwargs passed to HuggingFaceClient will eventually be passed to AutoModel.from_pretrained().
-    Since the kwargs from HuggingFaceClient may be derived from configuration YAML,
-    they may contain primitive types instead of the unserializable types that
-    AutoModel.from_pretrained() expects (e.g. torch_dtype). This function converts values of
-    primitive types to values of the unserializable types."""
-    processed_kwargs = deepcopy(raw_kwargs)
-
-    # Convert torch_dtype string value to actual dtypes
-    # e.g. the string "torch.bfloat16" is converted to torch.bfloat16
-    torch_dtype = processed_kwargs.get(TORCH_DTYPE_KEY)
-    if torch_dtype and isinstance(torch_dtype, str):
-        if not torch_dtype.startswith(TORCH_DTYPE_VALUE_PREFIX):
-            raise ValueError(
-                f'Unknown dtype "{torch_dtype}"; expected a string such as "torch.bfloat16"'
-            )
-        processed_kwargs[TORCH_DTYPE_KEY] = getattr(
-            torch, torch_dtype[len(TORCH_DTYPE_VALUE_PREFIX) :]
-        )
-
-    return processed_kwargs
 
 
 class HuggingFaceToken(OptionalSecret):
@@ -238,7 +140,13 @@ class HuggingFaceToken(OptionalSecret):
         )
 
 
-@modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
+@modelgauge_sut(
+    capabilities=[
+        AcceptsTextPrompt,
+        AcceptsChatPrompt,
+        ProducesPerTokenLogProbabilities,
+    ]
+)
 class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse]):
     """A thin wrapper around a Hugging Face AutoModelForCausalLM for HuggingFaceClient to call."""
 
@@ -255,7 +163,7 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         else:
             self.device = "cpu"
         self.token = token.value
-        self.hg_kwargs = _process_huggingface_client_kwargs(kwargs)
+        self.hg_kwargs = kwargs
         self.model_path = pretrained_model_name_or_path
         # Model and tokenizer are lazy loaded.
         self.model: Optional[Any] = None
@@ -319,83 +227,52 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
         if self.model.config.pad_token_id is None:
             if self.model.config.eos_token_id is not None:
                 optional_args["pad_token_id"] = self.model.config.eos_token_id
+        output_scores = (
+            raw_request.num_top_logprobs is not None
+            and raw_request.num_top_logprobs > 0
+        )
         output = self.model.generate(
             **encoded_input,
             **raw_request.generate_args.model_dump(),
             max_new_tokens=max_new_tokens,
             do_sample=True,
             return_dict_in_generate=True,
-            output_scores=True,
+            output_scores=output_scores,
             **optional_args,
         )
-        sequences = output.sequences
-        scores = output.scores
-
-        # Compute logprobs of generated tokens for each completed sequence.
-        all_generated_tokens_logprobs = []
-        all_generated_tokens_top_logprobs_dicts = []
-        for completion_id in range(raw_request.generate_args.num_return_sequences):
-            generated_tokens_logprobs = []
-            generated_tokens_top_logprobs_dicts = []
-            for i in range(len(sequences[completion_id]) - num_input_tokens):
-                logprobs = torch.nn.functional.log_softmax(
-                    scores[i][completion_id], dim=0
-                )
-                # Get top tokens in terms of log probability.
-                topk_logprobs = torch.topk(logprobs, k=raw_request.top_k_per_token)
-                with self.wrapped_tokenizer as tokenizer:
-                    generated_tokens_top_logprobs_dicts.append(
-                        {
-                            tokenizer.convert_ids_to_tokens(k.item()): v.item()
-                            for (k, v) in zip(
-                                topk_logprobs.indices, topk_logprobs.values
-                            )
-                        }
-                    )
-                # Get log probability of chosen token.
-                j = i + num_input_tokens
-                generated_tokens_logprobs.append(
-                    logprobs[sequences[completion_id][j]].item()
-                )
-            all_generated_tokens_logprobs.append(generated_tokens_logprobs)
-            all_generated_tokens_top_logprobs_dicts.append(
-                generated_tokens_top_logprobs_dicts
-            )
-
-        # Remove prompt from the start of each sequence.
-        sequences = [sequence[num_input_tokens:] for sequence in sequences]
-
-        with self.wrapped_tokenizer as tokenizer:
-            all_tokens = [
-                [tokenizer.decode(token) for token in sequence_tokens]
-                for sequence_tokens in sequences
-            ]
-            all_decoded_text = tokenizer.batch_decode(sequences)
 
         completions: List[HuggingFaceCompletion] = []
-        for (
-            decoded_text,
-            tokens,
-            generated_tokens_logprobs,
-            generated_tokens_top_logprobs_dicts,
-        ) in zip(
-            all_decoded_text,
-            all_tokens,
-            all_generated_tokens_logprobs,
-            all_generated_tokens_top_logprobs_dicts,
-        ):
+        for completion_id in range(raw_request.generate_args.num_return_sequences):
+            # Remove input prompt and truncate if length exceeds max_new_tokens.
+            sequence = output.sequences[completion_id][num_input_tokens:]
+            sequence = sequence[:max_new_tokens]
+
+            text = tokenizer.decode(sequence)
+            sequence_logprobs_dicts = None
+            if raw_request.num_top_logprobs:
+                scores = output.scores
+                sequence_logprobs_dicts = []
+                # Get dictonary of top-k logprobs for each token in the sequence.
+                for i in range(len(sequence)):
+                    logprobs = torch.nn.functional.log_softmax(
+                        scores[i][completion_id], dim=0
+                    )
+                    # Get top tokens in terms of log probability.
+                    topk_logprobs = torch.topk(logprobs, k=raw_request.num_top_logprobs)
+                    logprobs_dict = {}
+                    with self.wrapped_tokenizer as tokenizer:
+                        for token_id, logprob in zip(
+                            topk_logprobs.indices, topk_logprobs.values
+                        ):
+                            token = tokenizer.convert_ids_to_tokens(token_id.item())
+                            logprobs_dict[token] = logprob.item()
+                    sequence_logprobs_dicts.append(logprobs_dict)
             completions.append(
                 HuggingFaceCompletion(
-                    text=decoded_text,
-                    tokens=tokens,
-                    logprobs=generated_tokens_logprobs,
-                    top_logprobs_dicts=generated_tokens_top_logprobs_dicts,
+                    text=text, top_logprobs_dicts=sequence_logprobs_dicts
                 )
             )
-
-        return HuggingFaceResponse(
-            completions=completions, input_length=num_input_tokens
-        )
+        return HuggingFaceResponse(completions=completions)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> HuggingFaceRequest:
         return self._translate_request(prompt.text, prompt.options)
@@ -411,14 +288,15 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
             "temperature": temperature,
             "num_return_sequences": options.num_completions,
             "top_p": value_or_default(options.top_p, 1.0),
+            "top_k": value_or_default(options.top_k_per_token, 1),
         }
         return HuggingFaceRequest(
             prompt=text,
             model=self.model_path,
             max_new_tokens=options.max_tokens,
-            top_k_per_token=value_or_default(options.top_k_per_token, 1),
             stop_sequences=value_or_default(options.stop_sequences, []),
             generate_args=generate_args,
+            num_top_logprobs=options.top_logprobs,
         )
 
     def translate_response(
@@ -426,30 +304,24 @@ class HuggingFaceSUT(PromptResponseSUT[HuggingFaceRequest, HuggingFaceResponse])
     ) -> SUTResponse:
         completions = []
         for raw_completion in response.completions:
-            sequence_logprob: float = 0
-            tokens: List[Token] = []
-            generated_tokens = raw_completion.tokens
+            logprobs: Optional[List[TopTokens]] = None
+            if request.num_top_logprobs:
+                assert (
+                    raw_completion.top_logprobs_dicts is not None
+                ), "Expected logprobs, but not returned."
+                logprobs = []
+                for top_logprobs in raw_completion.top_logprobs_dicts:
+                    top_tokens: List[TokenProbability] = []
+                    for token, logprob in top_logprobs.items():
+                        top_tokens.append(
+                            TokenProbability(token=token, logprob=logprob)
+                        )
+                    logprobs.append(TopTokens(top_tokens=top_tokens))
 
-            # Compute logprob for the entire sequence.
-            for token_text, logprob, top_logprobs_dict in zip(
-                generated_tokens,
-                raw_completion.logprobs,
-                raw_completion.top_logprobs_dicts,
-            ):
-                tokens.append(
-                    Token(
-                        text=token_text, logprob=logprob, top_logprobs=top_logprobs_dict
-                    )
-                )
-                sequence_logprob += logprob
-
-            completion = Sequence(
-                text=raw_completion.text, logprob=sequence_logprob, tokens=tokens
+            completions.append(
+                SUTCompletion(text=raw_completion.text, top_logprobs=logprobs)
             )
-            completion = _truncate_sequence(completion, request)
-            completions.append(completion)
-        sut_completions = [SUTCompletion(text=c.text) for c in completions]
-        return SUTResponse(completions=sut_completions)
+        return SUTResponse(completions=completions)
 
 
 SUTS.register(HuggingFaceSUT, "gpt2", "gpt2", InjectSecret(HuggingFaceToken))
