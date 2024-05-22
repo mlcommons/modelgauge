@@ -30,7 +30,11 @@ class WebData(ExternalData):
 
     source_url: str
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=1))
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=1),
+        reraise=True,
+    )
     def download(self, location):
         urllib.request.urlretrieve(
             self.source_url,
@@ -46,7 +50,11 @@ class GDriveData(ExternalData):
     data_source: str
     file_path: str
 
-    @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=3, min=15))
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=3, min=15),
+        reraise=True,
+    )
     def download(self, location):
         with tempfile.TemporaryDirectory() as tmpdir:
             # Empty folder downloaded to tmpdir
