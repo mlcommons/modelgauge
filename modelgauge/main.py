@@ -1,5 +1,6 @@
 import os
 import click
+import debugpy
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -183,6 +184,13 @@ def run_sut(
     default=False,
     help="Disable displaying the 'Processing TestItems' progress bar.",
 )
+@click.option(
+    "--debug",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Enable debugging with debugpy.",
+)
 def run_test(
     test: str,
     sut: str,
@@ -191,8 +199,16 @@ def run_test(
     output_file: Optional[str],
     no_caching: bool,
     no_progress_bar: bool,
+    debug: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
+    if debug:
+        port = 5678
+        host = 'localhost'
+        print(f"Waiting for debugger to attach on {host}:{port}")
+        debugpy.listen((host, port))
+        debugpy.wait_for_client()
+
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
     missing_secrets: List[MissingSecretValues] = []
