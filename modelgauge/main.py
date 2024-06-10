@@ -192,6 +192,12 @@ def run_test(
     no_caching: bool,
     no_progress_bar: bool,
 ):
+    import debugpy
+    port = 5678
+    host = 'localhost'
+    print(f"Waiting for debugger to attach on {host}:{port}")
+    debugpy.listen((host, port))
+    debugpy.wait_for_client()
     """Run the Test on the desired SUT and output the TestRecord."""
     secrets = load_secrets_from_config()
     # Check for missing secrets without instantiating any objects
