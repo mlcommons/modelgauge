@@ -266,18 +266,18 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         assert len(response.choices) == 1
         response_str = response.choices[0].text
         return translate_llama_guard_response(
-            response=response_str, version=self.llama_guard_data, decoder=self.decoder
+            response=response_str,
+            llama_guard_data=self.llama_guard_data,
+            decoder=self.decoder,
         )
 
 
 def translate_llama_guard_response(
-    response: str, version: LlamaGuardVersion, decoder: Optional[Dict[str, str]] = None
+    response: str,
+    llama_guard_data: LlamaGuardData,
+    decoder: Optional[Dict[str, str]] = None,
 ) -> LlamaGuardAnnotation:
-    decoder = (
-        _make_llamaguard_mapping(_LLAMA_GUARD_MAP[version])
-        if decoder is None
-        else decoder
-    )
+    decoder = _make_llamaguard_mapping(llama_guard_data) if decoder is None else decoder
 
     lines = response.split()
     # This is all very strict, might want to be less so.
@@ -290,7 +290,7 @@ def translate_llama_guard_response(
             categories.append(decoder[raw])
         return LlamaGuardAnnotation(is_safe=False, violation_categories=categories)
     else:
-        raise AssertionError("Unexpected response: ", response.choices[0].text)
+        raise AssertionError("Unexpected response: ", response)
 
 
 def _default_formatter(message, llama_guard):
