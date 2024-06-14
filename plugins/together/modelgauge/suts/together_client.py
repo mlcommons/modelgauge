@@ -39,7 +39,7 @@ _ASSISTANT_ROLE = "assistant"
 _ROLE_MAP = {
     ChatRole.user: _USER_ROLE,
     ChatRole.sut: _ASSISTANT_ROLE,
-    ChatRole.system: _SYSTEM_ROLE
+    ChatRole.system: _SYSTEM_ROLE,
 }
 
 

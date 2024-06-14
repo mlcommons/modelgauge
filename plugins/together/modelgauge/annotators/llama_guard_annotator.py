@@ -266,11 +266,13 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         assert len(response.choices) == 1
         response_str = response.choices[0].text
         return translate_llama_guard_response(
-            response=response_str,
-            version=self.llama_guard_data,
-            decoder=self.decoder)
+            response=response_str, version=self.llama_guard_data, decoder=self.decoder
+        )
 
-def translate_llama_guard_response(response: str, version: LlamaGuardVersion, decoder: Optional[Dict[str, str]] = None) -> LlamaGuardAnnotation:
+
+def translate_llama_guard_response(
+    response: str, version: LlamaGuardVersion, decoder: Optional[Dict[str, str]] = None
+) -> LlamaGuardAnnotation:
     decoder = (
         _make_llamaguard_mapping(_LLAMA_GUARD_MAP[version])
         if decoder is None
