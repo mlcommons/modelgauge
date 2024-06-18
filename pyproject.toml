@@ -49,9 +49,10 @@ pydantic = "^2.6.0"
 sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
 modelgauge_demo_plugin = {version = "*", optional = true}
+modelgauge_safety_models = {version = "*", optional = true}
+modelgauge_together = {version = "*", optional = true}
 modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
-modelgauge_together = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
 tomli = "^2.0.1"
@@ -61,6 +62,7 @@ tenacity = "^8.3.0"
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=true}
+modelgauge_safety_models = {path = "plugins/safety_models", develop = true, optional=true}
 modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, optional=true}
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_together = {path = "plugins/together", develop = true, optional=true}
@@ -85,7 +87,7 @@ addopts="--ignore=modelgauge/ --ignore=demo_plugin/modelgauge/ --ignore=plugins/
 # However, by default mypy uses those to map file paths to modules. This override fixes that.
 # https://mypy.readthedocs.io/en/stable/config_file.html#confval-explicit_package_bases
 explicit_package_bases = true
-mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, plugins/together"
+mypy_path = "., demo_plugin, plugins/standard_tests, plugins/openai, plugins/huggingface, plugins/perspective_api, plugins/together, plugins/safety_models"
 
 [build-system]
 requires = ["poetry-core"]
@@ -98,11 +100,12 @@ openai = ["modelgauge_openai"]
 together = ["modelgauge_together"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_together"]
+safety_models = ["modelgauge_safety_models"]
+all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_together", "modelgauge_safety_models"]
 
 
 [[tool.poetry_bumpversion.replacements]]
-files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml"]
+files = ["demo_plugin/pyproject.toml", "plugins/huggingface/pyproject.toml", "plugins/openai/pyproject.toml", "plugins/perspective_api/pyproject.toml", "plugins/standard_tests/pyproject.toml", "plugins/together/pyproject.toml", "plugins/safety_models/pyproject.toml"]
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
 

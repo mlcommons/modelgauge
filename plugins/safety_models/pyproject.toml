@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "modelgauge-safety-models"
+version = "0.5.1"
+description = "Measuring effectiveness of safety classifier models."
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [{include = "modelgauge"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.26.4"
+scikit-learn = "^1.5.0"
+pandas = "^2.2.2"
+modelgauge_together = {path = "../together", develop = true}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
