@@ -41,7 +41,7 @@ def run_batch_prompt_response_test(
     disable_progress_bar: bool = False,
     max_batch_size: int = 20,  # 20 works well as a default against together API rate limits
 ) -> TestRecord:
-    """Demonstration for how to run a single Test on a single SUT, all calls serial."""
+    """Runner to execute SUT tests in batch. Annotation and measurement are still called in serial (for now)"""
 
     assert_is_test(test)
     assert_is_sut(sut)
@@ -52,7 +52,7 @@ def run_batch_prompt_response_test(
     sut_initialization = sut.initialization_record
     test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
-    # TODO leverage the cache
+    # TODO leverage the cache for SUT responses
     # sut_cache: Cache
     # if use_caching:
     #     sut_cache = SqlDictCache(os.path.join(data_dir, "suts"), sut.uid)
@@ -92,18 +92,18 @@ def run_batch_prompt_response_test(
     measured_test_items = []
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
 
-    # Build SUT response joblist
+    # Build SUT response joblist by flattening test item prompts into list of individual jobs
+    # TODO validate test item ids are all unique
+    # TODO validate that all sut request types are the same
     jobs: List[Job] = []
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         assert (
             test_item.id is not None
         ), "For batch jobs, all test items must have an id."
-        # TODO validate ids are all unique
 
         for index, prompt in enumerate(test_item.prompts):
             job_id = build_job_id(test_item, index)
 
-            # TODO validate that all sut request types are the same
             if isinstance(prompt.prompt, TextPrompt):
                 sut_request = sut.translate_text_prompt(prompt.prompt)
             else:
@@ -220,4 +220,5 @@ class AnnotatorData:
 
 
 def build_job_id(test_item: TestItem, prompt_index: int) -> str:
+    """Given a test item, and index of a prompt, build a unique job id. Used to tie batched SUT responses to original test items"""
     return f"{test_item.id}-{prompt_index}"
