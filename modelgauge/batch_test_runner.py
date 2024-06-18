@@ -26,6 +26,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from modelgauge.sut import RequestType, ResponseType
 
+
 class Job(BaseModel):
     id: str
     request: RequestType
@@ -39,7 +40,9 @@ def run_batch_prompt_response_test(
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
     disable_progress_bar: bool = False,
-    max_batch_size: Optional[int] = 20, # 20 works well as a default against together API rate limits
+    max_batch_size: Optional[
+        int
+    ] = 20,  # 20 works well as a default against together API rate limits
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
 
@@ -95,7 +98,9 @@ def run_batch_prompt_response_test(
     # Build SUT response joblist
     jobs = []
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
-        assert test_item.id is not None, "For batch jobs, all test items must have an id."
+        assert (
+            test_item.id is not None
+        ), "For batch jobs, all test items must have an id."
         # TODO validate ids are all unique
 
         for index, prompt in enumerate(test_item.prompts):
@@ -113,25 +118,25 @@ def run_batch_prompt_response_test(
                     request=sut_request,
                 )
             )
-    
-    # Evaluate in batches
+
     job_requests = [job.request for job in jobs]
 
+    # Compute SUT responses in batches
     batch_sut_responses = []
     responses = []
     max_batch_size = len(jobs) if len(jobs) < max_batch_size else max_batch_size
     for i in range(0, len(jobs), max_batch_size):
-        batch_sut_responses = sut.batch_evaluate(job_requests[i:i+max_batch_size])
+        batch_sut_responses = sut.batch_evaluate(job_requests[i : i + max_batch_size])
         for response in batch_sut_responses:
             responses.append(response)
-    
-    # Translate all the responses
+
+    # Translate all the responses and build a lookup
     response_lookup = {}
     for i in range(len(jobs)):
         response = sut.translate_response(job_requests[i], responses[i])
         response_lookup[jobs[i].id] = response
 
-    # Remap all responses back to test items
+    # Compute annotations and measurements using single item processing (for now)
     test_item_records = []
     measured_test_items = []
     for item in test_items:
@@ -145,7 +150,9 @@ def run_batch_prompt_response_test(
                 for annotator_data in annotators:
                     annotator = annotator_data.annotator
                     try:
-                        annotator_request = annotator.translate_request(prompt, completion)
+                        annotator_request = annotator.translate_request(
+                            prompt, completion
+                        )
                         with annotator_data.cache as cache:
                             annotator_response = cache.get_or_call(
                                 annotator_request, annotator.annotate
@@ -158,14 +165,19 @@ def run_batch_prompt_response_test(
                             f"Exception while handling annotation for {annotator_data.key} on {response}"
                         ) from e
 
-                    annotations[annotator_data.key] = Annotation.from_instance(annotation)
+                    annotations[annotator_data.key] = Annotation.from_instance(
+                        annotation
+                    )
                 annotated_completions.append(
-                    SUTCompletionAnnotations(completion=completion, annotations=annotations)
+                    SUTCompletionAnnotations(
+                        completion=completion, annotations=annotations
+                    )
                 )
             interactions.append(
                 PromptInteractionAnnotations(
                     prompt=prompt,
-                    response=SUTResponseAnnotations(completions=annotated_completions),)
+                    response=SUTResponseAnnotations(completions=annotated_completions),
+                )
             )
         annotated = TestItemAnnotations(
             test_item=item,
@@ -173,6 +185,7 @@ def run_batch_prompt_response_test(
         )
         measurements = test.measure_quality(annotated)
 
+        # Create and store the record + measurement
         test_item_record = TestItemRecord(
             test_item=annotated.test_item,
             interactions=annotated.interactions,
@@ -182,10 +195,11 @@ def run_batch_prompt_response_test(
         measured_test_items.append(
             MeasuredTestItem(
                 test_item=test_item_record.test_item,
-                measurements=test_item_record.measurements
+                measurements=test_item_record.measurements,
             )
         )
-    
+
+    # Aggregate measurements into test result
     test_result = TestResult.from_instance(
         test.aggregate_measurements(measured_test_items)
     )
@@ -201,7 +215,6 @@ def run_batch_prompt_response_test(
     )
 
 
-
 class AnnotatorData:
     """Container to hold data about an annotator."""
 
@@ -209,6 +222,7 @@ class AnnotatorData:
         self.key = key
         self.annotator = annotator
         self.cache = cache
+
 
 def build_job_id(test_item: TestItem, prompt_index: int) -> str:
     return f"{test_item.id}-{prompt_index}"

@@ -15,13 +15,13 @@ from modelgauge.config import (
     raise_if_missing_from_config,
     toml_format_secrets,
 )
+from modelgauge.batch_test_runner import run_batch_prompt_response_test
 from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.batch_test_runner import run_batch_prompt_response_test
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
