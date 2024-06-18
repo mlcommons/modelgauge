@@ -1,5 +1,6 @@
 import os
 from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
 from modelgauge.sut_decorator import modelgauge_sut
@@ -26,8 +27,10 @@ class LlamaGuard2SUT(
         self.llama_guard_client = LlamaGuardAnnotator(together_api_key)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
+        """TODO confusing when reusing annotator as the SUT. Possibly extract LlamaGuard logic to 3rd separate class"""
+        no_op_prompt = PromptWithContext(prompt="", source_id="")
         return self.llama_guard_client.translate_request(
-            prompt=None, completion=SUTCompletion(text=prompt.text)
+            prompt=no_op_prompt, completion=SUTCompletion(text=prompt.text)
         )
 
     def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
@@ -48,5 +51,5 @@ class LlamaGuard2SUT(
 SUTS.register(
     LlamaGuard2SUT,
     "lg2",
-    together_api_key=TogetherApiKey(os.getenv("TOGETHER_API_KEY")),
+    together_api_key=TogetherApiKey(os.getenv("TOGETHER_API_KEY") or ""),
 )

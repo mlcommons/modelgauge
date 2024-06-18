@@ -1,14 +1,10 @@
 import os
 import json
+from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
+from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.test_decorator import modelgauge_test
-from modelgauge.annotators.llama_guard_annotator import (
-    translate_llama_guard_response,
-    LlamaGuardAnnotation,
-    LlamaGuardVersion,
-    LlamaGuardData,
-)
-from modelgauge.external_data import LocalData
+from modelgauge.external_data import ExternalData, LocalData
 from modelgauge.test_registry import TESTS
 from modelgauge.prompt import TextPrompt, ChatPrompt, ChatMessage, ChatRole
 from modelgauge.single_turn_prompt_response import (
@@ -17,13 +13,12 @@ from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
     PromptWithContext,
 )
-from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt, AcceptsChatPrompt
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Mapping
 from pydantic import BaseModel
 import pandas as pd
 import numpy as np
-from sklearn import metrics
+from sklearn import metrics  # type: ignore
 import traceback
 
 
@@ -171,11 +166,11 @@ class SafetyEvalContext(BaseModel):
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
 class EvalModelTest(PromptResponseTest):
-    def get_dependencies(self):
+    def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         return {"human_eval_dataset": LocalData(path="./1320_sample_labelled.csv")}
 
-    def make_test_items(self, dependency_helper):
+    def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
 
         df = pd.read_csv(dependency_helper.get_local_path("human_eval_dataset"))
@@ -244,10 +239,11 @@ class EvalModelTest(PromptResponseTest):
 
         return test_items
 
-    def get_annotators(self):
+    def get_annotators(self) -> Mapping[str, Annotator]:
+        """Annotations currently read directly from context in measurement stage"""
         return {}
 
-    def measure_quality(self, item):
+    def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         test_item_prompt_and_context: PromptWithContext = item.test_item.prompts[0]
 
         # Get human annotations
@@ -285,11 +281,11 @@ class EvalModelTest(PromptResponseTest):
                 "sut_is_safe": 0,
             }
 
-        # llama_guard_annotation: LlamaGuardAnnotation = translate_llama_guard_response(response_text, LlamaGuardVersion.VERSION_2)
-        # sut_is_safe = 1.0 if llama_guard_annotation.is_safe else 0 # FIXME using context value for now. We expect the SUT response to be here instead
-        sut_is_safe = 1.0 if response_json["is_safe"] else 0
-
         # TODO We're only measuring is/unsafe for now. We need to measure the violation categories as well
+        # Uncomment below line when we're ready to score category correctness
+        # llama_guard_annotation: LlamaGuardAnnotation = translate_llama_guard_response(response_text, LlamaGuardVersion.VERSION_2)
+
+        sut_is_safe = 1.0 if response_json["is_safe"] else 0
 
         # Log the result.
         return {
@@ -304,7 +300,6 @@ class EvalModelTest(PromptResponseTest):
         )
         y_pred = list(map(lambda item: item.measurements["sut_is_safe"], items))
 
-        # result_confusion_matrix = confusion_matrix(y_true, y_pred)
         accuracy = metrics.accuracy_score(y_true, y_pred)
         precision = metrics.precision_score(y_true, y_pred)
         recall = metrics.recall_score(y_true, y_pred)
@@ -316,6 +311,7 @@ class EvalModelTest(PromptResponseTest):
         }
 
     def _find_human_annotator_columns(self, dataset) -> List[str]:
+        """Search for human annotator columns indicated by the column name ending with _annotations"""
         return [column for column in dataset.columns if column.endswith("_annotations")]
 
     def _clean_df(self, df) -> pd.DataFrame:
@@ -324,7 +320,7 @@ class EvalModelTest(PromptResponseTest):
         return df
 
     def _eval_dataset_validation(self, dataset) -> bool:
-        """TODO Validate the dataset"""
+        """Validate the dataset for expected columns"""
         is_valid = True
 
         print(f"Begin dataset validation")
