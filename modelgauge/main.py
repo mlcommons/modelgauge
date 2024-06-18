@@ -21,6 +21,7 @@ from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.batch_test_runner import run_batch_prompt_response_test
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
@@ -183,6 +184,13 @@ def run_sut(
     default=False,
     help="Disable displaying the 'Processing TestItems' progress bar.",
 )
+@click.option(
+    "--batch-preview",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="PREVIEW. Try to run the test in batch mode. This is experimental and may not work for all tests.",
+)
 def run_test(
     test: str,
     sut: str,
@@ -191,6 +199,7 @@ def run_test(
     output_file: Optional[str],
     no_caching: bool,
     no_progress_bar: bool,
+    batch_preview: bool,
 ):
     """Run the Test on the desired SUT and output the TestRecord."""
     secrets = load_secrets_from_config()
@@ -212,14 +221,24 @@ def run_test(
         output_file = os.path.join(
             "output", normalize_filename(f"record_for_{test}_{sut}.json")
         )
-    test_record = run_prompt_response_test(
-        test_obj,
-        sut_obj,
-        data_dir,
-        max_test_items,
-        use_caching=not no_caching,
-        disable_progress_bar=no_progress_bar,
-    )
+    if batch_preview:
+        test_record = run_batch_prompt_response_test(
+            test_obj,
+            sut_obj,
+            data_dir,
+            max_test_items,
+            use_caching=not no_caching,
+            disable_progress_bar=no_progress_bar,
+        )
+    else:
+        test_record = run_prompt_response_test(
+            test_obj,
+            sut_obj,
+            data_dir,
+            max_test_items,
+            use_caching=not no_caching,
+            disable_progress_bar=no_progress_bar,
+        )
     with open(output_file, "w") as f:
         print(test_record.model_dump_json(indent=4), file=f)
     # For displaying to the screen, clear out the verbose test_item_records

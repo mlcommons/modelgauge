@@ -48,6 +48,7 @@ class TestItem(BaseModel):
     """
 
     prompts: List[PromptWithContext]
+    id: Optional[str] = None
 
     @property
     def context(self):
@@ -59,14 +60,14 @@ class TestItem(BaseModel):
     context_internal: _Context = None
     """Internal variable for the serialization friendly version of context"""
 
-    def __init__(self, *, prompts, context=None, context_internal=None):
+    def __init__(self, *, prompts, id=None, context=None, context_internal=None):
         if context_internal is not None:
             internal = context_internal
         elif isinstance(context, BaseModel):
             internal = TypedData.from_instance(context)
         else:
             internal = context
-        super().__init__(prompts=prompts, context_internal=internal)
+        super().__init__(prompts=prompts, id=id, context_internal=internal)
 
     # Convince pytest to ignore this class.
     __test__ = False

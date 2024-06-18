@@ -78,6 +78,13 @@ class PromptResponseSUT(SUT, ABC, Generic[RequestType, ResponseType]):
         """Evaluate this SUT on the native request."""
         pass
 
+    @not_implemented
+    def batch_evaluate(self, requests: List[RequestType]) -> List[ResponseType]:
+        """Evaluate this SUT on the native requests."""
+        raise NotImplementedError(
+            f"SUT {self.__class__.__name__} does not implement batch_evaluate."
+        )
+
     @abstractmethod
     def translate_response(
         self, request: RequestType, response: ResponseType
