@@ -15,10 +15,10 @@ from pydantic import BaseModel
 from typing import Dict, List, Mapping
 
 
-def fake_test_item(text):
+def fake_test_item(text, id=None):
     """Create a TestItem with `text` as the prompt text."""
     return TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)]
+        id=id, prompts=[PromptWithContext(prompt=TextPrompt(text=text), source_id=None)]
     )
 
 

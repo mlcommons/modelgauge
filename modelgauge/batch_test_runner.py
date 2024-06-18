@@ -20,14 +20,13 @@ from modelgauge.sut_capabilities_verification import assert_sut_capabilities
 from modelgauge.sut_decorator import assert_is_sut
 from modelgauge.test_decorator import assert_is_test
 from tqdm import tqdm
-from typing import List, Optional
-
+from typing import Generic, List, Optional
 
 from pydantic import BaseModel
 from modelgauge.sut import RequestType, ResponseType
 
 
-class Job(BaseModel):
+class Job(BaseModel, Generic[RequestType, ResponseType]):
     id: str
     request: RequestType
     result: Optional[ResponseType] = None
@@ -40,9 +39,7 @@ def run_batch_prompt_response_test(
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
     disable_progress_bar: bool = False,
-    max_batch_size: Optional[
-        int
-    ] = 20,  # 20 works well as a default against together API rate limits
+    max_batch_size: int = 20,  # 20 works well as a default against together API rate limits
 ) -> TestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
 
@@ -96,7 +93,7 @@ def run_batch_prompt_response_test(
     desc = f"Processing TestItems for test={test.uid} sut={sut.uid}"
 
     # Build SUT response joblist
-    jobs = []
+    jobs: List[Job] = []
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
         assert (
             test_item.id is not None
@@ -137,8 +134,6 @@ def run_batch_prompt_response_test(
         response_lookup[jobs[i].id] = response
 
     # Compute annotations and measurements using single item processing (for now)
-    test_item_records = []
-    measured_test_items = []
     for item in test_items:
         interactions: List[PromptInteractionAnnotations] = []
         for index, prompt in enumerate(item.prompts):

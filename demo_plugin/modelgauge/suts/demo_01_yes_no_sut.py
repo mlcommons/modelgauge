@@ -36,8 +36,10 @@ class DemoYesNoSUT(PromptResponseSUT[DemoYesNoRequest, DemoYesNoResponse]):
         number_of_words = len(request.text.split())
         answer = "Yes" if number_of_words % 2 == 0 else "No"
         return DemoYesNoResponse(number_of_words=number_of_words, text=answer)
-    
-    def batch_evaluate(self, request: List[DemoYesNoRequest]) -> List[DemoYesNoResponse]:
+
+    def batch_evaluate(
+        self, request: List[DemoYesNoRequest]
+    ) -> List[DemoYesNoResponse]:
         return [self.evaluate(req) for req in request]
 
     def translate_response(
