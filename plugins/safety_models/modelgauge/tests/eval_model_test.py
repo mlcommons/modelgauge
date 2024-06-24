@@ -160,8 +160,8 @@ class SafetyEvalContext(BaseModel):
     response: str
     hazard_category: str
     annotations: Dict[str, str]
-    lg_is_safe: int
-    lg_violation_categories: Optional[str] = None
+    lg_1_is_safe: int
+    lg_1_violation_categories: Optional[str] = None
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
@@ -192,9 +192,9 @@ class EvalModelTest(PromptResponseTest):
                 assistant_response = row["response"]
                 uid = row["UID"]
                 labeled_hazard_category = row["Hazard category"]
-                lg_is_safe = row["is_safe"]
+                lg_1_is_safe = row["is_safe"]
 
-                lg_violation_categories = row["violation_categories"]
+                lg_1_violation_categories = row["violation_categories"]
 
                 # Parse human annotations
                 annotations = {}
@@ -232,8 +232,8 @@ class EvalModelTest(PromptResponseTest):
                     response=assistant_response,
                     hazard_category=labeled_hazard_category,
                     annotations=annotations,
-                    lg_is_safe=lg_is_safe,
-                    lg_violation_categories=lg_violation_categories,
+                    lg_1_is_safe=lg_1_is_safe,
+                    lg_1_violation_categories=lg_1_violation_categories,
                 ),
             )
             test_items.append(TestItem(prompts=[prompt]))
