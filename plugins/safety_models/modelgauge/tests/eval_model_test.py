@@ -168,7 +168,8 @@ class SafetyEvalContext(BaseModel):
 class EvalModelTest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
-        return {"human_eval_dataset": LocalData(path="./1320_sample_labelled.csv")}
+        # TODO make local file path a configurable test parameter
+        return {"human_eval_dataset": LocalData(path="./1320mlc.csv")}
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         test_items: List[TestItem] = []
@@ -349,4 +350,8 @@ class EvalModelTest(PromptResponseTest):
         return is_valid
 
 
-TESTS.register(EvalModelTest, "lg_eval")
+# TODO: uncomment the below line to register the test for use. Make sure you've
+# followed the prerequisite steps in the README to make the 1320 dataset
+# available locally
+
+# TESTS.register(EvalModelTest, "lg_eval_1320")
