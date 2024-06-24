@@ -1,5 +1,6 @@
 import os
 from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
 from modelgauge.sut_capabilities import AcceptsChatPrompt, AcceptsTextPrompt
@@ -51,5 +52,5 @@ class LlamaGuard2SUT(
 SUTS.register(
     LlamaGuard2SUT,
     "lg2",
-    together_api_key=TogetherApiKey(os.getenv("TOGETHER_API_KEY") or ""),
+    together_api_key=InjectSecret(TogetherApiKey),
 )
