@@ -3,6 +3,9 @@ repo_url: https://github.com/mlcommons/modelgauge/
 edit_uri: blob/main/docs/
 theme:
   name: "material"
+  features:
+    - navigation.tabs
+    - navigation.sections
 plugins:
   - search
   - mkdocstrings:
@@ -15,20 +18,22 @@ plugins:
             docstring_section_style: table
 nav:
   - index.md
-  - user_quick_start.md
-  - dev_quick_start.md
-  - prompt_response_tests.md
-  - tutorial.md
-  - tutorial_tests.md
-  - tutorial_suts.md
-  - plugins.md
-  - design_philosophy.md
-  - publishing.md
+  - User Guide:
+    - user_quick_start.md
+    - prompt_response_tests.md
+    - tutorial.md
+    - tutorial_tests.md
+    - tutorial_suts.md
+  - Developer Guide:
+    - dev_quick_start.md
+    - plugins.md
+    - design_philosophy.md
+    - publishing.md
   - API Reference:
       - SUTs:
         - sut: API/sut.md
         - sut_capabilities: API/sut_capabilities.md
         - sut_decorator: API/sut_decorator.md
       - Data structures: # This can be organized differently.
-          - prompts: API/prompt.md
-          - initialization record: API/record_init.md
+        - prompts: API/prompt.md
+        - initialization record: API/record_init.md
