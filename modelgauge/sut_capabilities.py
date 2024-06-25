@@ -16,6 +16,7 @@ class AcceptsTextPrompt(SUTCapability):
 
     SUTs that report this capability must implement `translate_text_prompt()`.
     """
+
     @classmethod
     def description(cls) -> str:
         return "These SUTs can take a `TextPrompt` as input."
@@ -37,6 +38,7 @@ class ProducesPerTokenLogProbabilities(SUTCapability):
 
     SUTs that report this capability must set the `top_logprobs` field in SUTResponse, if logprobs are requested.
     """
+
     @classmethod
     def description(cls) -> str:
         return "These SUTs set the 'top_logprobs' field in SUTResponse."
