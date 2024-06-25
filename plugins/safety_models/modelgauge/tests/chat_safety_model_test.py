@@ -6,12 +6,17 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.external_data import ExternalData, LocalData
 from modelgauge.test_registry import TESTS
-from modelgauge.prompt import TextPrompt, ChatPrompt, ChatMessage, ChatRole
+from modelgauge.prompt import TextPrompt, ChatPrompt, ChatMessage, ChatRole, SUTOptions
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     TestItem,
     TestItemAnnotations,
     PromptWithContext,
+)
+from modelgauge.safety_model_test_utils import (
+    find_human_annotator_columns,
+    clean_df,
+    eval_dataset_validation,
 )
 from modelgauge.sut_capabilities import AcceptsTextPrompt, AcceptsChatPrompt
 from typing import List, Dict, Optional, Mapping
@@ -21,6 +26,7 @@ import numpy as np
 from sklearn import metrics  # type: ignore
 import traceback
 
+DEFAULT_MAX_TOKENS = 4000
 
 MLC_TAXONOMY_0_5 = """
 Possible categories: [
@@ -165,7 +171,7 @@ class SafetyEvalContext(BaseModel):
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
-class EvalModelTest(PromptResponseTest):
+class ChatSafetyModelTest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
@@ -175,16 +181,16 @@ class EvalModelTest(PromptResponseTest):
         test_items: List[TestItem] = []
 
         df = pd.read_csv(dependency_helper.get_local_path("human_eval_dataset"))
-        assert self._eval_dataset_validation(df), "Dataset is not valid"
+        assert eval_dataset_validation(df), "Dataset is not valid"
 
         # Clean dataset for weird nan values
-        df = self._clean_df(df)
+        df = clean_df(df)
 
         labeler_system_prompt = ChatMessage(
             text=LABELER_SYS_PROMPT.format(taxonomy=MLC_TAXONOMY_0_5),
             role=ChatRole.system,
         )
-        annotator_columns = self._find_human_annotator_columns(df)
+        annotator_columns = find_human_annotator_columns(df)
         for index, row in df.iterrows():
             # TODO parse row using a pydantic class
             try:
@@ -222,9 +228,9 @@ class EvalModelTest(PromptResponseTest):
                             ),
                             role=ChatRole.user,
                         ),
-                    ]
+                    ],
+                    options=SUTOptions(max_tokens=DEFAULT_MAX_TOKENS),
                 ),
-                # prompt = TextPrompt(text=assistant_response),
                 source_id=uid,
                 context=SafetyEvalContext(
                     uid=uid,
@@ -311,47 +317,9 @@ class EvalModelTest(PromptResponseTest):
             "recall": recall,
         }
 
-    def _find_human_annotator_columns(self, dataset) -> List[str]:
-        """Search for human annotator columns indicated by the column name ending with _annotations"""
-        return [column for column in dataset.columns if column.endswith("_annotations")]
-
-    def _clean_df(self, df) -> pd.DataFrame:
-        """Clean the dataset. Replace nan values with None"""
-        df = df.replace(np.nan, None)
-        return df
-
-    def _eval_dataset_validation(self, dataset) -> bool:
-        """Validate the dataset for expected columns"""
-        is_valid = True
-
-        print(f"Begin dataset validation")
-
-        print(f"Checking for expected metadata columns")
-        expected_metadata_columns = ["UID", "prompt", "response", "Hazard Category"]
-        missing_columns = set(expected_metadata_columns) - set(dataset.columns)
-        if missing_columns:
-            print(f"Dataset is not valid. Expected columns: {missing_columns}")
-        else:
-            print("All expected metadata columns found")
-            is_valid = False
-
-        print(f"Checking for human annotater columns")
-        human_annotator_columns = self._find_human_annotator_columns(dataset)
-        if not human_annotator_columns:
-            print("No human annotator columns found. Dataset is not valid.")
-            is_valid = False
-        else:
-            for column in human_annotator_columns:
-                print(f"Found human annotator column: {column}")
-
-        # TODO type validation. Ensure that the columns are of the expected type
-        # and the values are within the valid subset
-
-        return is_valid
-
 
 # TODO: uncomment the below line to register the test for use. Make sure you've
 # followed the prerequisite steps in the README to make the 1320 dataset
 # available locally
 
-# TESTS.register(EvalModelTest, "lg_eval_1320")
+# TESTS.register(ChatSafetyModelTest, "chat_safety_eval_1320")
