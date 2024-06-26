@@ -1,5 +1,5 @@
 import os
-from modelgauge.prompt import ChatPrompt, TextPrompt
+from modelgauge.prompt import ChatPrompt, TextPrompt, ChatMessage, ChatRole
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion, SUTResponse
@@ -15,6 +15,7 @@ from modelgauge.suts.together_client import (
     TogetherCompletionsResponse,
     TogetherCompletionsRequest,
 )
+from typing import List
 
 
 @modelgauge_sut(capabilities=[AcceptsTextPrompt, AcceptsChatPrompt])
@@ -29,13 +30,17 @@ class LlamaGuard2SUT(
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
         """TODO confusing when reusing annotator as the SUT. Possibly extract LlamaGuard logic to 3rd separate class"""
-        no_op_prompt = PromptWithContext(prompt="", source_id="")
+        no_op_prompt = PromptWithContext(prompt=TextPrompt(text=""), source_id="")
         return self.llama_guard_client.translate_request(
             prompt=no_op_prompt, completion=SUTCompletion(text=prompt.text)
         )
 
     def translate_chat_prompt(self, prompt: ChatPrompt) -> TogetherCompletionsRequest:
-        raise NotImplementedError()
+        completion_input = self._messages_to_str(prompt.messages)
+        no_op_prompt = PromptWithContext(prompt=TextPrompt(text=""), source_id="")
+        return self.llama_guard_client.translate_request(
+            prompt=no_op_prompt, completion=SUTCompletion(text=completion_input)
+        )
 
     def evaluate(
         self, request: TogetherCompletionsRequest
@@ -46,6 +51,21 @@ class LlamaGuard2SUT(
         self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> SUTResponse:
         return SUTResponse(completions=[SUTCompletion(text=response.choices[0].text)])
+
+    def _messages_to_str(self, messages: List[ChatMessage]) -> str:
+        return "\n".join([self._combine_role_and_text(m) for m in messages])
+
+    def _combine_role_and_text(self, m: ChatMessage) -> str:
+        role_name = ""
+
+        if m.role == ChatRole.user:
+            role_name = "User"
+        elif m.role == ChatRole.sut:
+            role_name = "Assistant"
+        else:
+            raise ValueError(f"Bad role: {m.role}. Valid roles are 'user' and 'sut'.")
+
+        return f"{role_name}: {m.text}"
 
 
 # TODO move the os env var into a constant

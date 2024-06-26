@@ -6,18 +6,18 @@ from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.safety_model_measurements import SafetyModelMeasurement
 
 
-def find_human_annotator_columns(dataset: pd.DataFrame) -> List[str]:
+def find_1320_dataset_human_annotator_columns(dataset: pd.DataFrame) -> List[str]:
     """Search for human annotator columns indicated by the column name ending with _annotations"""
     return [column for column in dataset.columns if column.endswith("_annotations")]
 
 
-def clean_df(df: pd.DataFrame) -> pd.DataFrame:
+def clean_imported_1320_df(df: pd.DataFrame) -> pd.DataFrame:
     """Clean the dataset. Replace nan values with None"""
     df = df.replace(np.nan, None)
     return df
 
 
-def eval_dataset_validation(dataset: pd.DataFrame) -> bool:
+def validate_1320_dataset(dataset: pd.DataFrame) -> bool:
     """Validate the dataset for expected columns"""
     is_valid = True
 
@@ -33,7 +33,7 @@ def eval_dataset_validation(dataset: pd.DataFrame) -> bool:
         is_valid = False
 
     print(f"Checking for human annotater columns")
-    human_annotator_columns = find_human_annotator_columns(dataset)
+    human_annotator_columns = find_1320_dataset_human_annotator_columns(dataset)
     if not human_annotator_columns:
         print("No human annotator columns found. Dataset is not valid.")
         is_valid = False

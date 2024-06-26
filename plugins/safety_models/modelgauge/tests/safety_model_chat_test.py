@@ -14,9 +14,9 @@ from modelgauge.single_turn_prompt_response import (
     PromptWithContext,
 )
 from modelgauge.safety_model_utils import (
-    find_human_annotator_columns,
-    clean_df,
-    eval_dataset_validation,
+    find_1320_dataset_human_annotator_columns,
+    clean_imported_1320_df,
+    validate_1320_dataset,
     measure_safety_model_quality,
 )
 from modelgauge.safety_eval_context import SafetyEvalContext
@@ -60,7 +60,7 @@ Sample: {message}
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
-class ChatSafetyModelTest(PromptResponseTest):
+class SafetyModelChatTest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
@@ -70,16 +70,16 @@ class ChatSafetyModelTest(PromptResponseTest):
         test_items: List[TestItem] = []
 
         df = pd.read_csv(dependency_helper.get_local_path("human_eval_dataset"))
-        assert eval_dataset_validation(df), "Dataset is not valid"
+        assert validate_1320_dataset(df), "Dataset is not valid"
 
         # Clean dataset for weird nan values
-        df = clean_df(df)
+        df = clean_imported_1320_df(df)
 
         labeler_system_prompt = ChatMessage(
             text=LABELER_SYS_PROMPT.format(taxonomy=MLC_TAXONOMY_0_5),
             role=ChatRole.system,
         )
-        annotator_columns = find_human_annotator_columns(df)
+        annotator_columns = find_1320_dataset_human_annotator_columns(df)
         for index, row in df.iterrows():
             # TODO parse row using a pydantic class
             try:
@@ -88,7 +88,6 @@ class ChatSafetyModelTest(PromptResponseTest):
                 uid = row["UID"]
                 labeled_hazard_category = row["Hazard category"]
                 lg_1_is_safe = row["is_safe"]
-
                 lg_1_violation_categories = row["violation_categories"]
 
                 # Parse human annotations
@@ -184,4 +183,4 @@ class ChatSafetyModelTest(PromptResponseTest):
 # followed the prerequisite steps in the README to make the 1320 dataset
 # available locally
 
-TESTS.register(ChatSafetyModelTest, "chat_safety_eval_1320")
+TESTS.register(SafetyModelChatTest, "safety_eval_chat_1320")
