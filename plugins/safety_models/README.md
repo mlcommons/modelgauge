@@ -12,11 +12,11 @@ _Steps confirmed as of: 6/24/24_
 1. **Upload 1320 dataset locally**
     - Add the dataset to the root directory of modelgauge
     - Name it `1320mlc.csv`
-1. **Register the test**
-    - In `plugins/safety_models/modelgauge/tests/eval_model_test.py`, add the following line at the bottom to register the test with modelgauge
+1. **Register the tests**
+    - In `plugins/safety_models/modelgauge/tests`, for the test you want to run, uncomment the modelgauge test registration lines at the bottom e.g. 
 
     ```
-    TESTS.register(EvalModelTest, "lg_eval_1320", "1320mlc.csv")
+    TESTS.register(TestClass, "test_name")
 
     ```
 1. **Add together API key**
@@ -28,10 +28,10 @@ _Steps confirmed as of: 6/24/24_
     poetry run modelgauge list-tests
 
     ```
-    - verify that `lg_eval_1320` is one of the listed tests
+    - verify that the `safety_eval...` tests are in the listed tests
 1. **Run the test**
     ```
-    poetry run modelgauge run-test --test lg_eval --sut YOUR_SUT
+    poetry run modelgauge run-test --test TEST_NAME --sut YOUR_SUT
     ```
     - TODO add notes on which SUTs are supported since we'll only support safety models
 
