@@ -1,4 +1,8 @@
-DEFAULT_MAX_TOKENS = 4000
+HUMAN_EVAL_DEPENDENCY_KEY = "human_eval_dataset"
+
+DEFAULT_1320_DATASET_PATH = "./1320mlc.csv"
+
+DEFAULT_MAX_CHAT_TOKENS = 4000
 
 MLC_TAXONOMY_0_5 = """
 Possible categories: [
