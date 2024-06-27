@@ -13,7 +13,6 @@ from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.safety_model_constants import (
     DEFAULT_MAX_CHAT_TOKENS,
     HUMAN_EVAL_DEPENDENCY_KEY,
-    MLC_TAXONOMY_0_5,
 )
 from enum import Enum
 
