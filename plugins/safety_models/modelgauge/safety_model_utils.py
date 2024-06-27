@@ -41,13 +41,14 @@ def validate_1320_dataset(dataset: pd.DataFrame) -> bool:
     print(f"Begin dataset validation")
 
     print(f"Checking for expected metadata columns")
-    expected_metadata_columns = ["UID", "prompt", "response", "Hazard Category"]
+    # TODO make pydantic class
+    expected_metadata_columns = ["UID", "prompt", "response", "Hazard category"]
     missing_columns = set(expected_metadata_columns) - set(dataset.columns)
     if missing_columns:
         print(f"Dataset is not valid. Expected columns: {missing_columns}")
+        is_valid = False
     else:
         print("All expected metadata columns found")
-        is_valid = False
 
     print(f"Checking for human annotater columns")
     human_annotator_columns = find_1320_dataset_human_annotator_columns(dataset)
@@ -62,6 +63,76 @@ def validate_1320_dataset(dataset: pd.DataFrame) -> bool:
     # and the values are within the valid subset
 
     return is_valid
+
+
+def make_annotation_test_items(dependency_helper: DependencyHelper) -> List[TestItem]:
+    test_items: List[TestItem] = []
+
+    df = pd.read_csv(dependency_helper.get_local_path(HUMAN_EVAL_DEPENDENCY_KEY))
+    assert validate_1320_dataset(df) == True, "Dataset is not valid"
+
+    # Clean dataset for weird nan values
+    df = clean_imported_1320_df(df)
+
+    annotator_columns = find_1320_dataset_human_annotator_columns(df)
+    for index, row in df.iterrows():
+        if index < 1000:
+            continue
+        if index > 1020:
+            break
+        # TODO parse row using a pydantic class
+        try:
+            user_prompt = row["prompt"]
+            assistant_response = row["response"]
+            uid = row["UID"]
+            labeled_hazard_category = row["Hazard category"]
+            lg_1_is_safe = row["is_safe"]
+            lg_1_violation_categories = row["violation_categories"]
+
+            # Parse human annotations
+            annotations = {}
+            for column in annotator_columns:
+                annotator_name = column.split("_")[0]
+                annotation = row[column]
+                annotations[annotator_name] = annotation
+
+        except Exception as e:
+            print(traceback.format_exc())
+            print(f"Error reading row {index}: {e}")
+            print(f"Row data: {row}")
+            continue
+
+        # Create a test item
+        context = SafetyEvalContext(
+            uid=uid,
+            prompt=user_prompt,
+            response=assistant_response,
+            hazard_category=labeled_hazard_category,
+            annotations=annotations,
+            lg_1_is_safe=lg_1_is_safe,
+            lg_1_violation_categories=lg_1_violation_categories,
+        )
+
+        prompt = PromptWithContext(
+            prompt=ChatPrompt(
+                messages=[
+                    ChatMessage(
+                        text=user_prompt,
+                        role=ChatRole.user,
+                    ),
+                    ChatMessage(
+                        text=assistant_response,
+                        role=ChatRole.sut,
+                    ),
+                ],
+            ),
+            source_id=uid,
+            context=context,
+        )
+
+        test_items.append(TestItem(prompts=[prompt]))
+
+    return test_items
 
 
 def make_safety_model_test_items(

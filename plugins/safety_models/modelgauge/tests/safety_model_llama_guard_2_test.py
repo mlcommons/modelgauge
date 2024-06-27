@@ -1,5 +1,3 @@
-import os
-import json
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
@@ -13,10 +11,12 @@ from modelgauge.single_turn_prompt_response import (
 )
 from modelgauge.safety_model_utils import (
     measure_safety_model_quality,
+    make_annotation_test_items,
     make_safety_model_test_items,
     ModelType,
 )
 from modelgauge.annotators.llama_guard_annotator import (
+    LlamaGuardAnnotator,
     LlamaGuardAnnotation,
     LLAMA_GUARD_2_DATA,
     translate_llama_guard_response,
@@ -27,24 +27,33 @@ from modelgauge.safety_model_constants import (
     HUMAN_EVAL_DEPENDENCY_KEY,
     DEFAULT_1320_DATASET_PATH,
 )
-from modelgauge.sut_capabilities import AcceptsTextPrompt
+from modelgauge.sut_capabilities import AcceptsChatPrompt
 from typing import List, Dict, Mapping
 from sklearn import metrics  # type: ignore
+from modelgauge.secret_values import InjectSecret
+from modelgauge.suts.together_client import TogetherApiKey
+
+TOGETHER_API_KEY_SECRET = InjectSecret(TogetherApiKey)
+ANNOTATOR = "llama_guard_2"
 
 
-@modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
+@modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
 class SafetyModelLlamaGuard2Test(PromptResponseTest):
+    def __init__(self, uid: str, together_api_key: TogetherApiKey):
+        super().__init__(uid)
+        self.together_api_key = together_api_key
+
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
         return {HUMAN_EVAL_DEPENDENCY_KEY: LocalData(path=DEFAULT_1320_DATASET_PATH)}
 
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
-        return make_safety_model_test_items(ModelType.TEXT, dependency_helper)
+        return make_annotation_test_items(dependency_helper)
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         """Annotations currently read directly from context in measurement stage"""
-        return {}
+        return {ANNOTATOR: LlamaGuardAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         test_item_prompt_and_context: PromptWithContext = item.test_item.prompts[0]
@@ -54,10 +63,10 @@ class SafetyModelLlamaGuard2Test(PromptResponseTest):
 
         # Get safety model response
         interaction = item.interactions[0]
-        response_text = interaction.response.completions[0].completion.text
-        llama_guard_annotation: LlamaGuardAnnotation = translate_llama_guard_response(
-            response_text, LLAMA_GUARD_2_DATA
+        llama_guard_annotation = interaction.response.completions[0].get_annotation(
+            ANNOTATOR, LlamaGuardAnnotation
         )
+
         safety_response = SafetyModelResponse(
             is_safe=llama_guard_annotation.is_safe,
             safety_categories=llama_guard_annotation.violation_categories,
@@ -87,4 +96,8 @@ class SafetyModelLlamaGuard2Test(PromptResponseTest):
 # followed the prerequisite steps in the README to make the 1320 dataset
 # available locally
 
-TESTS.register(SafetyModelLlamaGuard2Test, "safety_eval_llama_guard_2_1320")
+TESTS.register(
+    SafetyModelLlamaGuard2Test,
+    "safety_eval_llama_guard_2_1320",
+    TOGETHER_API_KEY_SECRET,
+)

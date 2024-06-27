@@ -29,7 +29,6 @@ class LlamaGuard2SUT(
         self.llama_guard_client = LlamaGuardAnnotator(together_api_key)
 
     def translate_text_prompt(self, prompt: TextPrompt) -> TogetherCompletionsRequest:
-        """TODO confusing when reusing annotator as the SUT. Possibly extract LlamaGuard logic to 3rd separate class"""
         no_op_prompt = PromptWithContext(prompt=TextPrompt(text=""), source_id="")
         return self.llama_guard_client.translate_request(
             prompt=no_op_prompt, completion=SUTCompletion(text=prompt.text)
