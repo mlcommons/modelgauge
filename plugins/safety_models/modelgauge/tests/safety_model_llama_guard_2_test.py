@@ -12,7 +12,6 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.safety_model_utils import (
     measure_safety_model_quality,
     make_annotation_test_items,
-    make_safety_model_test_items,
     ModelType,
 )
 from modelgauge.annotators.llama_guard_annotator import (
