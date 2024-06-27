@@ -76,10 +76,6 @@ def make_annotation_test_items(dependency_helper: DependencyHelper) -> List[Test
 
     annotator_columns = find_1320_dataset_human_annotator_columns(df)
     for index, row in df.iterrows():
-        if index < 1000:
-            continue
-        if index > 1020:
-            break
         # TODO parse row using a pydantic class
         try:
             user_prompt = row["prompt"]
