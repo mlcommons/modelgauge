@@ -54,11 +54,11 @@ class FromSourceDependencyHelper(DependencyHelper):
 
     def __init__(
         self,
-        data_dir: os.PathLike,
+        data_dir: os.PathLike | str,
         dependencies: Mapping[str, ExternalData],
         required_versions: Mapping[str, str],
     ):
-        self.data_dir: os.PathLike = data_dir
+        self.data_dir: os.PathLike | str = data_dir
         """Directory path where all dependencies are stored."""
         self.dependencies: Mapping[str, ExternalData] = dependencies
         """External data dependencies and their keys."""
