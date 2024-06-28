@@ -6,6 +6,7 @@ theme:
   features:
     - navigation.tabs
     - navigation.sections
+    - navigation.tabs.sticky
 plugins:
   - search
   - mkdocstrings:
@@ -16,6 +17,7 @@ plugins:
             show_signature_annotations: true
             signature_crossrefs: true
             docstring_section_style: table
+            members_order: "source"
 nav:
   - index.md
   - User Guide:
@@ -34,6 +36,11 @@ nav:
         - sut: API/sut.md
         - sut_capabilities: API/sut_capabilities.md
         - sut_decorator: API/sut_decorator.md
-      - Data structures: # This can be organized differently.
-        - prompts: API/prompt.md
+        - Data Types: API/prompt.md
+      - Tests:
+        - test: API/test.md
+        - test_decorator: API/test_decorator.md
+        - Dependency Management: API/dependency_management.md
+        - Data Types: API/single_turn_prompt_response.md
+      - Data Structures: # This can be organized differently.
         - initialization record: API/record_init.md
