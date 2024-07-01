@@ -41,6 +41,9 @@ class FakeSUT(PromptResponseSUT[FakeSUTRequest, FakeSUTResponse]):
             completions.append(request.text)
         return FakeSUTResponse(completions=completions)
 
+    def batch_evaluate(self, request: List[FakeSUTRequest]) -> List[FakeSUTResponse]:
+        return [self.evaluate(req) for req in request]
+
     def translate_response(
         self, request: FakeSUTRequest, response: FakeSUTResponse
     ) -> SUTResponse:

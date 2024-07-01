@@ -137,6 +137,7 @@ def test_serialize_test_record():
             }
           }
         ],
+        "id": null,
         "context_internal": {
           "module": "tests.test_records",
           "class_name": "MockContext",
