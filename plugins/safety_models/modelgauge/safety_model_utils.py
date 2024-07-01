@@ -158,7 +158,7 @@ def measure_safety_model_quality(
 
     # Log the result.
     measurement = SafetyModelMeasurement(
-        valid_test=True,
+        valid_test=model_response.is_valid,
         human_majority_is_safe=human_majority_is_safe,
         sut_is_safe=sut_is_safe,
     )
