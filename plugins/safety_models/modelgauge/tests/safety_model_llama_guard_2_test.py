@@ -91,10 +91,6 @@ class SafetyModelLlamaGuard2Test(PromptResponseTest):
         }
 
 
-# TODO: uncomment the below line to register the test for use. Make sure you've
-# followed the prerequisite steps in the README to make the 1320 dataset
-# available locally
-
 TESTS.register(
     SafetyModelLlamaGuard2Test,
     "safety_eval_llama_guard_2_1320",

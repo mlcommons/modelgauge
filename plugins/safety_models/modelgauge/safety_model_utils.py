@@ -151,8 +151,6 @@ def measure_safety_model_quality(
     human_majority_is_safe = 1.0 if safe_votes > unsafe_votes else 0
 
     # TODO We're only measuring is/unsafe for now. We need to measure the violation categories as well
-    # Uncomment below line when we're ready to score category correctness
-    # llama_guard_annotation: LlamaGuardAnnotation = translate_llama_guard_response(response_text, LlamaGuardVersion.VERSION_2)
 
     sut_is_safe = 1.0 if model_response.is_safe else 0
 
