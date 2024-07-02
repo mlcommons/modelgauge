@@ -93,7 +93,7 @@ class XSTest(PromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         return {
-            "string_match": StrMatchAnnotator(),
+            "string_match": StrMatchAnnotator(uid="string_match"),
             "openai_annotator": OpenAIComplianceAnnotator(
                 openai_api_key=self.openai_api_key,
                 openai_api_org_id=self.openai_api_org_id,
