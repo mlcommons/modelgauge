@@ -13,5 +13,4 @@ def format_chat(
         else:
             role_text = sut_role
         blocks.append(f"{role_text}: {message.text}")
-    blocks.append(f"{sut_role}: ")
     return "\n\n".join(blocks)

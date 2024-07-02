@@ -27,6 +27,7 @@ from typing import List, Optional
 
 def run_annotator_test(
     test: PromptResponseTest,
+    annotator: CompletionAnnotator,
     data_dir: str,
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
@@ -40,19 +41,18 @@ def run_annotator_test(
     test_initialization = test.initialization_record
     test_data_path = os.path.join(data_dir, "tests", test.__class__.__name__)
 
-    annotators = []
-    for key, annotator in test.get_annotators().items():
-        annotator_cache: Cache
-        if use_caching:
-            annotator_cache = SqlDictCache(
-                os.path.join(test_data_path, "annotators"), key
-            )
-        else:
-            annotator_cache = NoCache()
-        assert isinstance(
-            annotator, CompletionAnnotator
-        ), "Only know how to do CompletionAnnotator."
-        annotators.append(AnnotatorData(key, annotator, annotator_cache))
+    # Instead of getting annotators, we should be reading it as an arg
+    annotator_cache: Cache
+    if use_caching:
+        annotator_cache = SqlDictCache(
+            os.path.join(test_data_path, "annotators"), annotator.uid
+        )
+    else:
+        annotator_cache = NoCache()
+    assert isinstance(
+        annotator, CompletionAnnotator
+    ), "Only know how to do CompletionAnnotator."
+    annotator_data = AnnotatorData(annotator.uid, annotator, annotator_cache)
 
     # This runner just records versions, it doesn't specify a required version.
     dependency_helper = FromSourceDependencyHelper(
@@ -74,7 +74,7 @@ def run_annotator_test(
     measured_test_items = []
     desc = f"Processing TestItems for test={test.uid}"
     for test_item in tqdm(test_items, desc=desc, disable=disable_progress_bar):
-        test_item_record = _process_test_item(test_item, test, annotators)
+        test_item_record = _process_test_item(test_item, test, annotator_data)
         test_item_records.append(test_item_record)
         measured_test_items.append(
             MeasuredTestItem(
@@ -108,7 +108,7 @@ class AnnotatorData:
 def _process_test_item(
     item: TestItem,
     test: PromptResponseTest,
-    annotators: List[AnnotatorData],
+    annotator_data: AnnotatorData,
 ) -> TestItemRecord:
     interactions: List[PromptInteractionAnnotations] = []
     for prompt in item.prompts:
@@ -121,26 +121,27 @@ def _process_test_item(
         annotated_completions: List[SUTCompletionAnnotations] = []
 
         annotations = {}
-        for annotator_data in annotators:
-            annotator = annotator_data.annotator
-            try:
-                annotator_request = annotator.translate_request(prompt, completion)
-                with annotator_data.cache as cache:
-                    annotator_response = cache.get_or_call(
-                        annotator_request, annotator.annotate
-                    )
-                # TODO some check needs to happen here to ensure annotator
-                # response is of a certain type. Ideally it should be
-                # compile time driven, not runtime
-                annotation = annotator.translate_response(
-                    annotator_request, annotator_response
-                )
-            except Exception as e:
-                raise Exception(
-                    f"Exception while handling annotation for {annotator_data.key} on {prompt}"
-                ) from e
 
-            annotations[annotator_data.key] = Annotation.from_instance(annotation)
+        annotator = annotator_data.annotator
+        try:
+            annotator_request = annotator.translate_request(prompt, completion)
+            with annotator_data.cache as cache:
+                annotator_response = cache.get_or_call(
+                    annotator_request, annotator.annotate
+                )
+            # TODO some check needs to happen here to ensure annotator
+            # response is of a certain type. Ideally it should be
+            # compile time driven, not runtime
+            annotation = annotator.translate_response(
+                annotator_request, annotator_response
+            )
+        except Exception as e:
+            raise Exception(
+                f"Exception while handling annotation for {annotator_data.key} on {prompt}"
+            ) from e
+
+        annotations[annotator_data.key] = Annotation.from_instance(annotation)
+
         annotated_completions.append(
             SUTCompletionAnnotations(completion=completion, annotations=annotations)
         )

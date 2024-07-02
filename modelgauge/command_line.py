@@ -48,6 +48,10 @@ MAX_TEST_ITEMS_OPTION = click.option(
 
 SUT_OPTION = click.option("--sut", help="Which registered SUT to run.", required=True)
 
+ANNOTATOR_OPTION = click.option(
+    "--annotator", help="Which annotator to run.", required=True
+)
+
 LOCAL_PLUGIN_DIR_OPTION = click.option(
     "--plugin-dir",
     type=click.Path(

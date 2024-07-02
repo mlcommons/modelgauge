@@ -1,7 +1,6 @@
 import os
 import json
 
-from modelgauge.annotators.llama_3_70b_chat_annotator import Llama3_70bChatAnnotator
 from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
@@ -27,11 +26,10 @@ from typing import List, Dict, Mapping
 from sklearn import metrics  # type: ignore
 
 TOGETHER_API_KEY_SECRET = InjectSecret(TogetherApiKey)
-ANNOTATOR = "llama_3_70b_chat"
 
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
-class SafetyModelChatTest(PromptResponseTest):
+class SafetyModelTest(PromptResponseTest):
     def __init__(self, uid: str, together_api_key: TogetherApiKey):
         super().__init__(uid)
         self.together_api_key = together_api_key
@@ -41,12 +39,11 @@ class SafetyModelChatTest(PromptResponseTest):
         # TODO make local file path a configurable test parameter
         return {"human_eval_dataset": LocalData(path="./1320mlc.csv")}
 
+    def get_annotators(self) -> Mapping[str, Annotator]:
+        return {}
+
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
         return make_annotation_test_items(dependency_helper)
-
-    def get_annotators(self) -> Mapping[str, Annotator]:
-        """Annotations currently read directly from context in measurement stage"""
-        return {ANNOTATOR: Llama3_70bChatAnnotator(self.together_api_key)}
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         test_item_prompt_and_context: PromptWithContext = item.test_item.prompts[0]
@@ -57,17 +54,21 @@ class SafetyModelChatTest(PromptResponseTest):
         # Get safety model response
         interaction = item.interactions[0]
 
+        # Assume only 1 annotator (for now as we test 1 annotator at a time)
+        assert len(interaction.response.completions[0].annotations.keys()) == 1
+        annotation_key = list(interaction.response.completions[0].annotations.keys())[0]
+
         safety_response = interaction.response.completions[0].get_annotation(
-            ANNOTATOR, SafetyModelResponse
+            annotation_key, SafetyModelResponse
         )
 
         return measure_safety_model_quality(test_item_context, safety_response)
 
     def aggregate_measurements(self, items):
         y_true = list(
-            map(lambda item: item.measurements["human_majority_is_safe"], items)
+            map(lambda item: item.measurements["human_majority_is_unsafe"], items)
         )
-        y_pred = list(map(lambda item: item.measurements["sut_is_safe"], items))
+        y_pred = list(map(lambda item: item.measurements["sut_is_unsafe"], items))
 
         accuracy = metrics.accuracy_score(y_true, y_pred)
         precision = metrics.precision_score(y_true, y_pred)
@@ -80,4 +81,4 @@ class SafetyModelChatTest(PromptResponseTest):
         }
 
 
-TESTS.register(SafetyModelChatTest, "safety_eval_chat_1320", TOGETHER_API_KEY_SECRET)
+TESTS.register(SafetyModelTest, "safety_eval_1320", TOGETHER_API_KEY_SECRET)

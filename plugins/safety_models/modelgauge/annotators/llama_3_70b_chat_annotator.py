@@ -13,12 +13,14 @@ from modelgauge.suts.together_client import (
     TogetherChatSUT,
 )
 from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.sut import SUTCompletion
 
-ANNOTATOR_UID = "llama_3_70b_chat_annotator"
+ANNOTATOR_UID = "llama_3_70b_chat_safety_annotator"
 LLAMA_3_70B_MODEL_PATH = "meta-llama/Llama-3-70b-chat-hf"
 
 
@@ -27,12 +29,12 @@ class Llama3_70bChatAnnotator(CompletionAnnotator[SafetyModelResponse]):
 
     def __init__(
         self,
+        uid: str,
         together_api_key: TogetherApiKey,
     ):
+        super().__init__(uid)
         self.model_name = None
-        self.model = TogetherChatSUT(
-            ANNOTATOR_UID, LLAMA_3_70B_MODEL_PATH, together_api_key
-        )
+        self.model = TogetherChatSUT(uid, LLAMA_3_70B_MODEL_PATH, together_api_key)
 
     def translate_request(self, prompt: PromptWithContext, completion: SUTCompletion):
         """Convert the prompt+completion into the native representation for this annotator."""
@@ -101,3 +103,8 @@ class Llama3_70bChatAnnotator(CompletionAnnotator[SafetyModelResponse]):
                 raise ValueError(f"Unknown or invalid role: {role}")
 
         return "\n".join([f"{_role_to_str(m.role)}: {m.text}" for m in messages])
+
+
+ANNOTATORS.register(
+    Llama3_70bChatAnnotator, ANNOTATOR_UID, InjectSecret(TogetherApiKey)
+)

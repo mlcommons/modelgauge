@@ -6,6 +6,7 @@ from modelgauge.command_line import (
     LOCAL_PLUGIN_DIR_OPTION,
     MAX_TEST_ITEMS_OPTION,
     SUT_OPTION,
+    ANNOTATOR_OPTION,
     display_header,
     display_list_item,
     modelgauge_cli,
@@ -21,10 +22,15 @@ from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.annotator_test_runner import (
+    run_annotator_test as run_annotation_test_runner,
+)
+from modelgauge.annotator import Annotator, CompletionAnnotator
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
+from modelgauge.annotator_registry import ANNOTATORS
 from typing import List, Optional
 
 
@@ -157,6 +163,78 @@ def run_sut(
     click.echo(f"Native response: {response}\n")
     result = sut_obj.translate_response(request, response)
     click.echo(f"Normalized response: {result.model_dump_json(indent=2)}\n")
+
+
+@modelgauge_cli.command()
+@click.option("--test", help="Which registered TEST to run.", required=True)
+@LOCAL_PLUGIN_DIR_OPTION
+@ANNOTATOR_OPTION
+@DATA_DIR_OPTION
+@MAX_TEST_ITEMS_OPTION
+@click.option(
+    "--output-file",
+    help="If specified, will override the default location for outputting the TestRecord.",
+)
+@click.option(
+    "--no-caching",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Disable caching.",
+)
+@click.option(
+    "--no-progress-bar",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Disable displaying the 'Processing TestItems' progress bar.",
+)
+def run_annotator_test(
+    test: str,
+    annotator: str,
+    data_dir: str,
+    max_test_items: int,
+    output_file: Optional[str],
+    no_caching: bool,
+    no_progress_bar: bool,
+):
+    """Run the Test on the desired Annotator and output the TestRecord."""
+    secrets = load_secrets_from_config()
+    # Check for missing secrets without instantiating any objects
+    missing_secrets: List[MissingSecretValues] = []
+    missing_secrets.extend(TESTS.get_missing_dependencies(test, secrets=secrets))
+    missing_secrets.extend(
+        ANNOTATORS.get_missing_dependencies(annotator, secrets=secrets)
+    )
+    raise_if_missing_from_config(missing_secrets)
+
+    test_obj = TESTS.make_instance(test, secrets=secrets)
+    annotator_obj = ANNOTATORS.make_instance(annotator, secrets=secrets)
+
+    # Current this only knows how to do prompt response, so assert that is what we have.
+    # TODO stronger annotator assertion
+    assert isinstance(annotator_obj, Annotator)
+    assert isinstance(test_obj, PromptResponseTest)
+
+    if output_file is None:
+        os.makedirs("output", exist_ok=True)
+        output_file = os.path.join(
+            "output", normalize_filename(f"record_for_{test}_{annotator}.json")
+        )
+    test_record = run_annotation_test_runner(
+        test_obj,
+        annotator_obj,
+        data_dir,
+        max_test_items,
+        use_caching=not no_caching,
+        disable_progress_bar=no_progress_bar,
+    )
+    with open(output_file, "w") as f:
+        print(test_record.model_dump_json(indent=4), file=f)
+    # For displaying to the screen, clear out the verbose test_item_records
+    test_record.test_item_records = []
+    print(test_record.model_dump_json(indent=4))
+    print("Full TestRecord json written to", output_file)
 
 
 @modelgauge_cli.command()
