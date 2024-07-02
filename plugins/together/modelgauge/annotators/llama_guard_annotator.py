@@ -354,7 +354,9 @@ if __name__ == "__main__":
 
     text = sys.argv[1]
 
-    annotator = LlamaGuardAnnotator(TogetherApiKey.make(secrets))
+    annotator = LlamaGuardAnnotator(
+        uid="llama-guard-annotator", together_api_key=TogetherApiKey.make(secrets)
+    )
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)
