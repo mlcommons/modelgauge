@@ -6,6 +6,7 @@ from modelgauge.annotators.llama_guard_annotator import (
     translate_llama_guard_response,
 )
 from modelgauge.safety_model_response import SafetyModelResponse
+from modelgauge.safety_model_utils import flatten_conversation_to_str
 from modelgauge.suts.together_client import (
     TogetherApiKey,
     TogetherCompletionsRequest,
@@ -14,7 +15,6 @@ from modelgauge.suts.together_client import (
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.prompt import ChatMessage, ChatPrompt
-from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
@@ -81,7 +81,9 @@ def _formatter(chat_prompt: ChatPrompt, llama_guard: LlamaGuardData):
         ]
     )
 
-    conversations_str = format_chat(chat_prompt, user_role="User", sut_role="Agent")
+    conversations_str = flatten_conversation_to_str(
+        chat_prompt, user_role="User", sut_role="Agent"
+    )
     return llama_guard.template.substitute(
         agent_type=llama_guard.agent,
         categories=categories_str,

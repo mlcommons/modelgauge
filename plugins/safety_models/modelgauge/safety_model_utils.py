@@ -162,3 +162,18 @@ def measure_safety_model_quality(
     )
 
     return measurement.model_dump()
+
+
+def flatten_conversation_to_str(
+    chat: ChatPrompt, *, user_role: str = "user", sut_role: str = "assistant"
+) -> str:
+    """Flattens a chat conversation into a single text prompt"""
+    blocks = []
+    for message in chat.messages:
+        role_text: str
+        if message.role == ChatRole.user:
+            role_text = user_role
+        else:
+            role_text = sut_role
+        blocks.append(f"{role_text}: {message.text}")
+    return "\n\n".join(blocks)
