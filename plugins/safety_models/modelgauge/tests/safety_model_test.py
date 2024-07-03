@@ -30,10 +30,6 @@ TOGETHER_API_KEY_SECRET = InjectSecret(TogetherApiKey)
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsChatPrompt])
 class SafetyModelTest(PromptResponseTest):
-    def __init__(self, uid: str, together_api_key: TogetherApiKey):
-        super().__init__(uid)
-        self.together_api_key = together_api_key
-
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
@@ -81,4 +77,4 @@ class SafetyModelTest(PromptResponseTest):
         }
 
 
-TESTS.register(SafetyModelTest, "safety_eval_1320", TOGETHER_API_KEY_SECRET)
+TESTS.register(SafetyModelTest, "safety_eval_1320")
