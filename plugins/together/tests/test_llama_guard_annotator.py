@@ -54,7 +54,7 @@ class MockTogetherSUT:
 def test_safe(llama_guard_version):
     responses = [_make_response("safe")]
     annotator = LlamaGuardAnnotator(
-        uid="llama_guard",
+        uid="llama_guard_2",
         together_api_key=TogetherApiKey("some-value"),
         llama_guard_version=llama_guard_version,
     )
@@ -75,7 +75,7 @@ def test_safe(llama_guard_version):
 def test_unsafe(llama_guard_version, sut_response_category, unsafe_category_name):
     responses = [_make_response("unsafe\n" + sut_response_category)]
     annotator = LlamaGuardAnnotator(
-        uid="llama_guard",
+        uid="llama_guard_2",
         together_api_key=TogetherApiKey("some-value"),
         llama_guard_version=llama_guard_version,
     )
@@ -104,7 +104,7 @@ def test_unsafe_multiple_categories(
 ):
     responses = [_make_response("unsafe\n" + sut_response_categories)]
     annotator = LlamaGuardAnnotator(
-        uid="llama_guard",
+        uid="llama_guard_2",
         together_api_key=TogetherApiKey("some-value"),
         llama_guard_version=llama_guard_version,
     )
@@ -125,7 +125,7 @@ def test_custom_prompt_decoder():
     decoder = {"foo": "bar"}
     responses = [_make_response("unsafe\nfoo")]
     annotator = LlamaGuardAnnotator(
-        uid="llama_guard",
+        uid="llama_guard_2",
         together_api_key=TogetherApiKey("some-value"),
         formatter=prompt_formatter,
         decoder=decoder,

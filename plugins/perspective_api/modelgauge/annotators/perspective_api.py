@@ -96,11 +96,13 @@ class PerspectiveAPIAnnotator(CompletionAnnotator[PerspectiveAPIAnnotation]):
 
     def __init__(
         self,
+        uid: str,
         desired_attributes: List[str],
         developer_key: PerspectiveDeveloperKey,
         languages: Optional[List[str]] = None,
         num_retries: int = 6,
     ):
+        super().__init__(uid)
         assert desired_attributes, "Must specify at least one desired attribute"
         assert len(desired_attributes) == len(
             set(desired_attributes)
@@ -300,7 +302,9 @@ if __name__ == "__main__":
     print("Sending:", sut_text)
     secrets = load_secrets_from_config()
     annotator = PerspectiveAPIAnnotator(
-        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT], PerspectiveDeveloperKey.make(secrets)
+        "perspective_annotator",
+        [ATTRIBUTE_TOXICITY, ATTRIBUTE_THREAT],
+        PerspectiveDeveloperKey.make(secrets),
     )
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=sut_text)

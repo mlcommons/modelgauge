@@ -103,7 +103,7 @@ class SimpleSafetyTests(PromptResponseTest):
         # Eventually replace with evaluator model from Tests group
         return {
             "llama_guard": LlamaGuardAnnotator(
-                uid="llama_guard", together_api_key=self.together_api_key
+                uid="llama_guard_2", together_api_key=self.together_api_key
             )
         }
 

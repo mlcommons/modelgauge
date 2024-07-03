@@ -129,7 +129,7 @@ class SafeTest(PromptResponseTest):
     def get_annotators(self) -> Mapping[str, Annotator]:
         return {
             "llama_guard": LlamaGuardAnnotator(
-                uid="llama_guard",
+                uid=f"llama_guard_{self.llama_guard_version.name}",
                 together_api_key=self.together_api_key,
                 llama_guard_version=self.llama_guard_version,
             )
