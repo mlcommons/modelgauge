@@ -1,6 +1,4 @@
-import os
-import json
-
+from modelgauge.safety_model_constants import DEFAULT_1320_DATASET_PATH
 from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.annotator import Annotator
 from modelgauge.base_test import PromptResponseTest
@@ -17,7 +15,6 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.safety_model_utils import (
     measure_safety_model_quality,
     make_annotation_test_items,
-    ModelType,
 )
 from modelgauge.safety_eval_context import SafetyEvalContext
 from modelgauge.safety_model_response import SafetyModelResponse
@@ -33,7 +30,7 @@ class SafetyModelTest(PromptResponseTest):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
-        return {"human_eval_dataset": LocalData(path="./1320mlc.csv")}
+        return {"human_eval_dataset": LocalData(path=DEFAULT_1320_DATASET_PATH)}
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         return {}

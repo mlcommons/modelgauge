@@ -1,5 +1,4 @@
 import traceback
-from modelgauge.safety_model_prompts import LABELER_SYS_PROMPT, LABELER_USER_PROMPT
 import pandas as pd
 import numpy as np
 from typing import Dict, List
@@ -8,10 +7,9 @@ from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.safety_model_measurements import SafetyModelMeasurement
 
 from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole
 from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.safety_model_constants import (
-    DEFAULT_MAX_CHAT_TOKENS,
     HUMAN_EVAL_DEPENDENCY_KEY,
 )
 from enum import Enum

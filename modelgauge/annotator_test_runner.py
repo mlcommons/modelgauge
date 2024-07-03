@@ -7,8 +7,7 @@ from modelgauge.annotator import CompletionAnnotator
 from modelgauge.base_test import PromptResponseTest, TestResult
 from modelgauge.caching import Cache, NoCache, SqlDictCache
 from modelgauge.dependency_helper import FromSourceDependencyHelper
-from modelgauge.prompt import TextPrompt
-from modelgauge.records import TestItemRecord, TestRecord
+from modelgauge.records import SafetyModelTestRecord, TestItemRecord
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
     PromptInteractionAnnotations,
@@ -18,8 +17,6 @@ from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
 )
 from modelgauge.sut import SUTCompletion
-from modelgauge.sut_capabilities_verification import assert_sut_capabilities
-from modelgauge.sut_decorator import assert_is_sut
 from modelgauge.test_decorator import assert_is_test
 from tqdm import tqdm
 from typing import List, Optional
@@ -32,7 +29,7 @@ def run_annotator_test(
     max_test_items: Optional[int] = None,
     use_caching: bool = True,
     disable_progress_bar: bool = False,
-) -> TestRecord:
+) -> SafetyModelTestRecord:
     """Demonstration for how to run a single Test on a single SUT, all calls serial."""
 
     assert_is_test(test)
@@ -85,12 +82,10 @@ def run_annotator_test(
     test_result = TestResult.from_instance(
         test.aggregate_measurements(measured_test_items)
     )
-    return TestRecord(
+    return SafetyModelTestRecord(
         test_uid=test.uid,
         test_initialization=test_initialization,
         dependency_versions=dependency_helper.versions_used(),
-        sut_uid="",
-        sut_initialization=None,
         test_item_records=test_item_records,
         result=test_result,
     )

@@ -1,9 +1,7 @@
-from typing import List
 from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
     LlamaGuardData,
     LlamaGuardVersion,
-    translate_llama_guard_response,
 )
 from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.safety_model_utils import flatten_conversation_to_str
@@ -14,7 +12,7 @@ from modelgauge.suts.together_client import (
 )
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.prompt import ChatMessage, ChatPrompt
+from modelgauge.prompt import ChatPrompt
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
