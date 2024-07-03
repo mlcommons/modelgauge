@@ -213,7 +213,7 @@ def run_annotator_test(
 
     # Current this only knows how to do prompt response, so assert that is what we have.
     # TODO stronger annotator assertion
-    assert isinstance(annotator_obj, Annotator)
+    assert isinstance(annotator_obj, CompletionAnnotator)
     assert isinstance(test_obj, PromptResponseTest)
 
     if output_file is None:
