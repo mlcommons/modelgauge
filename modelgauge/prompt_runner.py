@@ -1,11 +1,12 @@
-import concurrent
 import csv
 import datetime
 import pathlib
 import queue
 import time
+from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from threading import Event, Thread
+from typing import Callable
 
 import click
 
@@ -13,6 +14,7 @@ from modelgauge.config import load_secrets_from_config, raise_if_missing_from_co
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
 from modelgauge.secret_values import MissingSecretValues
+from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
 
 
@@ -31,7 +33,19 @@ class PromptItem(dict):
         return hash(self.uid())
 
 
-class PromptInput:
+class PromptInput(metaclass=ABCMeta):
+    @abstractmethod
+    def __iter__(self):
+        pass
+
+    def __len__(self):
+        count = 0
+        for prompt in self:
+            count += 1
+        return count
+
+
+class CsvPromptInput(PromptInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
@@ -43,7 +57,19 @@ class PromptInput:
                 yield PromptItem(row)
 
 
-class PromptOutput:
+class PromptOutput(metaclass=ABCMeta):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    @abstractmethod
+    def write(self, item, results):
+        pass
+
+
+class CsvPromptOutput(PromptOutput):
     def __init__(self, path, suts):
         super().__init__()
         self.path = path
@@ -59,7 +85,7 @@ class PromptOutput:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+        self.file.close()
 
     def write(self, item: PromptItem, results):
         row = [item.uid(), item.prompt()]
@@ -71,163 +97,96 @@ class PromptOutput:
         self.writer.writerow(row)
 
 
+def do_nothing(*args):
+    pass
+
+
 class ParallelPromptRunner:
-    def __init__(self, input, output, suts):
+    def __init__(
+        self,
+        input: PromptInput,
+        output: PromptOutput,
+        suts: dict[str, PromptResponseSUT],
+        worker_count: int = None,
+    ):
         super().__init__()
         self.input = input
         self.output = output
         self.suts = suts
-        self._worker_count = 25 * len(suts)
+        if worker_count:
+            self._worker_count = worker_count
+        else:
+            self._worker_count = 10 * len(suts)
 
-    def run(self):
-        to_process = queue.Queue(maxsize=self._worker_count * 4)
-        to_output = queue.Queue(maxsize=self._worker_count * 2)
-        unfinished = defaultdict(lambda: dict())
-        input_done = Event()
+        # queues
+        self.to_process = queue.Queue(maxsize=self._worker_count * 4)
+        self.to_output = queue.Queue(maxsize=self._worker_count * 2)
 
-        def read():
-            for item in self.input:
-                for sut_key in self.suts:
-                    to_process.put((item, sut_key))
-            input_done.set()
+        # data
+        self.unfinished = defaultdict(lambda: dict())
+        self.stats = defaultdict(lambda: 0)
 
-        def process():
-            while (not input_done.is_set()) or (not to_process.empty()):
-                item, sut_key = to_process.get()
-                request = self.suts[sut_key].translate_text_prompt(
-                    TextPrompt(text=item.prompt())
-                )
-                response = self.suts[sut_key].evaluate(request)
-                result = self.suts[sut_key].translate_response(request, response)
+        # flags
+        self.all_input_read = Event()
 
-                to_output.put((item, sut_key, result.completions[0].text))
-                to_process.task_done()
+    def done_processing(self):
+        return self.all_input_read.is_set() and self.to_process.empty()
 
-        def handle_output():
-            with self.output as output:
-                while (
-                    (not input_done.is_set())
-                    or (not to_process.empty())
-                    or not (to_output.empty())
-                ):
-                    item, sut_key, response = to_output.get()
-                    print(f"outputting {item}")
-                    unfinished[item][sut_key] = response
-                    if len(unfinished[item]) == len(self.suts):
-                        output.write(item, unfinished[item])
-                        del unfinished[item]
-                        to_output.task_done()
-            print(
-                f"worker done: (not {input_done.is_set()}) and (not {to_process.empty()}) and not ({to_output.empty()})"
+    def done_outputting(self):
+        return self.done_processing() and self.to_output.empty()
+
+    def _read(self):
+        for item in self.input:
+            for sut_key in self.suts:
+                self.to_process.put((item, sut_key))
+            self.stats["read"] += 1
+        self.all_input_read.set()
+
+    def _process(self):
+        while not self.done_processing():
+            item, sut_key = self.to_process.get()
+            request = self.suts[sut_key].translate_text_prompt(
+                TextPrompt(text=item.prompt())
             )
+            response = self.suts[sut_key].evaluate(request)
+            result = self.suts[sut_key].translate_response(request, response)
 
-        input_worker = Thread(target=read)
+            self.to_output.put((item, sut_key, result.completions[0].text))
+            self.stats["process"] += 1
+
+            self.to_process.task_done()
+
+    def _handle_output(self):
+        with self.output as output:
+            while not self.done_outputting():
+                item, sut_key, response = self.to_output.get()
+                self.unfinished[item][sut_key] = response
+                if len(self.unfinished[item]) == len(self.suts):
+                    output.write(item, self.unfinished[item])
+                    del self.unfinished[item]
+                    self.to_output.task_done()
+                    self.stats["completed"] += 1
+
+    def run(self, progress: Callable = do_nothing):
+        self.all_input_read.clear()
+        progress(self.stats)
+
+        input_worker = Thread(target=self._read)
         input_worker.start()
-        process_workers = [Thread(target=process) for n in range(self._worker_count)]
+        process_workers = [
+            Thread(target=self._process) for n in range(self._worker_count)
+        ]
         for worker in process_workers:
             worker.start()
-        output_worker = Thread(target=handle_output)
+        output_worker = Thread(target=self._handle_output)
         output_worker.start()
 
-        def status():
-            return f"to_process: {to_process.qsize()} to_output: {to_output.qsize()} unfinished: {len(unfinished)} workers: {input_worker} {process_workers} {output_worker}"
+        while not self.done_outputting():
+            time.sleep(0.1)
+            progress(self.stats)
 
-        print(f"off to the races: {status()}")
-        while not input_done.wait(1):
-            print(f"working: {status()}")
-            time.sleep(0.5)
-        print(f"input all loaded: {status()}")
         input_worker.join()
-        print(f"input finished: {status()}")
-
         for worker in process_workers:
             worker.join()
-            print(f"{worker} done")
         output_worker.join()
-        print("output complete")
-
-
-input
-
-
-@click.command()
-@click.option(
-    "sut_names",
-    "-s",
-    "--sut",
-    help="Which registered SUT to run.",
-    multiple=True,
-    required=True,
-)
-@click.argument("filename", type=click.Path(exists=True))
-def cli(sut_names, filename):
-    load_plugins()
-    secrets = load_secrets_from_config()
-
-    try:
-        suts = {
-            sut_name: SUTS.make_instance(sut_name, secrets=secrets)
-            for sut_name in sut_names
-        }
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
-
-    path = pathlib.Path(filename)
-    input = PromptInput(path)
-    output = PromptOutput(
-        pathlib.Path(
-            path.stem
-            + "-responses-"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            + ".csv"
-        ),
-        suts,
-    )
-    runner = ParallelPromptRunner(input, output, suts)
-    runner.run()
-
-
-@click.command()
-@click.option("--sut", help="Which registered SUT to run.", required=True)
-@click.argument("filename", type=click.Path(exists=True))
-def fnord(sut, filename):
-    load_plugins()
-    secrets = load_secrets_from_config()
-
-    # TODO Add multiple SUTS and correlating output
-    # TODO Retry on error
-    # TODO maybe convert to an object so state is less insane?
-    try:
-        sut_obj = SUTS.make_instance(sut, secrets=secrets)
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
-
-    def process_prompt(prompt):
-        request = sut_obj.translate_text_prompt(TextPrompt(text=prompt))
-        response = sut_obj.evaluate(request)
-        result = sut_obj.translate_response(request, response)
-        return result.completions[0].text
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-        future_to_row = {}
-        with open(filename, newline="") as f:
-            csvreader = csv.DictReader(f)
-            for row in csvreader:
-                future_to_row[executor.submit(process_prompt, row["Text"])] = row
-        with open("result.csv", "w", newline="") as f:
-            csvwriter = csv.writer(f, quoting=csv.QUOTE_ALL)
-            csvwriter.writerow(["UID", "Text", sut])
-            for future in concurrent.futures.as_completed(future_to_row):
-                row = future_to_row[future]
-
-                try:
-                    response = future.result()
-                except Exception as e:
-                    print(f"Unexpected failure for {row['UID']}: {e}")
-                else:
-                    csvwriter.writerow([row["UID"], row["Text"], response])
-                    print(f"{row['UID']}: {row['Text']} -> {response}")
-
-
-if __name__ == "__main__":
-    cli()
+        progress(self.stats)

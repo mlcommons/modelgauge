@@ -1,5 +1,10 @@
+import datetime
 import os
+import pathlib
+from typing import List, Optional
+
 import click
+
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -20,12 +25,16 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.simple_test_runner import run_prompt_response_test
+from modelgauge.prompt_runner import (
+    CsvPromptInput,
+    CsvPromptOutput,
+    ParallelPromptRunner,
+)
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
+from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
-from typing import List, Optional
 
 
 @modelgauge_cli.command(name="list")
@@ -226,6 +235,67 @@ def run_test(
     test_record.test_item_records = []
     print(test_record.model_dump_json(indent=4))
     print("Full TestRecord json written to", output_file)
+
+
+@modelgauge_cli.command()
+@click.option(
+    "sut_names",
+    "-s",
+    "--sut",
+    help="Which registered SUT(s) to run.",
+    multiple=True,
+    required=True,
+)
+@click.option(
+    "--workers",
+    type=int,
+    default=None,
+    help="Number of worker threads, default is 10 * number of SUTs.",
+)
+@click.argument(
+    "filename",
+    type=click.Path(exists=True),
+)
+def run_prompts(sut_names, workers, filename):
+    """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
+
+    load_plugins()
+    secrets = load_secrets_from_config()
+
+    try:
+        suts = {
+            sut_name: SUTS.make_instance(sut_name, secrets=secrets)
+            for sut_name in sut_names
+        }
+    except MissingSecretValues as e:
+        raise_if_missing_from_config([e])
+
+    path = pathlib.Path(filename)
+    input = CsvPromptInput(path)
+
+    output_path = pathlib.Path(
+        path.stem
+        + "-responses-"
+        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        + ".csv"
+    )
+    output = CsvPromptOutput(output_path, suts)
+
+    prompt_count = len(input)
+    with click.progressbar(
+        length=prompt_count,
+        label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
+    ) as bar:
+        last_complete_count = 0
+
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
+
+        runner = ParallelPromptRunner(input, output, suts, worker_count=workers)
+        runner.run(progress=show_progress)
 
 
 def main():
