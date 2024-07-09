@@ -25,10 +25,14 @@ from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins, load_plugins
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.prompt_runner import (
+from modelgauge.pipeline import Pipeline
+from modelgauge.prompt_pipeline import (
+    PromptSource,
+    PromptSutAssigner,
+    PromptSutWorkers,
+    PromptSink,
     CsvPromptInput,
     CsvPromptOutput,
-    ParallelPromptRunner,
 )
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.simple_test_runner import run_prompt_response_test
@@ -252,11 +256,14 @@ def run_test(
     default=None,
     help="Number of worker threads, default is 10 * number of SUTs.",
 )
+@click.option(
+    "--debug", is_flag=True, help="Show internal pipeline debugging information."
+)
 @click.argument(
     "filename",
     type=click.Path(exists=True),
 )
-def run_prompts(sut_names, workers, filename):
+def run_prompts(sut_names, workers, filename, debug):
     """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
 
     load_plugins()
@@ -282,6 +289,7 @@ def run_prompts(sut_names, workers, filename):
     output = CsvPromptOutput(output_path, suts)
 
     prompt_count = len(input)
+
     with click.progressbar(
         length=prompt_count,
         label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
@@ -294,8 +302,18 @@ def run_prompts(sut_names, workers, filename):
             bar.update(complete_count - last_complete_count)
             last_complete_count = complete_count
 
-        runner = ParallelPromptRunner(input, output, suts, worker_count=workers)
-        runner.run(progress=show_progress)
+        pipeline = Pipeline(
+            PromptSource(input),
+            PromptSutAssigner(suts),
+            PromptSutWorkers(suts, workers),
+            PromptSink(suts, output),
+            progress_callback=show_progress,
+            debug=debug,
+        )
+
+        pipeline.run()
+
+    print(f"output saved to {output_path}")
 
 
 def main():
