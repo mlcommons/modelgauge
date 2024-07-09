@@ -3,6 +3,7 @@ import sys
 import traceback
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
+from typing import Any, Dict
 
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
@@ -127,7 +128,10 @@ class PromptSutWorkers(Pipe):
             traceback.print_exc(file=sys.stderr)
 
 
+
 class PromptSink(Sink):
+    unfinished: defaultdict[PromptItem, dict[str, str]]
+
     def __init__(self, suts: dict[str, PromptResponseSUT], writer: PromptOutput):
         super().__init__()
         self.suts = suts

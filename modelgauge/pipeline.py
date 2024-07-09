@@ -57,7 +57,7 @@ import threading
 from abc import abstractmethod, ABC
 from queue import Queue
 from threading import Event, Thread
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional
 
 
 class PipelineSegment(ABC):
@@ -68,7 +68,7 @@ class PipelineSegment(ABC):
     def __init__(self):
         super().__init__()
         self._work_done = Event()
-        self._upstream: [PipelineSegment, None] = None
+        self._upstream: Optional[PipelineSegment] = None
         self._queue: Queue = Queue()
         self.completed = 0
         self._debug_enabled = False
@@ -172,7 +172,7 @@ class Pipe(PipelineSegment):
         Thread(target=self._notice_complete).start()
 
     @abstractmethod
-    def handle_item(self, item) -> [Any, None]:
+    def handle_item(self, item) -> Optional[Any]:
         """
         Takes in an item from the previous stage, returns the item for the next stage. If for your use
         one input item produces multiple items, then don't return anything, instead calling
@@ -257,7 +257,7 @@ class Pipeline:
         self,
         *segments: PipelineSegment,
         debug: bool = False,
-        progress_callback: Callable = None,
+        progress_callback: Optional[Callable] = None,
     ):
         super().__init__()
         self._segments = segments
