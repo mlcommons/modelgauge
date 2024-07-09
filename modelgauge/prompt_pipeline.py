@@ -128,7 +128,6 @@ class PromptSutWorkers(Pipe):
             traceback.print_exc(file=sys.stderr)
 
 
-
 class PromptSink(Sink):
     unfinished: defaultdict[PromptItem, dict[str, str]]
 
