@@ -5,7 +5,7 @@ from modelgauge.annotator_test_runner import run_annotator_test
 from modelgauge.interaction_annotation import AnnotatorInteractionRecord
 from tests.fake_annotator import FakeAnnotator
 from tests.fake_sut import FakeSUT
-from fake_annotator_test import (
+from .fake_annotator_test import (
     FakeAnnotatorTest,
     FakeTestResult,
     fake_annotation_test_item,
