@@ -9,7 +9,6 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.interaction_annotation import AnnotationTestItem, SUTInteraction
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.safety_model_constants import (
-    DEFAULT_MAX_CHAT_TOKENS,
     HUMAN_EVAL_DEPENDENCY_KEY,
 )
 from modelgauge.safety_model_measurements import SafetyModelMeasurement

@@ -1,3 +1,4 @@
+from modelgauge.safety_model_constants import DEFAULT_1320_DATASET_PATH
 from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.annotator_test import InteractionAnnotationTest
 from modelgauge.interaction_annotation import AnnotationTestItem
@@ -26,7 +27,7 @@ class SafetyModelTest(InteractionAnnotationTest[SafetyModelResponse]):
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
         # TODO make local file path a configurable test parameter
-        return {"human_eval_dataset": LocalData(path="./1320mlc.csv")}
+        return {"human_eval_dataset": LocalData(path=DEFAULT_1320_DATASET_PATH)}
 
     def make_test_items(
         self, dependency_helper: DependencyHelper
@@ -55,4 +56,4 @@ class SafetyModelTest(InteractionAnnotationTest[SafetyModelResponse]):
         }
 
 
-TESTS.register(SafetyModelTest, "safety_eval_1320", TOGETHER_API_KEY_SECRET)
+TESTS.register(SafetyModelTest, "safety_eval_1320")
