@@ -36,4 +36,3 @@ class TestRecord(BaseModel):
     result: TestResult
 
     __test__ = False
-
