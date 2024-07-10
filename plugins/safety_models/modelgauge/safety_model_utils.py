@@ -1,20 +1,34 @@
-import traceback
-from modelgauge.safety_model_prompts import LABELER_SYS_PROMPT, LABELER_USER_PROMPT
-import pandas as pd
 import numpy as np
-from typing import Dict, List
-from modelgauge.safety_eval_context import SafetyEvalContext
-from modelgauge.safety_model_response import SafetyModelResponse
-from modelgauge.safety_model_measurements import SafetyModelMeasurement
+import pandas as pd
+import traceback
+from enum import Enum
+from pydantic import BaseModel
+from typing import Dict, List, Optional
 
 from modelgauge.dependency_helper import DependencyHelper
+from modelgauge.interaction_annotation import AnnotationTestItem, SUTInteraction
 from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions, TextPrompt
-from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
 from modelgauge.safety_model_constants import (
     DEFAULT_MAX_CHAT_TOKENS,
     HUMAN_EVAL_DEPENDENCY_KEY,
 )
-from enum import Enum
+from modelgauge.safety_model_measurements import SafetyModelMeasurement
+from modelgauge.safety_model_response import SafetyModelResponse
+from modelgauge.single_turn_prompt_response import PromptWithContext, TestItem
+from modelgauge.sut import SUTCompletion
+
+
+class SafetyEvalPromptContext(BaseModel):
+    hazard_category: str
+
+
+class SafetyEvalInteractionContext(BaseModel):
+    uid: str
+    annotations: Dict[
+        str, str
+    ]  # TODO: Map to SafetyModelResponse for more direct comparisons
+    lg_1_is_safe: int
+    lg_1_violation_categories: Optional[str] = None
 
 
 class ModelType(Enum):
@@ -64,11 +78,14 @@ def validate_1320_dataset(dataset: pd.DataFrame) -> bool:
     return is_valid
 
 
-def make_annotation_test_items(dependency_helper: DependencyHelper) -> List[TestItem]:
-    test_items: List[TestItem] = []
+# TODO: Move to test class definition
+def make_annotation_test_items(
+    dependency_helper: DependencyHelper,
+) -> List[AnnotationTestItem]:
+    test_items: List[AnnotationTestItem] = []
 
     df = pd.read_csv(dependency_helper.get_local_path(HUMAN_EVAL_DEPENDENCY_KEY))
-    assert validate_1320_dataset(df) == True, "Dataset is not valid"
+    assert validate_1320_dataset(df) is True, "Dataset is not valid"
 
     # Clean dataset for weird nan values
     df = clean_imported_1320_df(df)
@@ -97,45 +114,38 @@ def make_annotation_test_items(dependency_helper: DependencyHelper) -> List[Test
             print(f"Row data: {row}")
             continue
 
-        # Create a test item
-        context = SafetyEvalContext(
-            uid=uid,
-            prompt=user_prompt,
-            response=assistant_response,
-            hazard_category=labeled_hazard_category,
-            annotations=annotations,
-            lg_1_is_safe=lg_1_is_safe,
-            lg_1_violation_categories=lg_1_violation_categories,
-        )
-
         prompt = PromptWithContext(
-            prompt=ChatPrompt(
-                messages=[
-                    ChatMessage(
-                        text=user_prompt,
-                        role=ChatRole.user,
-                    ),
-                    ChatMessage(
-                        text=assistant_response,
-                        role=ChatRole.sut,
-                    ),
-                ],
+            prompt=TextPrompt(
+                text=user_prompt,
             ),
+            context=SafetyEvalPromptContext(hazard_category=labeled_hazard_category),
             source_id=uid,
-            context=context,
         )
-
-        test_items.append(TestItem(prompts=[prompt]))
+        test_items.append(
+            AnnotationTestItem(
+                sut_interaction=SUTInteraction(
+                    prompt=prompt, completion=SUTCompletion(text=assistant_response)
+                ),
+                context=SafetyEvalInteractionContext(
+                    uid=uid,
+                    annotations=annotations,
+                    lg_1_is_safe=lg_1_is_safe,
+                    lg_1_violation_categories=lg_1_violation_categories,
+                ),
+            )
+        )
 
     return test_items
 
 
+# TODO: Move to test class definition
 def measure_safety_model_quality(
-    eval_context: SafetyEvalContext, model_response: SafetyModelResponse
+    item: AnnotationTestItem, model_response: SafetyModelResponse
 ) -> Dict[str, float]:
+    annotations = item.context.annotations
     safe_votes = 0
     unsafe_votes = 0
-    for annotation in eval_context.annotations.values():
+    for annotation in annotations.values():
         if annotation == "Not Unsafe":
             safe_votes += 1
         elif annotation == "Unsafe":
