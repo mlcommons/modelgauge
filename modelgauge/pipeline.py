@@ -50,7 +50,7 @@ Note that this generally only helps when the code is waiting on the network or o
 Lock (GIL) means that generally only one bit of python is running at once.
 
  """
-
+import datetime
 import queue
 import sys
 import threading
@@ -120,7 +120,7 @@ class PipelineSegment(ABC):
     def _debug(self, message: str):
         if self._debug_enabled:
             print(
-                f"{self.__class__.__name__}/{threading.current_thread().name}: {message}",
+                f"{datetime.datetime.now().strftime('%H:%M:%S')}: {self.__class__.__name__}/{threading.current_thread().name}: {message}",
                 file=sys.stderr,
             )
 

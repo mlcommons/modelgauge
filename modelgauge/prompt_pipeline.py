@@ -109,7 +109,9 @@ class PromptSutAssigner(Pipe):
 
 
 class PromptSutWorkers(Pipe):
-    def __init__(self, suts: dict[str, PromptResponseSUT], workers=30):
+    def __init__(self, suts: dict[str, PromptResponseSUT], workers=None):
+        if workers is None:
+            workers = 8
         super().__init__(thread_count=workers)
         self.suts = suts
 

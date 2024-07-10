@@ -291,7 +291,7 @@ def run_prompts(sut_names, workers, filename, debug):
     prompt_count = len(input)
 
     with click.progressbar(
-        length=prompt_count,
+        length=prompt_count * len(suts),
         label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
     ) as bar:
         last_complete_count = 0

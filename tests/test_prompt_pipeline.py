@@ -119,8 +119,6 @@ def test_full_run(suts):
         PromptSink(suts, output),
     )
 
-    suts = {"fake1": FakeSUT(), "fake2": FakeSUT()}
-
     p.run()
 
     assert len(output.output) == len(input.items)
