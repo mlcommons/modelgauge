@@ -78,13 +78,16 @@ class CsvPromptOutput(PromptOutput):
         self.file.close()
 
     def write(self, item: PromptWithContext, results):
-        row = [item.source_id, item.prompt.text]
+        row = [item.source_id, item.prompt.text]  # type: ignore
         for k in self.suts:
             if k in results:
                 row.append(results[k])
             else:
                 row.append("")
         self.writer.writerow(row)
+
+    def launder_the_type_problem(self, item) -> str:
+        return item.prompt.text
 
 
 class PromptSource(Source):
