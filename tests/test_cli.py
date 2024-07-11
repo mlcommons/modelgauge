@@ -50,12 +50,12 @@ def test_list_suts():
 )
 def test_run_sut_demos(sut):
     assert (
-            os.system(
-                f"""modelgauge run-sut \
+        os.system(
+            f"""modelgauge run-sut \
                 --sut {sut} \
                 --prompt "Can you say Hello?" """
-            )
-            == 0
+        )
+        == 0
     )
 
 
@@ -63,13 +63,13 @@ def test_run_sut_demos(sut):
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
     assert (
-            os.system(
-                f"""modelgauge run-test \
+        os.system(
+            f"""modelgauge run-test \
                 --test {test} \
                 --sut demo_yes_no \
                 --max-test-items 1"""
-            )
-            == 0
+        )
+        == 0
     )
 
 

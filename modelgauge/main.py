@@ -285,7 +285,7 @@ def run_prompts(sut_uids, workers, filename, debug):
     path = pathlib.Path(filename)
     input = CsvPromptInput(path)
 
-    output_path = path.parent /  pathlib.Path(
+    output_path = path.parent / pathlib.Path(
         path.stem
         + "-responses-"
         + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
