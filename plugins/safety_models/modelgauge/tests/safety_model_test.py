@@ -1,9 +1,7 @@
 from modelgauge.safety_model_constants import DEFAULT_1320_DATASET_PATH
-from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.annotator_test import InteractionAnnotationTest
 from modelgauge.interaction_annotation import AnnotationTestItem
 from modelgauge.dependency_helper import DependencyHelper
-from modelgauge.secret_values import InjectSecret
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.external_data import ExternalData, LocalData
 from modelgauge.test_registry import TESTS
@@ -15,14 +13,11 @@ from modelgauge.safety_model_response import SafetyModelResponse
 from typing import List, Dict, Mapping
 from sklearn import metrics  # type: ignore
 
-TOGETHER_API_KEY_SECRET = InjectSecret(TogetherApiKey)
-
 
 @modelgauge_test(requires_sut_capabilities=[])
 class SafetyModelTest(InteractionAnnotationTest[SafetyModelResponse]):
-    def __init__(self, uid: str, together_api_key: TogetherApiKey):
+    def __init__(self, uid: str):
         super().__init__(uid)
-        self.together_api_key = together_api_key
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         # Make sure file is loaded into correct directory
