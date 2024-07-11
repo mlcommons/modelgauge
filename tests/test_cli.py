@@ -1,7 +1,6 @@
 import csv
 import os
 import re
-import subprocess
 
 import pytest
 from click.testing import CliRunner
@@ -51,12 +50,12 @@ def test_list_suts():
 )
 def test_run_sut_demos(sut):
     assert (
-        os.system(
-            f"""modelgauge run-sut \
+            os.system(
+                f"""modelgauge run-sut \
                 --sut {sut} \
                 --prompt "Can you say Hello?" """
-        )
-        == 0
+            )
+            == 0
     )
 
 
@@ -64,47 +63,20 @@ def test_run_sut_demos(sut):
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
     assert (
-        os.system(
-            f"""modelgauge run-test \
+            os.system(
+                f"""modelgauge run-test \
                 --test {test} \
                 --sut demo_yes_no \
                 --max-test-items 1"""
-        )
-        == 0
+            )
+            == 0
     )
-
-
-# @expensive_tests
-# def test_run_prompts_normal(tmp_path):
-#     in_path = tmp_path / 'input.csv'
-#
-#     with open(in_path, 'w') as f:
-#         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
-#
-#     result = subprocess.run(["modelgauge", "run-prompts", "--sut", "demo_yes_no", in_path], capture_output=True,
-#                             text=True)
-#
-#     assert result.returncode == 0
-#
-#     out_path = re.findall(f"\S+\.csv", result.stdout)[0]
-#     with open(out_path, 'r') as f:
-#         reader = csv.DictReader(f)
-#
-#         row1 = next(reader)
-#         assert row1["UID"] == "p1"
-#         assert row1["Text"] == "Say yes"
-#         assert row1["demo_yes_no"] == "Yes"
-#
-#         row2 = next(reader)
-#         assert row2["UID"] == "p2"
-#         assert row2["Text"] == "Refuse"
-#         assert row2["demo_yes_no"] == "No"
 
 
 def test_run_prompts_normal(tmp_path):
     load_plugins()
 
-    in_path = tmp_path / "input.csv"
+    in_path = (tmp_path / "input.csv").absolute()
 
     with open(in_path, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
@@ -115,7 +87,7 @@ def test_run_prompts_normal(tmp_path):
     assert result.exit_code == 0
 
     out_path = re.findall(r"\S+\.csv", result.stdout)[0]
-    with open(out_path, "r") as f:
+    with open(in_path.parent / out_path, "r") as f:
         reader = csv.DictReader(f)
 
         row1 = next(reader)
@@ -139,7 +111,7 @@ def test_run_prompts_bad_sut(tmp_path):
 
     SUTS.register(NoReqsSUT, "noreqs")
 
-    in_path = tmp_path / "input.csv"
+    in_path = (tmp_path / "input.csv").absolute()
 
     with open(in_path, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\n")
