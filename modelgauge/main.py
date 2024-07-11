@@ -37,6 +37,7 @@ from modelgauge.prompt_pipeline import (
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.simple_test_runner import run_prompt_response_test
 from modelgauge.sut import PromptResponseSUT
+from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
 
@@ -243,7 +244,7 @@ def run_test(
 
 @modelgauge_cli.command()
 @click.option(
-    "sut_names",
+    "sut_uids",
     "-s",
     "--sut",
     help="Which registered SUT(s) to run.",
@@ -263,19 +264,23 @@ def run_test(
     "filename",
     type=click.Path(exists=True),
 )
-def run_prompts(sut_names, workers, filename, debug):
+def run_prompts(sut_uids, workers, filename, debug):
     """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
 
-    load_plugins()
     secrets = load_secrets_from_config()
 
     try:
         suts = {
-            sut_name: SUTS.make_instance(sut_name, secrets=secrets)
-            for sut_name in sut_names
+            sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
+            for sut_uid in sut_uids
         }
     except MissingSecretValues as e:
         raise_if_missing_from_config([e])
+
+    for sut_uid in suts:
+        sut = suts[sut_uid]
+        if not AcceptsTextPrompt in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
 
     path = pathlib.Path(filename)
     input = CsvPromptInput(path)

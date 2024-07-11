@@ -24,7 +24,7 @@ class MySink(Sink):
 def test_pipeline_basics():
     p = Pipeline(MySource(), MyPipe(), MySink(), debug=True)
     p.run()
-    assert p.sink().results == [2, 4, 6]
+    assert p.sink.results == [2, 4, 6]
 
 
 class MyExpandingPipe(Pipe):
@@ -40,7 +40,7 @@ def test_pipeline_with_stage_that_adds_elements():
         MySink(),
     )
     p.run()
-    assert p.sink().results == [2, 3, 4, 6, 6, 9]
+    assert p.sink.results == [2, 3, 4, 6, 6, 9]
 
 
 # more rich tests are in test_prompt_pipeline

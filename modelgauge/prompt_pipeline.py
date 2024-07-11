@@ -16,10 +16,16 @@ class PromptItem(dict):
         self.update(row)
 
     def uid(self):
-        return self["UID"]
+        try:
+            return self["UID"]
+        except KeyError:
+            raise ValueError(f"Missing UID key in {self.keys()}")
 
     def prompt(self):
-        return self["Text"]
+        try:
+            return self["Text"]
+        except KeyError:
+            raise ValueError(f"Missing Text key in {self.keys()}")
 
     def __hash__(self):
         return hash(self.uid())
@@ -104,8 +110,8 @@ class PromptSutAssigner(Pipe):
         self.suts = suts
 
     def handle_item(self, item: PromptItem):
-        for sut_key in self.suts:
-            self.downstream_put((item, sut_key))
+        for sut_uid in self.suts:
+            self.downstream_put((item, sut_uid))
 
 
 class PromptSutWorkers(Pipe):
@@ -116,16 +122,16 @@ class PromptSutWorkers(Pipe):
         self.suts = suts
 
     def handle_item(self, item):
-        prompt_item, sut_key = item
+        prompt_item, sut_uid = item
         try:
-            sut = self.suts[sut_key]
+            sut = self.suts[sut_uid]
             request = sut.translate_text_prompt(TextPrompt(text=prompt_item.prompt()))
             response = sut.evaluate(request)
             result = sut.translate_response(request, response)
-            return (prompt_item, sut_key, result.completions[0].text)
+            return (prompt_item, sut_uid, result.completions[0].text)
         except:
             print(
-                f"unexpected failure processing {item} for {sut_key}", file=sys.stderr
+                f"unexpected failure processing {item} for {sut_uid}", file=sys.stderr
             )
             traceback.print_exc(file=sys.stderr)
 

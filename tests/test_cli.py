@@ -1,5 +1,16 @@
+import csv
 import os
+import re
+import subprocess
+
 import pytest
+from click.testing import CliRunner
+
+from modelgauge import main
+from modelgauge.load_plugins import load_plugins
+from modelgauge.sut import SUT
+from modelgauge.sut_decorator import modelgauge_sut
+from modelgauge.sut_registry import SUTS
 from tests.utilities import expensive_tests
 
 
@@ -61,3 +72,80 @@ def test_run_test_demos(test):
         )
         == 0
     )
+
+
+# @expensive_tests
+# def test_run_prompts_normal(tmp_path):
+#     in_path = tmp_path / 'input.csv'
+#
+#     with open(in_path, 'w') as f:
+#         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+#
+#     result = subprocess.run(["modelgauge", "run-prompts", "--sut", "demo_yes_no", in_path], capture_output=True,
+#                             text=True)
+#
+#     assert result.returncode == 0
+#
+#     out_path = re.findall(f"\S+\.csv", result.stdout)[0]
+#     with open(out_path, 'r') as f:
+#         reader = csv.DictReader(f)
+#
+#         row1 = next(reader)
+#         assert row1["UID"] == "p1"
+#         assert row1["Text"] == "Say yes"
+#         assert row1["demo_yes_no"] == "Yes"
+#
+#         row2 = next(reader)
+#         assert row2["UID"] == "p2"
+#         assert row2["Text"] == "Refuse"
+#         assert row2["demo_yes_no"] == "No"
+
+
+def test_run_prompts_normal(tmp_path):
+    load_plugins()
+
+    in_path = tmp_path / "input.csv"
+
+    with open(in_path, "w") as f:
+        f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
+
+
+    runner = CliRunner()
+    result = runner.invoke(main.run_prompts, ["--sut", "demo_yes_no", str(in_path)])
+
+    assert result.exit_code == 0
+
+    out_path = re.findall(r"\S+\.csv", result.stdout)[0]
+    with open(out_path, "r") as f:
+        reader = csv.DictReader(f)
+
+        row1 = next(reader)
+        assert row1["UID"] == "p1"
+        assert row1["Text"] == "Say yes"
+        assert row1["demo_yes_no"] == "Yes"
+
+        row2 = next(reader)
+        assert row2["UID"] == "p2"
+        assert row2["Text"] == "Refuse"
+        assert row2["demo_yes_no"] == "No"
+
+
+@modelgauge_sut(capabilities=[])
+class NoReqsSUT(SUT):
+    pass
+
+
+def test_run_prompts_bad_sut(tmp_path):
+    load_plugins()
+
+    SUTS.register(NoReqsSUT, "noreqs")
+
+    in_path = tmp_path / "input.csv"
+
+    with open(in_path, "w") as f:
+        f.write("UID,Text,Ignored\np1,Say yes,ignored\n")
+
+    runner = CliRunner()
+    result = runner.invoke(main.run_prompts, ["--sut", "noreqs", str(in_path)])
+    assert result.exit_code == 2
+    assert re.search(r"noreqs does not accept text prompts", str(result.output))

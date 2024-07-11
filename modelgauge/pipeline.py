@@ -267,15 +267,17 @@ class Pipeline:
         for s in self._segments:
             s._debug_enabled = debug
 
-        assert isinstance(self.source(), Source)
-        assert isinstance(self.sink(), Sink)
+        assert isinstance(self.source, Source)
+        assert isinstance(self.sink, Sink)
 
         for a, b in zip(segments[:-1], segments[1:]):
             b.set_upstream(a)
 
+    @property
     def source(self):
         return self._segments[0]
 
+    @property
     def sink(self):
         return self._segments[-1]
 
@@ -288,7 +290,7 @@ class Pipeline:
             segment.start()
 
         if self.progress_callback:
-            while not self.sink().done():
+            while not self.sink.done():
                 self.report_progress()
 
         for segment in self._segments:
@@ -300,7 +302,7 @@ class Pipeline:
 
     def report_progress(self):
         if self.progress_callback:
-            self.progress_callback({"completed": self.sink().completed})
+            self.progress_callback({"completed": self.sink.completed})
 
     def _debug(self, message: str):
         if self._debug_enabled:
