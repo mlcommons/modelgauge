@@ -2,23 +2,25 @@ import itertools
 import signal
 import time
 from csv import DictReader
+from typing import List
 
 import pytest
 
 from modelgauge.pipeline import PipelineSegment, Pipeline
+from modelgauge.prompt import TextPrompt
+from modelgauge.prompt_pipeline import (
+    PromptOutput,
+    PromptInput,
+    CsvPromptInput,
+    CsvPromptOutput,
+)
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
 )
-from modelgauge.prompt_pipeline import (
-    PromptOutput,
-    PromptInput,
-    PromptItem,
-    CsvPromptInput,
-    CsvPromptOutput,
-)
+from modelgauge.single_turn_prompt_response import PromptWithContext
 from tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
 
@@ -44,9 +46,13 @@ class FakePromptInput(PromptInput):
         self.delay = itertools.cycle(delay or [0])
 
     def __iter__(self):
-        for item in self.items:
+        for row in self.items:
             time.sleep(next(self.delay))
-            yield PromptItem(item)
+            yield PromptWithContext(
+                prompt=TextPrompt(text=row["Text"]),
+                source_id=row["UID"],
+                context=row,
+            )
 
 
 class FakePromptOutput(PromptOutput):
@@ -79,9 +85,9 @@ def test_csv_prompt_input(tmp_path):
     input = CsvPromptInput(file_path)
 
     assert len(input) == 1
-    items = [i for i in input]
-    assert items[0].uid() == "1"
-    assert items[0].prompt() == "a"
+    items: List[PromptWithContext] = [i for i in input]
+    assert items[0].source_id == "1"
+    assert items[0].prompt.text == "a"
     assert len(items) == 1
 
 
@@ -90,7 +96,8 @@ def test_csv_prompt_output(tmp_path, suts):
 
     with CsvPromptOutput(file_path, suts) as output:
         output.write(
-            PromptItem({"UID": "1", "Text": "a"}), {"fake1": "a1", "fake2": "a2"}
+            PromptWithContext(source_id="1", prompt=TextPrompt(text="a")),
+            {"fake1": "a1", "fake2": "a2"},
         )
 
     with open(file_path, "r", newline="") as f:
@@ -115,14 +122,15 @@ def test_full_run(suts):
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),
-        PromptSutWorkers(suts),
+        PromptSutWorkers(suts, workers=1),
         PromptSink(suts, output),
+        debug=True,
     )
 
     p.run()
 
     assert len(output.output) == len(input.items)
-    assert sorted([r["item"]["UID"] for r in output.output]) == [
+    assert sorted([r["item"].source_id for r in output.output]) == [
         i["UID"] for i in input.items
     ]
     row1 = output.output[0]

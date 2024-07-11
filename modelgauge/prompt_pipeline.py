@@ -3,37 +3,22 @@ import sys
 import traceback
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
-from typing import Any, Dict
+from typing import Iterable
 
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT
 
 
-class PromptItem(dict):
-    def __init__(self, row):
-        super().__init__()
-        self.update(row)
-
-    def uid(self):
-        try:
-            return self["UID"]
-        except KeyError:
-            raise ValueError(f"Missing UID key in {self.keys()}")
-
-    def prompt(self):
-        try:
-            return self["Text"]
-        except KeyError:
-            raise ValueError(f"Missing Text key in {self.keys()}")
-
-    def __hash__(self):
-        return hash(self.uid())
-
-
 class PromptInput(metaclass=ABCMeta):
+    """
+    Your subclass should implement __iter__ such that it yields PromptWithContext objects.
+    Note that the source_id field must be set.
+    """
+
     @abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> Iterable[PromptWithContext]:
         pass
 
     def __len__(self):
@@ -48,11 +33,18 @@ class CsvPromptInput(PromptInput):
         super().__init__()
         self.path = path
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[PromptWithContext]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
-                yield PromptItem(row)
+                yield PromptWithContext(
+                    prompt=TextPrompt(text=row["Text"]),
+                    # Forward the underlying id to help make data tracking easier.
+                    source_id=row["UID"],
+                    # Context can be any type you want.
+                    context=row,
+                )
+                # yield PromptItem(row)
 
 
 class PromptOutput(metaclass=ABCMeta):
@@ -85,8 +77,8 @@ class CsvPromptOutput(PromptOutput):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
 
-    def write(self, item: PromptItem, results):
-        row = [item.uid(), item.prompt()]
+    def write(self, item: PromptWithContext, results):
+        row = [item.source_id, item.prompt.text]
         for k in self.suts:
             if k in results:
                 row.append(results[k])
@@ -109,7 +101,7 @@ class PromptSutAssigner(Pipe):
         super().__init__()
         self.suts = suts
 
-    def handle_item(self, item: PromptItem):
+    def handle_item(self, item):
         for sut_uid in self.suts:
             self.downstream_put((item, sut_uid))
 
@@ -122,14 +114,15 @@ class PromptSutWorkers(Pipe):
         self.suts = suts
 
     def handle_item(self, item):
+        prompt_item: PromptWithContext
         prompt_item, sut_uid = item
         try:
             sut = self.suts[sut_uid]
-            request = sut.translate_text_prompt(TextPrompt(text=prompt_item.prompt()))
+            request = sut.translate_text_prompt(prompt_item.prompt)
             response = sut.evaluate(request)
             result = sut.translate_response(request, response)
-            return (prompt_item, sut_uid, result.completions[0].text)
-        except:
+            return prompt_item, sut_uid, result.completions[0].text
+        except Exception:
             print(
                 f"unexpected failure processing {item} for {sut_uid}", file=sys.stderr
             )
@@ -137,7 +130,7 @@ class PromptSutWorkers(Pipe):
 
 
 class PromptSink(Sink):
-    unfinished: defaultdict[PromptItem, dict[str, str]]
+    unfinished: defaultdict[PromptWithContext, dict[str, str]]
 
     def __init__(self, suts: dict[str, PromptResponseSUT], writer: PromptOutput):
         super().__init__()

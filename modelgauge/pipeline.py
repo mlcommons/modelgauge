@@ -224,15 +224,19 @@ class Sink(PipelineSegment):
 
         self._work_done.clear()
         while not self._upstream.done():
+            item = None
             try:
                 item = self.upstream_get()
                 self._debug(f"handling {item}")
                 self.handle_item(item)
+                self._debug(f"handled {item}")
                 self.upstream_task_done()
                 self.completed += 1
             except queue.Empty:
                 # that's cool
                 self._debug(f"get was empty")
+            except Exception as e:
+                self._debug(f"exception {e} handling {item}")
         self._work_done.set()
         self._debug(f"finished run with upstream done")
 

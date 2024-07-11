@@ -109,7 +109,6 @@ def test_run_prompts_normal(tmp_path):
     with open(in_path, "w") as f:
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
 
-
     runner = CliRunner()
     result = runner.invoke(main.run_prompts, ["--sut", "demo_yes_no", str(in_path)])
 
