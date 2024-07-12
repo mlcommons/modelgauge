@@ -29,17 +29,14 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'poetry'
 
-    - name: Install the project
-      run: poetry install --no-interaction
+    - name: Install with plugins
+      run: poetry install --no-interaction --extras all_plugins
 
     - name: Lint formatting
       run: poetry run black --check .
 
     - name: Validate Poetry state
       run: poetry check
-
-    - name: Install with plugins
-      run: poetry install --no-interaction --extras all_plugins
 
     - name: Run mypy
       run: poetry run mypy .
