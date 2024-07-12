@@ -36,18 +36,3 @@ class TestRecord(BaseModel):
     result: TestResult
 
     __test__ = False
-
-
-class SafetyModelTestRecord(BaseModel):
-    """Record of all data relevant to a single run of a Test."""
-
-    run_timestamp: AwareDatetime = Field(default_factory=current_local_datetime)
-    test_uid: str
-    test_initialization: InitializationRecord
-    dependency_versions: Mapping[str, str]
-    # TODO We should either reintroduce "Turns" here, or expect
-    # there to b different schemas for different TestImplementationClasses.
-    test_item_records: List[TestItemRecord]
-    result: TestResult
-
-    __test__ = False

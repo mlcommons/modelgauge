@@ -12,7 +12,8 @@ AnnotationType = TypeVar("AnnotationType", bound=BaseModel)
 class Annotator(TrackedObject):
     """The base class for all annotators."""
 
-    pass
+    def __init__(self, uid: str):
+        super().__init__(uid)
 
 
 class CompletionAnnotator(Annotator, Generic[AnnotationType]):

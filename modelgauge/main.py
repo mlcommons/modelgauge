@@ -1,5 +1,6 @@
 import os
 import click
+from modelgauge.annotator_test import InteractionAnnotationTest
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -214,7 +215,7 @@ def run_annotator_test(
     # Current this only knows how to do prompt response, so assert that is what we have.
     # TODO stronger annotator assertion
     assert isinstance(annotator_obj, CompletionAnnotator)
-    assert isinstance(test_obj, PromptResponseTest)
+    assert isinstance(test_obj, InteractionAnnotationTest)
 
     if output_file is None:
         os.makedirs("output", exist_ok=True)
@@ -231,8 +232,6 @@ def run_annotator_test(
     )
     with open(output_file, "w") as f:
         print(test_record.model_dump_json(indent=4), file=f)
-    # For displaying to the screen, clear out the verbose test_item_records
-    test_record.test_item_records = []
     print(test_record.model_dump_json(indent=4))
     print("Full TestRecord json written to", output_file)
 
