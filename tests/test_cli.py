@@ -82,7 +82,7 @@ def test_run_prompts_normal(tmp_path):
         f.write("UID,Text,Ignored\np1,Say yes,ignored\np2,Refuse,ignored\n")
 
     runner = CliRunner()
-    result = runner.invoke(main.run_prompts, ["--sut", "demo_yes_no", str(in_path)])
+    result = runner.invoke(main.run_prompts, ["--sut", "demo_yes_no", str(in_path)],catch_exceptions=False )
 
     assert result.exit_code == 0
 
@@ -117,6 +117,6 @@ def test_run_prompts_bad_sut(tmp_path):
         f.write("UID,Text,Ignored\np1,Say yes,ignored\n")
 
     runner = CliRunner()
-    result = runner.invoke(main.run_prompts, ["--sut", "noreqs", str(in_path)])
+    result = runner.invoke(main.run_prompts, ["--sut", "noreqs", str(in_path)], catch_exceptions=False)
     assert result.exit_code == 2
     assert re.search(r"noreqs does not accept text prompts", str(result.output))
