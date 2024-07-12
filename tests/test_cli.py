@@ -1,44 +1,55 @@
 import csv
-import os
 import re
 
 import pytest
-from click.testing import CliRunner
+from click.testing import CliRunner, Result
 
 from modelgauge import main
-from modelgauge.load_plugins import load_plugins
 from modelgauge.sut import SUT
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from tests.utilities import expensive_tests
 
 
-@expensive_tests
+def run_cli(*args) -> Result:
+    # noinspection PyTypeChecker
+    result = CliRunner().invoke(main.modelgauge_cli, args, catch_exceptions=False)
+    return result
+
+
 def test_main():
-    assert os.system("modelgauge") == 0
+    result = run_cli()
+    assert result.exit_code == 0
+    assert re.search(r"Usage: modelgauge \[OPTIONS]", result.stdout)
 
 
-@expensive_tests
-def test_list_plugins():
-    assert os.system("modelgauge list") == 0
+def test_list():
+    result = run_cli("list")
+
+    assert result.exit_code == 0
+    assert re.search(r"Plugin Modules:", result.stdout)
 
 
-@expensive_tests
 def test_list_secrets():
-    assert os.system("modelgauge list-secrets") == 0
+    result = run_cli("list-secrets")
+
+    assert result.exit_code == 0
+    assert re.search(r"secrets", result.stdout)
 
 
-@expensive_tests
 def test_list_tests():
-    assert os.system("modelgauge list-tests") == 0
+    result = run_cli("list-tests")
+
+    assert result.exit_code == 0
+    assert re.search(r"Class: DemoSimpleQATest", result.stdout)
 
 
-@expensive_tests
 def test_list_suts():
-    assert os.system("modelgauge list-suts") == 0
+    result = run_cli("list-suts")
+
+    assert result.exit_code == 0
+    assert re.search(r"DemoConstantSUT", result.output)
 
 
-@expensive_tests
 @pytest.mark.parametrize(
     "sut",
     [
@@ -49,33 +60,23 @@ def test_list_suts():
     ],
 )
 def test_run_sut_demos(sut):
-    assert (
-        os.system(
-            f"""modelgauge run-sut \
-                --sut {sut} \
-                --prompt "Can you say Hello?" """
-        )
-        == 0
-    )
+    result = run_cli("run-sut", "--sut", sut, "--prompt", "Can you say Hello?")
+    assert result.exit_code == 0
+    assert re.search(r"Native response:", result.output)
 
 
-@expensive_tests
 @pytest.mark.parametrize("test", ["demo_01", "demo_02", "demo_03", "demo_04"])
 def test_run_test_demos(test):
-    assert (
-        os.system(
-            f"""modelgauge run-test \
-                --test {test} \
-                --sut demo_yes_no \
-                --max-test-items 1"""
-        )
-        == 0
+    result = run_cli(
+        "run-test", "--test", test, "--sut", "demo_yes_no", "--max-test-items", "1"
     )
+    print(result)
+    print(result.stdout)
+    assert result.exit_code == 0
+    assert re.search(r"Full TestRecord json written to output", result.output)
 
 
 def test_run_prompts_normal(tmp_path):
-    load_plugins()
-
     in_path = (tmp_path / "input.csv").absolute()
 
     with open(in_path, "w") as f:
@@ -83,7 +84,9 @@ def test_run_prompts_normal(tmp_path):
 
     runner = CliRunner()
     result = runner.invoke(
-        main.run_prompts, ["--sut", "demo_yes_no", str(in_path)], catch_exceptions=False
+        main.modelgauge_cli,
+        ["run-prompts", "--sut", "demo_yes_no", str(in_path)],
+        catch_exceptions=False,
     )
 
     assert result.exit_code == 0
@@ -109,8 +112,6 @@ class NoReqsSUT(SUT):
 
 
 def test_run_prompts_bad_sut(tmp_path):
-    load_plugins()
-
     SUTS.register(NoReqsSUT, "noreqs")
 
     in_path = (tmp_path / "input.csv").absolute()
@@ -120,7 +121,9 @@ def test_run_prompts_bad_sut(tmp_path):
 
     runner = CliRunner()
     result = runner.invoke(
-        main.run_prompts, ["--sut", "noreqs", str(in_path)], catch_exceptions=False
+        main.modelgauge_cli,
+        ["run-prompts", "--sut", "noreqs", str(in_path)],
+        catch_exceptions=False,
     )
     assert result.exit_code == 2
     assert re.search(r"noreqs does not accept text prompts", str(result.output))
