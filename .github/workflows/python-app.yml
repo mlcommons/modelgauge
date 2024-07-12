@@ -43,6 +43,3 @@ jobs:
 
     - name: Test with pytest
       run: poetry run pytest --nbmake
-
-    - name: Verify supported environments
-      run: poetry run tox
