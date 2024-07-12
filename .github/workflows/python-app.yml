@@ -30,7 +30,7 @@ jobs:
         cache: 'poetry'
 
     - name: Install with plugins
-      run: poetry install --no-interaction --with dev --extras demo
+      run: poetry install --no-interaction --with dev --extras all_plugins
 
     - name: Lint formatting
       run: poetry run black --check .
