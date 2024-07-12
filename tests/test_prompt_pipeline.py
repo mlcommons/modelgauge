@@ -3,7 +3,7 @@ import signal
 import time
 from csv import DictReader
 from typing import List
-from unittest.mock import MagicMock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 
