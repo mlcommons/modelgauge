@@ -128,8 +128,8 @@ def _process_test_item(
             f"Exception while handling annotation for {annotator.uid} on {interaction}"
         ) from e
 
-    annotation = Annotation.from_instance(annotation)
     measurements = test.measure_quality(item, annotation)
+    annotation = Annotation.from_instance(annotation)
     return AnnotatorInteractionRecord(
         test_item=item,
         annotation=annotation,
