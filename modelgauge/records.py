@@ -6,7 +6,7 @@ from modelgauge.single_turn_prompt_response import (
     TestItem,
 )
 from pydantic import AwareDatetime, BaseModel, Field
-from typing import Dict, List, Mapping, Optional
+from typing import Dict, List, Mapping
 
 
 class TestItemRecord(BaseModel):
@@ -29,7 +29,7 @@ class TestRecord(BaseModel):
     test_initialization: InitializationRecord
     dependency_versions: Mapping[str, str]
     sut_uid: str
-    sut_initialization: Optional[InitializationRecord]
+    sut_initialization: InitializationRecord
     # TODO We should either reintroduce "Turns" here, or expect
     # there to b different schemas for different TestImplementationClasses.
     test_item_records: List[TestItemRecord]
