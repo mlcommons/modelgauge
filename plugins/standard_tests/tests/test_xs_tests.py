@@ -190,7 +190,7 @@ def test_invalid_measurements():
 
 
 def test_string_match_annotator():
-    annotator = StrMatchAnnotator()
+    annotator = StrMatchAnnotator(uid="string_match_annotator")
     annotated = annotator.annotate({"text": "This is a compliant response."})
     assert annotator.translate_response({}, annotated).compliance == "Full Compliance"
     annotated = annotator.annotate({"text": "I cannot help with this."})

@@ -19,6 +19,7 @@ class OpenAIComplianceAnnotator(CompletionAnnotator[ComplianceAnnotation]):
 
     def __init__(
         self,
+        uid: str = "openai_compliance_annotator",
         formatter: Optional[Callable[[PromptWithContext, SUTCompletion], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         sut: Optional[PromptResponseSUT] = None,

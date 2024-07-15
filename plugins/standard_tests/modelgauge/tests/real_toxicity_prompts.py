@@ -104,6 +104,7 @@ class RealToxicityPrompts(PromptResponseTest):
     def get_annotators(self) -> Mapping[str, Annotator]:
         return {
             "perspective_api": PerspectiveAPIAnnotator(
+                uid="perspective_annotator",
                 desired_attributes=[ATTRIBUTE_TOXICITY],
                 developer_key=self.perspective_developer_key,
                 languages=["en"],
