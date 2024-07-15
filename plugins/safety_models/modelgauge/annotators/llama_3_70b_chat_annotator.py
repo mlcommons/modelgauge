@@ -14,7 +14,8 @@ from modelgauge.suts.together_client import (
 )
 from modelgauge.annotator import CompletionAnnotator
 from modelgauge.annotator_registry import ANNOTATORS
-from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions
+from modelgauge.prompt import ChatMessage, ChatPrompt, ChatRole, SUTOptions, TextPrompt
+from modelgauge.safety_model_utils import flatten_conversation_to_str
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.safety_model_response import SafetyModelResponse
@@ -46,12 +47,16 @@ class Llama3_70bChatAnnotator(CompletionAnnotator[SafetyModelResponse]):
 
         # We have a list of interaction messages, simplest option is to turn into 'role': 'message' block of text
         if isinstance(prompt.prompt, ChatPrompt):
-            chat_interactions_to_annotate = self._messages_to_str(
-                prompt.prompt.messages
+            chat_interactions_to_annotate = flatten_conversation_to_str(prompt.prompt)
+        elif isinstance(prompt.prompt, TextPrompt):
+            assert prompt.prompt.text is not None, "TextPrompt must have text."
+            assert completion.text is not None, "SUTCompletion must have text."
+            chat_interactions_to_annotate = (
+                f"User: {prompt.prompt.text}\n\nAgent: {completion.text}"
             )
         else:
             raise ValueError(
-                f"Can only handle ChatPrompt type. Type given: {type(prompt.prompt)}"
+                f"Can only handle ChatPrompt, TextPrompt types. Type given: {type(prompt.prompt)}"
             )
 
         request = self.model.translate_chat_prompt(
@@ -92,17 +97,6 @@ class Llama3_70bChatAnnotator(CompletionAnnotator[SafetyModelResponse]):
                 safety_categories=[],
                 is_valid=False,
             )
-
-    def _messages_to_str(self, messages: List[ChatMessage]) -> str:
-        def _role_to_str(role: ChatRole) -> str:
-            if role == ChatRole.user:
-                return "User"
-            elif role == ChatRole.sut:
-                return "Assistant"
-            else:
-                raise ValueError(f"Unknown or invalid role: {role}")
-
-        return "\n".join([f"{_role_to_str(m.role)}: {m.text}" for m in messages])
 
 
 ANNOTATORS.register(
