@@ -372,7 +372,7 @@ def run_annotators(annotator_uids, workers, filename, debug):
 
     output_path = path.parent / pathlib.Path(
         path.stem
-        + "-responses-"
+        + "-annotations-"
         + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         + ".jsonl"
     )
