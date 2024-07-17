@@ -271,15 +271,15 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
         self, request: TogetherCompletionsRequest, response: TogetherCompletionsResponse
     ) -> LlamaGuardAnnotation:
         assert len(response.choices) == 1
-        response_str = response.choices[0].text
-        lines = response_str.split()
+        response = response.choices[0]
+        lines = response.text.split()
 
-        assert (
-            response.choices[0].logprobs is not None
-        ), "Expected logprobs, but not returned."
+        assert response.logprobs is not None, "Expected logprobs, but not returned."
         # Make sure it's the same token.
-        assert response.choices[0].logprobs.tokens[0] == lines[0]
-        logprob = response.choices[0].logprobs.token_logprobs[0]
+        assert (
+            response.logprobs.tokens[0].strip() == lines[0]
+        ), f"Mismatched or misaligned tokens: {response.logprobs.tokens}"
+        logprob = response.logprobs.token_logprobs[0]
 
         # This is all very strict, might want to be less so.
         if lines[0] == "safe":
@@ -300,7 +300,7 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
                 is_safe=False, is_safe_logprob=logprob, violation_categories=categories
             )
         else:
-            raise AssertionError("Unexpected response: ", response_str)
+            raise AssertionError("Unexpected response: ", response.text)
 
 
 def _default_formatter(message, llama_guard):
