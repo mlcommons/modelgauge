@@ -1,4 +1,6 @@
 from modelgauge.annotator import CompletionAnnotator
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
 from modelgauge.suts.together_client import (
@@ -225,11 +227,13 @@ class LlamaGuardAnnotator(CompletionAnnotator[LlamaGuardAnnotation]):
 
     def __init__(
         self,
+        uid: str,
         together_api_key: TogetherApiKey,
         formatter: Optional[Callable[[str, LlamaGuardData], str]] = None,
         decoder: Optional[Dict[str, str]] = None,
         llama_guard_version: LlamaGuardVersion = LlamaGuardVersion.VERSION_2,
     ):
+        super().__init__(uid)
         self.llama_guard_data = _LLAMA_GUARD_MAP[llama_guard_version]
         self.model_name = self.llama_guard_data.model_name
         self.formatter = _default_formatter if formatter is None else formatter
@@ -315,6 +319,14 @@ def _make_llamaguard_mapping(llama_guard):
     }
 
 
+API_KEY_SECRET = InjectSecret(TogetherApiKey)
+ANNOTATORS.register(
+    LlamaGuardAnnotator, "llama_guard_1", API_KEY_SECRET, LlamaGuardVersion.VERSION_1
+)
+ANNOTATORS.register(
+    LlamaGuardAnnotator, "llama_guard_2", API_KEY_SECRET, LlamaGuardVersion.VERSION_2
+)
+
 if __name__ == "__main__":
     import sys
     from modelgauge.config import load_secrets_from_config
@@ -324,7 +336,7 @@ if __name__ == "__main__":
 
     text = sys.argv[1]
 
-    annotator = LlamaGuardAnnotator(TogetherApiKey.make(secrets))
+    annotator = LlamaGuardAnnotator("lg2", TogetherApiKey.make(secrets))
     prompt = PromptWithContext(prompt=TextPrompt(text="not used"), source_id=None)
     completion = SUTCompletion(text=text)
     request = annotator.translate_request(prompt, completion)

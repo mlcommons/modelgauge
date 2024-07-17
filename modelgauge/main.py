@@ -5,6 +5,15 @@ from typing import List, Optional
 
 import click
 
+from modelgauge.annotator_registry import ANNOTATORS
+from modelgauge.annotation_pipeline import (
+    AnnotatorAssigner,
+    AnnotatorSink,
+    AnnotatorSource,
+    AnnotatorWorkers,
+    CsvAnnotatorInput,
+    JsonlAnnotatorOutput,
+)
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.command_line import (
     DATA_DIR_OPTION,
@@ -312,6 +321,84 @@ def run_prompts(sut_uids, workers, filename, debug):
             PromptSutAssigner(suts),
             PromptSutWorkers(suts, workers),
             PromptSink(suts, output),
+            progress_callback=show_progress,
+            debug=debug,
+        )
+
+        pipeline.run()
+
+    print(f"output saved to {output_path}")
+
+
+@modelgauge_cli.command()
+@click.option(
+    "annotator_uids",
+    "-a",
+    "--annotator",
+    help="Which annotator to run",  # TODO: Provide options
+    multiple=True,
+    required=True,
+)
+@click.option(
+    "--workers",
+    type=int,
+    default=None,
+    help="Number of worker threads, default is 10 * number of SUTs.",
+)
+@click.option(
+    "--debug", is_flag=True, help="Show internal pipeline debugging information."
+)
+@click.argument(
+    "filename",
+    type=click.Path(exists=True),
+)
+def run_annotators(annotator_uids, workers, filename, debug):
+    """Take a CSV of prompts and responses and run them through annotators.
+    The CSV file must contain UID, Prompt, and Response columns.
+    Outputs CSV with additional columns for is_safe and violated_categories."""
+
+    from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotator
+
+    secrets = load_secrets_from_config()
+
+    try:
+        annotators = {
+            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+            for annotator_uid in annotator_uids
+        }
+    except MissingSecretValues as e:
+        raise_if_missing_from_config([e])
+
+    path = pathlib.Path(filename)
+    input = CsvAnnotatorInput(path)
+
+    output_path = path.parent / pathlib.Path(
+        path.stem
+        + "-responses-"
+        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        + ".csv"
+    )
+    output = JsonlAnnotatorOutput(output_path, annotators)
+
+    prompt_count = len(input)
+
+    with click.progressbar(
+        length=prompt_count * len(annotators),
+        label=f"Processing {prompt_count} prompts * {len(annotators)} annotators:",
+    ) as bar:
+        last_complete_count = 0
+
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
+
+        pipeline = Pipeline(
+            AnnotatorSource(input),
+            AnnotatorAssigner(annotators),
+            AnnotatorWorkers(annotators, workers),
+            AnnotatorSink(annotators, output),
             progress_callback=show_progress,
             debug=debug,
         )
