@@ -1,61 +1,27 @@
 import itertools
 import jsonlines
-import signal
-import time
-from csv import DictReader
-from typing import List
-
 import pytest
+import time
 
 from modelgauge.annotation_pipeline import (
     AnnotatorInputSample,
     AnnotatorInput,
-    JsonlAnnotatorOutput,
-    CsvAnnotatorInput,
     AnnotatorSource,
     AnnotatorAssigner,
     AnnotatorWorkers,
     AnnotatorSink,
+    CsvAnnotatorInput,
+    JsonlAnnotatorOutput,
 )
-from modelgauge.pipeline import PipelineSegment, Pipeline
+from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput
-
-# from modelgauge.prompt_pipeline import (
-#     PromptOutput,
-#     PromptInput,
-#     CsvPromptInput,
-#     CsvPromptOutput,
-# )
-# from modelgauge.prompt_pipeline import (
-#     PromptSource,
-#     PromptSutAssigner,
-#     PromptSutWorkers,
-#     PromptSink,
-# )
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
 from tests.fake_annotator import (
     FakeAnnotation,
     FakeAnnotator,
-    FakeAnnotatorRequest,
-    FakeAnnotatorResponse,
 )
-
-
-class timeout:
-    def __init__(self, seconds: int):
-        self.seconds = seconds
-
-    def handle_timeout(self, signum, frame):
-        raise TimeoutError(f"took more than {self.seconds}s to run")
-
-    def __enter__(self):
-        signal.signal(signal.SIGALRM, self.handle_timeout)
-        signal.alarm(self.seconds)
-
-    def __exit__(self, type, value, traceback):
-        signal.alarm(0)
 
 
 class FakeAnnotatorInput(AnnotatorInput):
@@ -76,23 +42,12 @@ class FakeAnnotatorInput(AnnotatorInput):
             yield AnnotatorInputSample(prompt, row["SUT"], response)
 
 
-class FakePromptOutput(PromptOutput):
+class FakeAnnotatorOutput(PromptOutput):
     def __init__(self):
         self.output = []
 
-    def write(self, item, results):
-        self.output.append({"item": item, "results": results})
-
-
-# TODO
-# class FakeAnnotatorWithDelay(FakeAnnotator):
-#     def __init__(self, uid: str = "fake-sut", delay=None):
-#         self.delay = itertools.cycle(delay or [0])
-#         super().__init__(uid)
-#
-#     def evaluate(self, request: FakeSUTRequest) -> FakeSUTResponse:
-#         time.sleep(next(self.delay))
-#         return super().evaluate(request)
+    def write(self, item, annotations):
+        self.output.append((item, annotations))
 
 
 @pytest.fixture
@@ -100,12 +55,11 @@ def annotators():
     return {"fake1": FakeAnnotator(), "fake2": FakeAnnotator()}
 
 
-@pytest.fixture
-def input_sample():
+def make_input_sample(source_id, prompt, sut_uid, response):
     return AnnotatorInputSample(
-        PromptWithContext(source_id="1", prompt=TextPrompt(text="a")),
-        "sut_uid",
-        SUTCompletion(text="b"),
+        PromptWithContext(source_id=source_id, prompt=TextPrompt(text=prompt)),
+        sut_uid,
+        SUTCompletion(text=response),
     )
 
 
@@ -122,18 +76,13 @@ def test_csv_annotator_input(tmp_path):
     assert item.response == SUTCompletion(text="b")
 
 
-def test_json_annotator_output(tmp_path, annotators, input_sample):
+def test_json_annotator_output(tmp_path, annotators):
     file_path = tmp_path / "output.jsonl"
+    input_sample1 = make_input_sample("1", "a", "sut_uid1", "b")
+    input_sample2 = make_input_sample("2", "c", "sut_uid2", "d")
     with JsonlAnnotatorOutput(file_path, annotators) as output:
-        output.write(input_sample, {"fake1": "a1", "fake2": "a2"})
-        output.write(
-            AnnotatorInputSample(
-                PromptWithContext(source_id="2", prompt=TextPrompt(text="a2")),
-                "sut_uid2",
-                SUTCompletion(text="b2"),
-            ),
-            {"fake1": "a12", "fake2": "a22"},
-        )
+        output.write(input_sample1, {"fake1": "a1", "fake2": "a2"})
+        output.write(input_sample2, {"fake1": "a3", "fake2": "a4"})
 
     with jsonlines.open(file_path) as reader:
         items: list[dict] = [i for i in reader]
@@ -141,25 +90,25 @@ def test_json_annotator_output(tmp_path, annotators, input_sample):
         assert items[0] == {
             "UID": "1",
             "Prompt": "a",
-            "SUT": "sut_uid",
+            "SUT": "sut_uid1",
             "Response": "b",
             "Annotations": {"fake1": "a1", "fake2": "a2"},
         }
         assert items[1] == {
             "UID": "2",
-            "Prompt": "a2",
+            "Prompt": "c",
             "SUT": "sut_uid2",
-            "Response": "b2",
-            "Annotations": {"fake1": "a12", "fake2": "a22"},
+            "Response": "d",
+            "Annotations": {"fake1": "a3", "fake2": "a4"},
         }
 
 
-def test_json_annotator_output_dict_annotation(tmp_path, annotators, input_sample):
+def test_json_annotator_output_dict_annotation(tmp_path, annotators):
     file_path = tmp_path / "output.jsonl"
 
     with JsonlAnnotatorOutput(file_path, annotators) as output:
         output.write(
-            input_sample,
+            make_input_sample("1", "a", "sut_uid1", "b"),
             {
                 "fake1": FakeAnnotation(sut_text="a1").model_dump(),
                 "fake2": FakeAnnotation(sut_text="a2").model_dump(),
@@ -180,7 +129,7 @@ def test_full_run(annotators):
             {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
         ]
     )
-    output = FakePromptOutput()
+    output = FakeAnnotatorOutput()
 
     p = Pipeline(
         AnnotatorSource(input),
@@ -193,7 +142,43 @@ def test_full_run(annotators):
     p.run()
 
     assert len(output.output) == len(input.items)
-    assert sorted([r["item"].prompt.source_id for r in output.output]) == [
+    assert sorted([r[0].prompt.source_id for r in output.output]) == [
         i["UID"] for i in input.items
     ]
+    assert sorted([r[0].response.text for r in output.output]) == [
+        i["Response"] for i in input.items
+    ]
     row1 = output.output[0]
+    assert "fake1" in row1[1]
+    assert "fake2" in row1[1]
+    row2 = output.output[1]
+    assert "fake1" in row2[1]
+    assert "fake2" in row2[1]
+
+
+#
+def test_progress(annotators):
+    input = FakeAnnotatorInput(
+        [
+            {"UID": "1", "Prompt": "a", "Response": "b", "SUT": "s"},
+            {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
+        ]
+    )
+    output = FakeAnnotatorOutput()
+
+    def track_progress(data):
+        progress_items.append(data.copy())
+
+    p = Pipeline(
+        AnnotatorSource(input),
+        AnnotatorAssigner(annotators),
+        AnnotatorWorkers(annotators, workers=1),
+        AnnotatorSink(annotators, output),
+        progress_callback=track_progress,
+    )
+    progress_items = []
+
+    p.run()
+
+    assert progress_items[0]["completed"] == 0
+    assert progress_items[-1]["completed"] == 4

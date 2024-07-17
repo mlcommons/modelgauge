@@ -321,10 +321,16 @@ def _make_llamaguard_mapping(llama_guard):
 
 API_KEY_SECRET = InjectSecret(TogetherApiKey)
 ANNOTATORS.register(
-    LlamaGuardAnnotator, "llama_guard_1", API_KEY_SECRET, LlamaGuardVersion.VERSION_1
+    LlamaGuardAnnotator,
+    "llama_guard_1",
+    API_KEY_SECRET,
+    llama_guard_version=LlamaGuardVersion.VERSION_1,
 )
 ANNOTATORS.register(
-    LlamaGuardAnnotator, "llama_guard_2", API_KEY_SECRET, LlamaGuardVersion.VERSION_2
+    LlamaGuardAnnotator,
+    "llama_guard_2",
+    API_KEY_SECRET,
+    llama_guard_version=LlamaGuardVersion.VERSION_2,
 )
 
 if __name__ == "__main__":

@@ -22,6 +22,9 @@ class AnnotatorInputSample:
     sut_uid: str
     response: SUTCompletion
 
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid)
+
 
 class AnnotatorInput(metaclass=ABCMeta):
     @abstractmethod
@@ -77,6 +80,8 @@ class JsonlAnnotatorOutput(PromptOutput):
         self.file.close()
 
     def write(self, item: AnnotatorInputSample, results):
+        if not isinstance(item.prompt.prompt, TextPrompt):
+            raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
         output_obj = {
             "UID": item.prompt.source_id,
             "Prompt": item.prompt.prompt.text,
@@ -121,14 +126,14 @@ class AnnotatorWorkers(Pipe):
         try:
             annotator = self.annotators[annotator_uid]
             request = annotator.translate_request(
-                annotator_input.prompt, annotator_input.completion
+                annotator_input.prompt, annotator_input.response
             )
-            response = annotator.evaluate(request)
+            response = annotator.annotate(request)
             result = annotator.translate_response(request, response)
             return annotator_input, annotator_uid, result
-        except Exception:
+        except Exception as e:
             print(
-                f"unexpected failure processing {item} for {annotator_uid}",
+                f"unexpected failure processing {item} for {annotator_uid}.\n{e}\n",
                 file=sys.stderr,
             )
             traceback.print_exc(file=sys.stderr)

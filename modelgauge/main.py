@@ -335,7 +335,7 @@ def run_prompts(sut_uids, workers, filename, debug):
     "annotator_uids",
     "-a",
     "--annotator",
-    help="Which annotator to run",  # TODO: Provide options
+    help="Which annotator to run",
     multiple=True,
     required=True,
 )
@@ -354,10 +354,8 @@ def run_prompts(sut_uids, workers, filename, debug):
 )
 def run_annotators(annotator_uids, workers, filename, debug):
     """Take a CSV of prompts and responses and run them through annotators.
-    The CSV file must contain UID, Prompt, and Response columns.
-    Outputs CSV with additional columns for is_safe and violated_categories."""
-
-    from modelgauge.annotators.llama_guard_annotator import LlamaGuardAnnotator
+    The CSV file must contain UID, Prompt, SUT, and Response columns.
+    Outputs a Jsonl file."""
 
     secrets = load_secrets_from_config()
 
@@ -376,7 +374,7 @@ def run_annotators(annotator_uids, workers, filename, debug):
         path.stem
         + "-responses-"
         + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        + ".csv"
+        + ".jsonl"
     )
     output = JsonlAnnotatorOutput(output_path, annotators)
 
