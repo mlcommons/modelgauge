@@ -550,6 +550,17 @@ files = [
 ]
 
 [[package]]
+name = "diskcache"
+version = "5.6.3"
+description = "Disk Cache -- Disk and file backed persistent cache."
+optional = false
+python-versions = ">=3"
+files = [
+    {file = "diskcache-5.6.3-py3-none-any.whl", hash = "sha256:5e31b2d5fbad117cc363ebaf6b689474db18a1f6438bc82358b024abd4c2ca19"},
+    {file = "diskcache-5.6.3.tar.gz", hash = "sha256:2c3a3fa2743d8535d832ec61c2054a1641f41775aa7c556758a109941e33e4fc"},
+]
+
+[[package]]
 name = "distlib"
 version = "0.3.8"
 description = "Distribution utilities"
@@ -4024,4 +4035,4 @@ together = ["modelgauge_together"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "8a1e2d18fb1f3dd0081c10bcda6f9b5356a59747eae10f8d89f4143bdbffac15"
+content-hash = "8f67728eef402903a0fdb73abd1ce696f325a58440a9f02419f43bca565919f8"
