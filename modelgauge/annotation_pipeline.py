@@ -4,31 +4,20 @@ import sys
 import traceback
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
-from dataclasses import dataclass
 from pydantic import BaseModel
 from typing import Iterable
 
 from modelgauge.annotator import Annotator
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_pipeline import PromptOutput
+from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUTCompletion
 
 
-@dataclass
-class AnnotatorInputSample:
-    prompt: PromptWithContext
-    sut_uid: str
-    response: SUTCompletion
-
-    def __hash__(self):
-        return hash(self.prompt.source_id + self.sut_uid)
-
-
 class AnnotatorInput(metaclass=ABCMeta):
     @abstractmethod
-    def __iter__(self) -> Iterable[AnnotatorInputSample]:
+    def __iter__(self) -> Iterable[SutInteraction]:
         pass
 
     def __len__(self):
@@ -43,7 +32,7 @@ class CsvAnnotatorInput(AnnotatorInput):
         super().__init__()
         self.path = path
 
-    def __iter__(self) -> Iterable[AnnotatorInputSample]:
+    def __iter__(self) -> Iterable[SutInteraction]:
         with open(self.path, newline="") as f:
             csvreader = csv.DictReader(f)
             for row in csvreader:
@@ -55,7 +44,7 @@ class CsvAnnotatorInput(AnnotatorInput):
                     context=row,
                 )
                 response = SUTCompletion(text=row["Response"])
-                yield AnnotatorInputSample(prompt, row["SUT"], response)
+                yield SutInteraction(prompt, row["SUT"], response)
 
 
 class JsonlAnnotatorOutput(PromptOutput):
@@ -79,7 +68,7 @@ class JsonlAnnotatorOutput(PromptOutput):
         self.writer.close()
         self.file.close()
 
-    def write(self, item: AnnotatorInputSample, results):
+    def write(self, item: SutInteraction, results):
         if not isinstance(item.prompt.prompt, TextPrompt):
             raise Exception(f"Error handling {item}. Can only handle TextPrompts.")
         output_obj = {
@@ -140,7 +129,7 @@ class AnnotatorWorkers(Pipe):
 
 
 class AnnotatorSink(Sink):
-    unfinished: defaultdict[AnnotatorInputSample, dict[str, str]]
+    unfinished: defaultdict[SutInteraction, dict[str, str]]
 
     def __init__(self, annotators: dict[str, Annotator], writer: JsonlAnnotatorOutput):
         super().__init__()

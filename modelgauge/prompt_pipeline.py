@@ -1,6 +1,7 @@
 import csv
 from abc import abstractmethod, ABCMeta
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Iterable
 
 import diskcache  # type: ignore
@@ -8,7 +9,17 @@ import diskcache  # type: ignore
 from modelgauge.pipeline import Source, Pipe, Sink
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import PromptResponseSUT, SUT
+from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
+
+
+@dataclass
+class SutInteraction:
+    prompt: PromptWithContext
+    sut_uid: str
+    response: SUTCompletion
+
+    def __hash__(self):
+        return hash(self.prompt.source_id + self.sut_uid)
 
 
 class PromptInput(metaclass=ABCMeta):
@@ -128,22 +139,26 @@ class PromptSutWorkers(Pipe):
         else:
             self.cache = NullCache()
 
-    def handle_item(self, item):
+    def handle_item(self, item) -> SutInteraction:
         prompt_item: PromptWithContext
         prompt_item, sut_uid = item
         cache_key = (prompt_item.prompt.text, sut_uid)
         if cache_key in self.cache:
+            # TODO: Cache SUTCompletion objects directly.
             response_text = self.cache[cache_key]
+            response = SUTCompletion(text=response_text)
         else:
-            response_text = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
-            self.cache[cache_key] = response_text
-        return prompt_item, sut_uid, response_text
+            response = self.call_sut(prompt_item.prompt, self.suts[sut_uid])
+            self.cache[cache_key] = response.text
+        return SutInteraction(prompt_item, sut_uid, response)
 
-    def call_sut(self, prompt_text: TextPrompt, sut: PromptResponseSUT) -> str:
+    def call_sut(
+        self, prompt_text: TextPrompt, sut: PromptResponseSUT
+    ) -> SUTCompletion:
         request = sut.translate_text_prompt(prompt_text)
         response = sut.evaluate(request)
         result = sut.translate_response(request, response)
-        return result.completions[0].text
+        return result.completions[0]
 
 
 class PromptSink(Sink):
@@ -159,10 +174,9 @@ class PromptSink(Sink):
         with self.writer:
             super().run()
 
-    def handle_item(self, item):
-        prompt_item, sut_key, response = item
-        self.unfinished[prompt_item][sut_key] = response
-        if len(self.unfinished[prompt_item]) == len(self.suts):
-            self.writer.write(prompt_item, self.unfinished[prompt_item])
-            self._debug(f"wrote {prompt_item}")
-            del self.unfinished[prompt_item]
+    def handle_item(self, item: SutInteraction):
+        self.unfinished[item.prompt][item.sut_uid] = item.response.text
+        if len(self.unfinished[item.prompt]) == len(self.suts):
+            self.writer.write(item.prompt, self.unfinished[item.prompt])
+            self._debug(f"wrote {item.prompt}")
+            del self.unfinished[item.prompt]

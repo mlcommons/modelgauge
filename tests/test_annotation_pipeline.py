@@ -4,7 +4,7 @@ import pytest
 import time
 
 from modelgauge.annotation_pipeline import (
-    AnnotatorInputSample,
+    SutInteraction,
     AnnotatorInput,
     AnnotatorSource,
     AnnotatorAssigner,
@@ -39,7 +39,7 @@ class FakeAnnotatorInput(AnnotatorInput):
                 context=row,
             )
             response = SUTCompletion(text=row["Response"])
-            yield AnnotatorInputSample(prompt, row["SUT"], response)
+            yield SutInteraction(prompt, row["SUT"], response)
 
 
 class FakeAnnotatorOutput(PromptOutput):
@@ -56,7 +56,7 @@ def annotators():
 
 
 def make_input_sample(source_id, prompt, sut_uid, response):
-    return AnnotatorInputSample(
+    return SutInteraction(
         PromptWithContext(source_id=source_id, prompt=TextPrompt(text=prompt)),
         sut_uid,
         SUTCompletion(text=response),
@@ -69,7 +69,7 @@ def test_csv_annotator_input(tmp_path):
     input = CsvAnnotatorInput(file_path)
 
     assert len(input) == 1
-    item: AnnotatorInputSample = next(iter(input))
+    item: SutInteraction = next(iter(input))
     assert item.prompt.prompt == TextPrompt(text="a")
     assert item.prompt.source_id == "1"
     assert item.sut_uid == "sut_uid"

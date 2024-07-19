@@ -20,7 +20,9 @@ from modelgauge.prompt_pipeline import (
     PromptSutAssigner,
     PromptSutWorkers,
     PromptSink,
+    SutInteraction,
 )
+from modelgauge.sut import SUTCompletion
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from tests.fake_sut import FakeSUT, FakeSUTRequest, FakeSUTResponse
 
@@ -122,7 +124,9 @@ def test_prompt_sut_worker_normal(suts):
     w = PromptSutWorkers(suts)
     result = w.handle_item((prompt_with_context, "fake1"))
 
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
 
 
 def test_prompt_sut_worker_cache(suts, tmp_path):
@@ -135,11 +139,15 @@ def test_prompt_sut_worker_cache(suts, tmp_path):
 
     w = PromptSutWorkers(suts, cache_path=tmp_path)
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
     assert mock.call_count == 1
 
     result = w.handle_item((prompt_with_context, "fake1"))
-    assert result == (prompt_with_context, "fake1", "a response")
+    assert result == SutInteraction(
+        prompt_with_context, "fake1", SUTCompletion(text="a response")
+    )
     assert mock.call_count == 1
 
 
