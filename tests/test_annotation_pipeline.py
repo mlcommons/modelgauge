@@ -2,6 +2,7 @@ import itertools
 import jsonlines
 import pytest
 import time
+from unittest.mock import MagicMock
 
 from modelgauge.annotation_pipeline import (
     SutInteraction,
@@ -15,13 +16,20 @@ from modelgauge.annotation_pipeline import (
 )
 from modelgauge.pipeline import Pipeline
 from modelgauge.prompt import TextPrompt
-from modelgauge.prompt_pipeline import PromptOutput
+from modelgauge.prompt_pipeline import (
+    PromptOutput,
+    PromptSource,
+    PromptSutAssigner,
+    PromptSutWorkers,
+)
 from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import SUTCompletion
 from tests.fake_annotator import (
     FakeAnnotation,
     FakeAnnotator,
 )
+from tests.fake_sut import FakeSUT
+from tests.test_prompt_pipeline import FakePromptInput
 
 
 class FakeAnnotatorInput(AnnotatorInput):
@@ -44,18 +52,13 @@ class FakeAnnotatorInput(AnnotatorInput):
 
 class FakeAnnotatorOutput(PromptOutput):
     def __init__(self):
-        self.output = []
+        self.output = {}
 
     def write(self, item, annotations):
-        self.output.append((item, annotations))
+        self.output[item] = annotations
 
 
-@pytest.fixture
-def annotators():
-    return {"fake1": FakeAnnotator(), "fake2": FakeAnnotator()}
-
-
-def make_input_sample(source_id, prompt, sut_uid, response):
+def make_sut_interaction(source_id, prompt, sut_uid, response):
     return SutInteraction(
         PromptWithContext(source_id=source_id, prompt=TextPrompt(text=prompt)),
         sut_uid,
@@ -63,26 +66,31 @@ def make_input_sample(source_id, prompt, sut_uid, response):
     )
 
 
+def sut_interactions_is_equal(a, b):
+    """Equality check that ignores the prompt's context attribute."""
+    return (
+        a.prompt.source_id == b.prompt.source_id
+        and a.prompt.prompt.text == b.prompt.prompt.text
+        and a.sut_uid == b.sut_uid
+        and a.response == b.response
+    )
+
+
 def test_csv_annotator_input(tmp_path):
     file_path = tmp_path / "input.csv"
-    file_path.write_text('UID,Prompt,SUT,Response\n"1","a","sut_uid","b"')
+    file_path.write_text('UID,Prompt,SUT,Response\n"1","a","s","b"')
     input = CsvAnnotatorInput(file_path)
 
     assert len(input) == 1
     item: SutInteraction = next(iter(input))
-    assert item.prompt.prompt == TextPrompt(text="a")
-    assert item.prompt.source_id == "1"
-    assert item.sut_uid == "sut_uid"
-    assert item.response == SUTCompletion(text="b")
+    assert sut_interactions_is_equal(item, make_sut_interaction("1", "a", "s", "b"))
 
 
-def test_json_annotator_output(tmp_path, annotators):
+def test_json_annotator_output(tmp_path):
     file_path = tmp_path / "output.jsonl"
-    input_sample1 = make_input_sample("1", "a", "sut_uid1", "b")
-    input_sample2 = make_input_sample("2", "c", "sut_uid2", "d")
-    with JsonlAnnotatorOutput(file_path, annotators) as output:
-        output.write(input_sample1, {"fake1": "a1", "fake2": "a2"})
-        output.write(input_sample2, {"fake1": "a3", "fake2": "a4"})
+    with JsonlAnnotatorOutput(file_path) as output:
+        output.write(make_sut_interaction("1", "a", "sut1", "b"), {"fake": "x"})
+        output.write(make_sut_interaction("2", "c", "sut2", "d"), {"fake": "y"})
 
     with jsonlines.open(file_path) as reader:
         items: list[dict] = [i for i in reader]
@@ -90,36 +98,43 @@ def test_json_annotator_output(tmp_path, annotators):
         assert items[0] == {
             "UID": "1",
             "Prompt": "a",
-            "SUT": "sut_uid1",
+            "SUT": "sut1",
             "Response": "b",
-            "Annotations": {"fake1": "a1", "fake2": "a2"},
+            "Annotations": {"fake": "x"},
         }
         assert items[1] == {
             "UID": "2",
             "Prompt": "c",
-            "SUT": "sut_uid2",
+            "SUT": "sut2",
             "Response": "d",
-            "Annotations": {"fake1": "a3", "fake2": "a4"},
+            "Annotations": {"fake": "y"},
         }
 
 
-def test_json_annotator_output_dict_annotation(tmp_path, annotators):
+def test_json_annotator_output_different_annotation_types(tmp_path):
     file_path = tmp_path / "output.jsonl"
+    annotations = {
+        "fake1": {"sut_text": "a"},
+        "fake2": {"sut_text": "b", "num": 0},
+        "fake3": "c",
+    }
+    with JsonlAnnotatorOutput(file_path) as output:
+        output.write(make_sut_interaction("1", "a", "s", "b"), annotations)
 
-    with JsonlAnnotatorOutput(file_path, annotators) as output:
-        output.write(
-            make_input_sample("1", "a", "sut_uid1", "b"),
-            {
-                "fake1": FakeAnnotation(sut_text="a1").model_dump(),
-                "fake2": FakeAnnotation(sut_text="a2").model_dump(),
-            },
-        )
     with jsonlines.open(file_path) as reader:
-        items: list[dict] = [i for i in reader]
-        assert items[0]["Annotations"] == {
-            "fake1": {"sut_text": "a1"},
-            "fake2": {"sut_text": "a2"},
+        assert reader.read()["Annotations"] == annotations
+
+
+@pytest.fixture
+def annotators():
+    annotator = FakeAnnotator()
+    annotator.translate_response = MagicMock(
+        side_effect=lambda _, response: {
+            "sut_text": response.sut_text,
+            "dummy": "d",
         }
+    )
+    return {"fake1": FakeAnnotator(), "fake2": annotator}
 
 
 def test_full_run(annotators):
@@ -130,7 +145,6 @@ def test_full_run(annotators):
         ]
     )
     output = FakeAnnotatorOutput()
-
     p = Pipeline(
         AnnotatorSource(input),
         AnnotatorAssigner(annotators),
@@ -138,25 +152,26 @@ def test_full_run(annotators):
         AnnotatorSink(annotators, output),
         debug=True,
     )
-
     p.run()
 
     assert len(output.output) == len(input.items)
-    assert sorted([r[0].prompt.source_id for r in output.output]) == [
-        i["UID"] for i in input.items
-    ]
-    assert sorted([r[0].response.text for r in output.output]) == [
-        i["Response"] for i in input.items
-    ]
-    row1 = output.output[0]
-    assert "fake1" in row1[1]
-    assert "fake2" in row1[1]
-    row2 = output.output[1]
-    assert "fake1" in row2[1]
-    assert "fake2" in row2[1]
+    interactions = sorted(list(output.output.keys()), key=lambda o: o.prompt.source_id)
+    assert sut_interactions_is_equal(
+        interactions[0], make_sut_interaction("1", "a", "s", "b")
+    )
+    assert output.output[interactions[0]] == {
+        "fake1": {"sut_text": "b"},
+        "fake2": {"sut_text": "b", "dummy": "d"},
+    }
+    assert sut_interactions_is_equal(
+        interactions[1], make_sut_interaction("2", "c", "s", "d")
+    )
+    assert output.output[interactions[1]] == {
+        "fake1": {"sut_text": "d"},
+        "fake2": {"sut_text": "d", "dummy": "d"},
+    }
 
 
-#
 def test_progress(annotators):
     input = FakeAnnotatorInput(
         [
@@ -182,3 +197,41 @@ def test_progress(annotators):
 
     assert progress_items[0]["completed"] == 0
     assert progress_items[-1]["completed"] == 4
+
+
+def test_prompt_response_annotation_pipeline(annotators):
+    input = FakePromptInput(
+        [
+            {"UID": "1", "Text": "a"},
+            {"UID": "2", "Text": "b"},
+        ]
+    )
+    output = FakeAnnotatorOutput()
+
+    suts = {"sut1": FakeSUT(), "sut2": FakeSUT()}
+    p = Pipeline(
+        PromptSource(input),
+        PromptSutAssigner(suts),
+        PromptSutWorkers(suts, workers=1),
+        AnnotatorAssigner(annotators),
+        AnnotatorWorkers(annotators, workers=1),
+        AnnotatorSink(annotators, output),
+    )
+    p.run()
+
+    assert len(output.output) == len(input.items) * len(suts)
+    interactions = sorted(
+        list(output.output.keys()), key=lambda o: (o.prompt.source_id, o.sut_uid)
+    )
+    for interaction, prompt_sut in zip(
+        interactions, itertools.product(input.items, suts)
+    ):
+        prompt, sut = prompt_sut
+        assert sut_interactions_is_equal(
+            interaction,
+            make_sut_interaction(prompt["UID"], prompt["Text"], sut, prompt["Text"]),
+        )
+        assert output.output[interaction] == {
+            "fake1": {"sut_text": prompt["Text"]},
+            "fake2": {"sut_text": prompt["Text"], "dummy": "d"},
+        }

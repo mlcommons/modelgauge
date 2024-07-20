@@ -48,20 +48,15 @@ class CsvAnnotatorInput(AnnotatorInput):
 
 
 class JsonlAnnotatorOutput(PromptOutput):
-    def __init__(self, path, annotators):
+    def __init__(self, path):
         super().__init__()
         self.path = path
-        self.annotators = annotators
         self.file = None
         self.writer = None
 
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = jsonlines.Writer(self.file)
-        # headers = ["UID", "Prompt", "SUT", "Response"]
-        # for a in self.annotators.keys():
-        #     headers += [a + "_is_safe", a + "_violation_categories"]
-        # self.writer.write(headers)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -80,9 +75,6 @@ class JsonlAnnotatorOutput(PromptOutput):
         }
         self.writer.write(output_obj)
 
-    # def launder_the_type_problem(self, item) -> str:
-    #     return item.prompt.text
-
 
 class AnnotatorSource(Source):
     def __init__(self, input: AnnotatorInput):
@@ -98,7 +90,7 @@ class AnnotatorAssigner(Pipe):
         super().__init__()
         self.annotators = annotators
 
-    def handle_item(self, item):
+    def handle_item(self, item: SutInteraction):
         for annotator_uid in self.annotators:
             self.downstream_put((item, annotator_uid))
 

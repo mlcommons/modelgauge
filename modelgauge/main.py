@@ -390,7 +390,7 @@ def run_annotators(annotator_uids, workers, filename, debug):
         + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         + ".jsonl"
     )
-    output = JsonlAnnotatorOutput(output_path, annotators)
+    output = JsonlAnnotatorOutput(output_path)
 
     prompt_count = len(input)
 
