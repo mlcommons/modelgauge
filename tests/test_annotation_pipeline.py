@@ -199,7 +199,13 @@ def test_progress(annotators):
     assert progress_items[-1]["completed"] == 4
 
 
-def test_prompt_response_annotation_pipeline(annotators):
+@pytest.mark.parametrize(
+    "sut_worker_count,annotator_worker_count",
+    [(1, 1), (2, 2), (8, 8), (1, 5), (5, 1), (3, 9), (9, 3)],
+)
+def test_prompt_response_annotation_pipeline(
+    annotators, sut_worker_count, annotator_worker_count
+):
     input = FakePromptInput(
         [
             {"UID": "1", "Text": "a"},
@@ -212,9 +218,9 @@ def test_prompt_response_annotation_pipeline(annotators):
     p = Pipeline(
         PromptSource(input),
         PromptSutAssigner(suts),
-        PromptSutWorkers(suts, workers=1),
+        PromptSutWorkers(suts, workers=sut_worker_count),
         AnnotatorAssigner(annotators),
-        AnnotatorWorkers(annotators, workers=1),
+        AnnotatorWorkers(annotators, workers=annotator_worker_count),
         AnnotatorSink(annotators, output),
     )
     p.run()
