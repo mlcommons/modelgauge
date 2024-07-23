@@ -166,15 +166,3 @@ class PromptSink(Sink):
             self.writer.write(item.prompt, self.unfinished[item.prompt])
             self._debug(f"wrote {item.prompt}")
             del self.unfinished[item.prompt]
-
-
-def create_prompt_source(path):
-    input = CsvPromptInput(path)
-    return PromptSource(input)
-
-
-def create_promp_pipes(suts, workers, cache_path):
-    return [
-        PromptSutAssigner(suts),
-        PromptSutWorkers(suts, workers=workers, cache_path=cache_path),
-    ]
