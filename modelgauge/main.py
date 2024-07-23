@@ -1,10 +1,9 @@
+import click
 import datetime
 import os
 import pathlib
-from typing import List, Optional, Any, Dict
+from typing import List, Optional
 
-import click
-from click._termui_impl import ProgressBar
 
 from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.annotation_pipeline import (
@@ -259,7 +258,15 @@ def run_test(
     "--sut",
     help="Which registered SUT(s) to run.",
     multiple=True,
-    required=True,
+    required=False,
+)
+@click.option(
+    "annotator_uids",
+    "-a",
+    "--annotator",
+    help="Which registered annotator(s) to run",
+    multiple=True,
+    required=False,
 )
 @click.option(
     "--workers",
@@ -268,9 +275,9 @@ def run_test(
     help="Number of worker threads, default is 10 * number of SUTs.",
 )
 @click.option(
-    "cache_dir",
+    "sut_cache_dir",
     "--cache",
-    help="Directory to cache model answers",
+    help="Directory to cache model answers (only applies to SUTs).",
     type=click.Path(
         file_okay=False, dir_okay=True, writable=True, path_type=pathlib.Path
     ),
@@ -280,123 +287,82 @@ def run_test(
 )
 @click.argument(
     "filename",
-    type=click.Path(exists=True),
+    type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_prompts(sut_uids, workers, cache_dir: pathlib.Path, debug, filename):
-    """Take a CSV of prompts and run them through SUTs. The CSV file must have UID and Text columns, and may have others."""
+def run_prompts(sut_uids, annotator_uids, workers, sut_cache_dir, debug, filename):
+    """Take a CSV of prompts and run them through SUTs and/or annotators.
 
+    The CSV file must have 'UID' and 'Text' columns if running through SUTs.
+    If only running through annotators, the CSV file must have 'UID', 'Prompt', 'SUT', and 'Response' columns.
+    """
+    assert len(sut_uids) or len(
+        annotator_uids
+    ), "Must specify at least one SUT or annotator."
     secrets = load_secrets_from_config()
+    pipes = []
+    if len(sut_uids):
+        try:
+            suts: dict[str, SUT] = {
+                sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
+                for sut_uid in sut_uids
+            }
+        except MissingSecretValues as e:
+            raise_if_missing_from_config([e])
 
-    try:
-        suts: dict[str, SUT] = {
-            sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
-            for sut_uid in sut_uids
-        }
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
+        if sut_cache_dir:
+            print(f"Creating cache dir {sut_cache_dir}")
+            sut_cache_dir.mkdir(exist_ok=True)
 
-    if cache_dir:
-        print(f"Creating cache dir {cache_dir}")
-        cache_dir.mkdir(exist_ok=True)
+        for sut_uid in suts:
+            sut = suts[sut_uid]
+            if not AcceptsTextPrompt in sut.capabilities:
+                raise click.BadParameter(f"{sut_uid} does not accept text prompts")
 
-    for sut_uid in suts:
-        sut = suts[sut_uid]
-        if not AcceptsTextPrompt in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-
-    path = pathlib.Path(filename)
-    input = CsvPromptInput(path)
-
-    output_path = path.parent / pathlib.Path(
-        path.stem
-        + "-responses-"
-        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        + ".csv"
-    )
-    output = CsvPromptOutput(output_path, suts)
-
-    prompt_count = len(input)
-
-    bar: ProgressBar
-    with click.progressbar(
-        length=prompt_count * len(suts),
-        label=f"Processing {prompt_count} prompts * {len(suts)} SUTs:",
-    ) as bar:
-        last_complete_count = 0
-
-        def show_progress(data):
-            nonlocal last_complete_count
-            complete_count = data["completed"]
-            bar.update(complete_count - last_complete_count)
-            last_complete_count = complete_count
-
-        pipeline = Pipeline(
-            PromptSource(input),
-            PromptSutAssigner(suts),
-            PromptSutWorkers(suts, workers, cache_path=cache_dir),
-            PromptSink(suts, output),
-            progress_callback=show_progress,
-            debug=debug,
+        input = CsvPromptInput(filename)
+        source = PromptSource(input)
+        pipes.append(PromptSutAssigner(suts))
+        pipes.append(PromptSutWorkers(suts, workers, cache_path=sut_cache_dir))
+        output_path = filename.parent / pathlib.Path(
+            filename.stem
+            + "-responses-"
+            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            + ".csv"
         )
+        output = CsvPromptOutput(output_path, suts)
+        sink = PromptSink(suts, output)
 
-        pipeline.run()
-
-    print(f"output saved to {output_path}")
-
-
-@modelgauge_cli.command()
-@click.option(
-    "annotator_uids",
-    "-a",
-    "--annotator",
-    help="Which annotator to run",
-    multiple=True,
-    required=True,
-)
-@click.option(
-    "--workers",
-    type=int,
-    default=None,
-    help="Number of worker threads, default is 10 * number of SUTs.",
-)
-@click.option(
-    "--debug", is_flag=True, help="Show internal pipeline debugging information."
-)
-@click.argument(
-    "filename",
-    type=click.Path(exists=True),
-)
-def run_annotators(annotator_uids, workers, filename, debug):
-    """Take a CSV of prompts and responses and run them through annotators.
-    The CSV file must contain UID, Prompt, SUT, and Response columns.
-    Outputs a Jsonl file."""
-
-    secrets = load_secrets_from_config()
-
-    try:
-        annotators = {
-            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
-            for annotator_uid in annotator_uids
-        }
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
-
-    path = pathlib.Path(filename)
-    input = CsvAnnotatorInput(path)
-
-    output_path = path.parent / pathlib.Path(
-        path.stem
-        + "-annotations-"
-        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        + ".jsonl"
-    )
-    output = JsonlAnnotatorOutput(output_path)
+    if len(annotator_uids):
+        try:
+            annotators = {
+                annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+                for annotator_uid in annotator_uids
+            }
+        except MissingSecretValues as e:
+            raise_if_missing_from_config([e])
+        # Only set input if annotation-only mode.
+        if not len(sut_uids):
+            input = CsvAnnotatorInput(filename)
+            source = AnnotatorSource(input)
+        # Annotator output format takes precedence over regular prompt response CSV format.
+        pipes.append(AnnotatorAssigner(annotators))
+        pipes.append(AnnotatorWorkers(annotators, workers))
+        output_path = filename.parent / pathlib.Path(
+            filename.stem
+            + "-annotations-"
+            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            + ".jsonl"
+        )
+        output = JsonlAnnotatorOutput(output_path)
+        sink = AnnotatorSink(annotators, output)
 
     prompt_count = len(input)
-
+    total_items = prompt_count * max(len(sut_uids), 1) * max(len(annotator_uids), 1)
     with click.progressbar(
-        length=prompt_count * len(annotators),
-        label=f"Processing {prompt_count} prompts * {len(annotators)} annotators:",
+        length=total_items,
+        label=f"Processing {prompt_count} prompts "
+        + (f"* {len(sut_uids)} SUTs" if len(sut_uids) else "")
+        + (f"* {len(annotator_uids)} annotators" if len(annotator_uids) else "")
+        + ":",
     ) as bar:
         last_complete_count = 0
 
@@ -407,10 +373,9 @@ def run_annotators(annotator_uids, workers, filename, debug):
             last_complete_count = complete_count
 
         pipeline = Pipeline(
-            AnnotatorSource(input),
-            AnnotatorAssigner(annotators),
-            AnnotatorWorkers(annotators, workers),
-            AnnotatorSink(annotators, output),
+            source,
+            *pipes,
+            sink,
             progress_callback=show_progress,
             debug=debug,
         )
