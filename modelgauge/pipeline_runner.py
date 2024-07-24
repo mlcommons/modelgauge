@@ -1,5 +1,5 @@
 import click
-from typing import Mapping, Optional
+from typing import List
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
@@ -9,8 +9,7 @@ from modelgauge.annotation_pipeline import (
     CsvAnnotatorInput,
     JsonlAnnotatorOutput,
 )
-from modelgauge.annotator import CompletionAnnotator
-from modelgauge.pipeline import Pipeline
+from modelgauge.pipeline import Pipeline, PipelineSegment
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
@@ -19,19 +18,18 @@ from modelgauge.prompt_pipeline import (
     CsvPromptInput,
     CsvPromptOutput,
 )
-from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 
 
 def build_prompt_pipeline_segments(
     suts,
     input_path,
-    output_path: Optional = None,
-    workers: Optional = None,
-    sut_cache_dir: Optional = None,
+    output_path=None,
+    workers=None,
+    sut_cache_dir=None,
     include_sink=True,
 ):
-    segments = []
+    segments: List[PipelineSegment] = []
     input = CsvPromptInput(input_path)
     segments.append(PromptSource(input))
     segments.append(PromptSutAssigner(suts))
@@ -47,16 +45,12 @@ def build_prompt_pipeline_segments(
 
 
 def build_annotator_pipeline_segments(
-    annotators,
-    output_path,
-    input_path: Optional = None,
-    workers: Optional = None,
-    include_source=True,
+    annotators, output_path, input_path=None, workers=None, include_source=True
 ):
     assert (
         output_path.suffix == ".jsonl"
     ), "Annotator output must have a .jsonl extension."
-    segments = []
+    segments: List[PipelineSegment] = []
     if include_source:
         assert (
             input_path is not None
@@ -71,13 +65,7 @@ def build_annotator_pipeline_segments(
 
 
 def run_prompts_pipeline(
-    suts: Mapping[str, PromptResponseSUT],
-    workers,
-    sut_cache_dir,
-    debug,
-    input_path,
-    output_path,
-    annotators: Optional[Mapping[str, CompletionAnnotator]] = None,
+    suts, workers, sut_cache_dir, debug, input_path, output_path, annotators=None
 ):
     """Runs a pipeline for a given CSV file of prompts over a set of SUTs."""
     # TODO: Check CSV
@@ -91,18 +79,17 @@ def run_prompts_pipeline(
         sut = suts[sut_uid]
         if not AcceptsTextPrompt in sut.capabilities:
             raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-    pipeline_segments = []
+
     if run_annotators:
         # Adds annotator pipes after prompt pipes. Uses annotator output sink instead of regular prompt output.
-        pipeline_segments.extend(
-            build_prompt_pipeline_segments(
-                suts,
-                input_path,
-                workers=workers,
-                sut_cache_dir=sut_cache_dir,
-                include_sink=False,
-            )
+        pipeline_segments = build_prompt_pipeline_segments(
+            suts,
+            input_path,
+            workers=workers,
+            sut_cache_dir=sut_cache_dir,
+            include_sink=False,
         )
+
         pipeline_segments.extend(
             build_annotator_pipeline_segments(
                 annotators, output_path, workers=workers, include_source=False

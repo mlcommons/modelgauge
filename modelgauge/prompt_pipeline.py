@@ -106,7 +106,7 @@ class PromptSource(Source):
         super().__init__()
         self.input = input
 
-    def new_item_iterable(self) -> Iterable[PromptWithContext]:
+    def new_item_iterable(self):
         return self.input
 
 
