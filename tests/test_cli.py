@@ -138,23 +138,15 @@ def create_prompt_responses_file(path):
     return in_path
 
 
-@pytest.mark.parametrize(
-    "create_input,sut_options",
-    [
-        (create_prompts_file, ["--sut", "demo_yes_no"]),
-        (create_prompt_responses_file, []),
-    ],
-)
-def test_run_annotators(tmp_path, create_input, sut_options):
-    in_path = create_input(tmp_path)
+def test_run_annotators(tmp_path):
+    in_path = create_prompt_responses_file(tmp_path)
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
         [
-            "run-prompts",
+            "run-annotators",
             "--annotator",
             "demo_annotator",
-            *sut_options,
             str(in_path),
         ],
         catch_exceptions=False,
@@ -180,3 +172,6 @@ def test_run_annotators(tmp_path, create_input, sut_options):
             "Response": "No",
             "Annotations": {"demo_annotator": {"badness": 0.0}},
         }
+
+
+# TODO: Add tesst for full prompt -> response - > annotator pipeline
