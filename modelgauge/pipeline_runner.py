@@ -29,6 +29,7 @@ def build_prompt_pipeline_segments(
     sut_cache_dir=None,
     include_sink=True,
 ):
+    """Returns an in-order list of pipeline segments required for a prompt pipeline."""
     segments: List[PipelineSegment] = []
     input = CsvPromptInput(input_path)
     segments.append(PromptSource(input))
@@ -38,7 +39,6 @@ def build_prompt_pipeline_segments(
         assert (
             output_path is not None
         ), "output_path must be provided if include_sink=True."
-        assert output_path.suffix == ".csv", "Prompt output must have a .csv extension."
         output = CsvPromptOutput(output_path, suts)
         segments.append(PromptSink(suts, output))
     return segments
@@ -47,9 +47,7 @@ def build_prompt_pipeline_segments(
 def build_annotator_pipeline_segments(
     annotators, output_path, input_path=None, workers=None, include_source=True
 ):
-    assert (
-        output_path.suffix == ".jsonl"
-    ), "Annotator output must have a .jsonl extension."
+    """Returns an in-order list of pipeline segments required for an annotator pipeline."""
     segments: List[PipelineSegment] = []
     if include_source:
         assert (
@@ -68,7 +66,6 @@ def run_prompts_pipeline(
     suts, workers, sut_cache_dir, debug, input_path, output_path, annotators=None
 ):
     """Runs a pipeline for a given CSV file of prompts over a set of SUTs."""
-    # TODO: Check CSV
     run_annotators = annotators is not None and len(annotators)
 
     if sut_cache_dir:
@@ -118,7 +115,6 @@ def run_prompts_pipeline(
 
 
 def run_annotator_pipeline(annotators, workers, debug, input_path, output_path):
-    # TODO: Check CSV has right columns
     pipeline_segments = build_annotator_pipeline_segments(
         annotators, output_path, input_path=input_path, workers=workers
     )
