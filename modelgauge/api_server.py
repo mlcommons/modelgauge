@@ -1,8 +1,10 @@
 import itertools
 import multiprocessing
+import os
 from typing import Sequence, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 
 from modelgauge.annotator import CompletionAnnotator
@@ -54,7 +56,8 @@ class ProcessingRequest(BaseModel):
     suts: Sequence[str]
     annotators: Sequence[str] = []
 
-
+SECRET_KEY = os.getenv("SECRET_KEY")
+assert SECRET_KEY, "must set SECRET_KEY environment variable"
 app = FastAPI()
 
 
@@ -82,8 +85,12 @@ def process_work_item(
     return result
 
 
+auth_header = APIKeyHeader(name="x-key")
+
 @app.post("/")
-async def postroot(req: ProcessingRequest):
+async def postroot(req: ProcessingRequest, key :str = Depends(auth_header)):
+    if key != SECRET_KEY:
+        raise HTTPException(401, "not authorized; send x-key header")
     if req.annotators:
         work_items = list(itertools.product(req.prompts, req.suts, req.annotators))
     else:
