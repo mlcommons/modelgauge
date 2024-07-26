@@ -3,8 +3,8 @@ import multiprocessing
 import os
 from typing import Sequence, Optional
 
-from fastapi import FastAPI, Depends, HTTPException # type: ignore
-from fastapi.security import APIKeyHeader # type: ignore
+from fastapi import FastAPI, Depends, HTTPException  # type: ignore
+from fastapi.security import APIKeyHeader  # type: ignore
 from pydantic import BaseModel
 
 from modelgauge.annotator import CompletionAnnotator
