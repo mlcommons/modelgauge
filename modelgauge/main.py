@@ -24,11 +24,15 @@ from modelgauge.dependency_injection import list_dependency_usage
 from modelgauge.general import normalize_filename
 from modelgauge.instance_factory import FactoryEntry
 from modelgauge.load_plugins import list_plugins
-from modelgauge.pipeline_runner import run_annotator_pipeline, run_prompts_pipeline
+from modelgauge.pipeline_runner import (
+    AnnotatorRunner,
+    PromptPlusAnnotatorRunner,
+    PromptRunner,
+)
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.secret_values import MissingSecretValues, RawSecrets, get_all_secrets
 from modelgauge.simple_test_runner import run_prompt_response_test
-from modelgauge.sut import PromptResponseSUT, SUT
+from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.sut_registry import SUTS
 from modelgauge.test_registry import TESTS
@@ -241,7 +245,7 @@ def run_test(
     "--sut",
     help="Which registered SUT(s) to run.",
     multiple=True,
-    required=True,
+    required=False,
 )
 @click.option(
     "annotator_uids",
@@ -258,7 +262,7 @@ def run_test(
     help="Number of worker threads, default is 10 * number of SUTs.",
 )
 @click.option(
-    "sut_cache_dir",
+    "cache_dir",
     "--cache",
     help="Directory to cache model answers (only applies to SUTs).",
     type=click.Path(
@@ -272,103 +276,89 @@ def run_test(
     "input_path",
     type=click.Path(exists=True, path_type=pathlib.Path),
 )
-def run_prompts(sut_uids, annotator_uids, workers, sut_cache_dir, debug, input_path):
-    """Take a CSV of prompts and run them through SUTs and/or annotators.
+def run_csv_items(sut_uids, annotator_uids, workers, cache_dir, debug, input_path):
+    """Run rows in a CSV through some SUTs and/or annotators.
 
-    The CSV file must have 'UID' and 'Text' columns.
+    If running SUTs, the file must have 'UID' and 'Text' columns. The output will be saved to a CSV file.
+    If running ONLY  annotators, the file must have 'UID', 'Prompt', 'SUT', and 'Response' columns. The output will be saved to a json lines file.
     """
     secrets = load_secrets_from_config()
-    try:
-        suts: dict[str, SUT] = {
-            sut_uid: SUTS.make_instance(sut_uid, secrets=secrets)
-            for sut_uid in sut_uids
-        }
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
 
-    if sut_cache_dir:
-        print(f"Creating cache dir {sut_cache_dir}")
-        sut_cache_dir.mkdir(exist_ok=True)
-
-    for sut_uid in suts:
-        sut = suts[sut_uid]
-        if not AcceptsTextPrompt in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-
-    output_path = input_path.parent / pathlib.Path(
-        input_path.stem
-        + "-responses-"
-        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        + ".csv"
-    )
-
-    annotators = None
-    if len(annotator_uids):
-        try:
-            annotators = {
-                annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
-                for annotator_uid in annotator_uids
-            }
-        except MissingSecretValues as e:
-            raise_if_missing_from_config([e])
-
-        output_path = input_path.parent / pathlib.Path(
-            input_path.stem
-            + "-annotated-responses"
-            + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            + ".jsonl"
+    # Check all objects for missing secrets.
+    missing_secrets: List[MissingSecretValues] = []
+    for sut_uid in sut_uids:
+        missing_secrets.extend(SUTS.get_missing_dependencies(sut_uid, secrets=secrets))
+    for annotator_uid in annotator_uids:
+        missing_secrets.extend(
+            ANNOTATORS.get_missing_dependencies(annotator_uid, secrets=secrets)
         )
+    raise_if_missing_from_config(missing_secrets)
 
-    run_prompts_pipeline(
-        suts, workers, sut_cache_dir, debug, input_path, output_path, annotators
-    )
+    suts = {}
+    for sut_uid in sut_uids:
+        sut = SUTS.make_instance(sut_uid, secrets=secrets)
+        if AcceptsTextPrompt not in sut.capabilities:
+            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
+        suts[sut_uid] = sut
 
+    annotators = {
+        annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
+        for annotator_uid in annotator_uids
+    }
 
-@modelgauge_cli.command()
-@click.option(
-    "annotator_uids",
-    "-a",
-    "--annotator",
-    help="Which annotator to run",
-    multiple=True,
-    required=True,
-)
-@click.option(
-    "--workers",
-    type=int,
-    default=None,
-    help="Number of worker threads, default is 10 * number of SUTs.",
-)
-@click.option(
-    "--debug", is_flag=True, help="Show internal pipeline debugging information."
-)
-@click.argument(
-    "input_path",
-    type=click.Path(exists=True, path_type=pathlib.Path),
-)
-def run_annotators(annotator_uids, workers, input_path, debug):
-    """Take a CSV of prompts and responses and run them through annotators.
-    The CSV file must contain UID, Prompt, SUT, and Response columns.
-    Outputs a jsonl file."""
+    if cache_dir:
+        print(f"Creating cache dir {cache_dir}")
+        cache_dir.mkdir(exist_ok=True)
 
-    secrets = load_secrets_from_config()
+    # Create correct pipeline runner based on input.
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    if suts and annotators:
+        output_path = input_path.parent / pathlib.Path(
+            input_path.stem + "-annotated-responses" + timestamp + ".jsonl"
+        )
+        pipeline_runner = PromptPlusAnnotatorRunner(
+            workers,
+            input_path,
+            output_path,
+            cache_dir,
+            suts=suts,
+            annotators=annotators,
+        )
+    elif suts:
+        output_path = input_path.parent / pathlib.Path(
+            input_path.stem + "-responses-" + timestamp + ".csv"
+        )
+        pipeline_runner = PromptRunner(
+            workers, input_path, output_path, cache_dir, suts=suts
+        )
+    elif annotators:
+        output_path = input_path.parent / pathlib.Path(
+            input_path.stem + "-annotations-" + timestamp + ".jsonl"
+        )
+        pipeline_runner = AnnotatorRunner(
+            workers, input_path, output_path, cache_dir, annotators=annotators
+        )
+    else:
+        raise ValueError("Must specify at least one SUT or annotator.")
 
-    try:
-        annotators = {
-            annotator_uid: ANNOTATORS.make_instance(annotator_uid, secrets=secrets)
-            for annotator_uid in annotator_uids
-        }
-    except MissingSecretValues as e:
-        raise_if_missing_from_config([e])
+    with click.progressbar(
+        length=pipeline_runner.num_total_items,
+        label=f"Processing {pipeline_runner.num_input_items} input items"
+        + (f" * {len(suts)} SUTs" if suts else "")
+        + (f" * {len(annotators)} annotators" if annotators else "")
+        + ":",
+    ) as bar:
+        last_complete_count = 0
 
-    output_path = input_path.parent / pathlib.Path(
-        input_path.stem
-        + "-annotations-"
-        + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        + ".jsonl"
-    )
+        def show_progress(data):
+            nonlocal last_complete_count
+            complete_count = data["completed"]
+            bar.update(complete_count - last_complete_count)
+            last_complete_count = complete_count
 
-    run_annotator_pipeline(annotators, workers, debug, input_path, output_path)
+        pipeline_runner.run(show_progress, debug)
+
+    print(f"output saved to {output_path}")
 
 
 def main():

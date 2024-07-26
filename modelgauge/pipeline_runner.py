@@ -1,5 +1,4 @@
-import click
-from typing import List
+from abc import ABC, abstractmethod
 
 from modelgauge.annotation_pipeline import (
     AnnotatorAssigner,
@@ -9,7 +8,7 @@ from modelgauge.annotation_pipeline import (
     CsvAnnotatorInput,
     JsonlAnnotatorOutput,
 )
-from modelgauge.pipeline import Pipeline, PipelineSegment
+from modelgauge.pipeline import Pipeline
 from modelgauge.prompt_pipeline import (
     PromptSource,
     PromptSutAssigner,
@@ -18,128 +17,102 @@ from modelgauge.prompt_pipeline import (
     CsvPromptInput,
     CsvPromptOutput,
 )
-from modelgauge.sut_capabilities import AcceptsTextPrompt
 
 
-def build_prompt_pipeline_segments(
-    suts,
-    input_path,
-    output_path=None,
-    workers=None,
-    sut_cache_dir=None,
-    include_sink=True,
-):
-    """Returns an in-order list of pipeline segments required for a prompt pipeline."""
-    segments: List[PipelineSegment] = []
-    input = CsvPromptInput(input_path)
-    segments.append(PromptSource(input))
-    segments.append(PromptSutAssigner(suts))
-    segments.append(PromptSutWorkers(suts, workers, cache_path=sut_cache_dir))
-    if include_sink:
-        assert (
-            output_path is not None
-        ), "output_path must be provided if include_sink=True."
-        output = CsvPromptOutput(output_path, suts)
-        segments.append(PromptSink(suts, output))
-    return segments
+class PipelineRunner(ABC):
+    def __init__(self, num_workers, input_path, output_path, cache_dir):
+        self.num_workers = num_workers
+        self.input_path = input_path
+        self.output_path = output_path
+        self.cache_dir = cache_dir
+        self.pipeline_segments = []
 
+        self._initialize_segments()
 
-def build_annotator_pipeline_segments(
-    annotators, output_path, input_path=None, workers=None, include_source=True
-):
-    """Returns an in-order list of pipeline segments required for an annotator pipeline."""
-    segments: List[PipelineSegment] = []
-    if include_source:
-        assert (
-            input_path is not None
-        ), "input_path must be provided if include_source=True."
-        input = CsvAnnotatorInput(input_path)
-        segments.append(AnnotatorSource(input))
-    segments.append(AnnotatorAssigner(annotators))
-    segments.append(AnnotatorWorkers(annotators, workers))
-    output = JsonlAnnotatorOutput(output_path)
-    segments.append(AnnotatorSink(annotators, output))
-    return segments
+    @property
+    def num_input_items(self):
+        """Number of items in the input file.
 
+        Corresponds to the number of prompts when running SUTs or the number of SUT interactions when only running annotators.
+        """
+        return len(self.pipeline_segments[0].input)
 
-def run_prompts_pipeline(
-    suts, workers, sut_cache_dir, debug, input_path, output_path, annotators=None
-):
-    """Runs a pipeline for a given CSV file of prompts over a set of SUTs."""
-    run_annotators = annotators is not None and len(annotators)
+    @property
+    @abstractmethod
+    def num_total_items(self):
+        """Total number of items to process."""
+        pass
 
-    if sut_cache_dir:
-        print(f"Creating cache dir {sut_cache_dir}")
-        sut_cache_dir.mkdir(exist_ok=True)
-
-    for sut_uid in suts:
-        sut = suts[sut_uid]
-        if not AcceptsTextPrompt in sut.capabilities:
-            raise click.BadParameter(f"{sut_uid} does not accept text prompts")
-
-    if run_annotators:
-        # Adds annotator pipes after prompt pipes. Uses annotator output sink instead of regular prompt output.
-        pipeline_segments = build_prompt_pipeline_segments(
-            suts,
-            input_path,
-            workers=workers,
-            sut_cache_dir=sut_cache_dir,
-            include_sink=False,
-        )
-
-        pipeline_segments.extend(
-            build_annotator_pipeline_segments(
-                annotators, output_path, workers=workers, include_source=False
-            )
-        )
-        num_input_items = len(pipeline_segments[0].input)
-        total_items = num_input_items * len(suts) * len(annotators)
-        print(
-            f"Processing {num_input_items} prompts * {len(suts)} SUTS * {len(annotators)} annotators."
-        )
-    else:
-        pipeline_segments = build_prompt_pipeline_segments(
-            suts,
-            input_path,
-            output_path,
-            workers=workers,
-            sut_cache_dir=sut_cache_dir,
-            include_sink=True,
-        )
-        num_input_items = len(pipeline_segments[0].input)
-        total_items = num_input_items * len(suts)
-        print(f"Processing {num_input_items} prompts * {len(suts)} SUTS)")
-
-    run_pipeline(pipeline_segments, total_items, debug)
-    print(f"output saved to {output_path}")
-
-
-def run_annotator_pipeline(annotators, workers, debug, input_path, output_path):
-    pipeline_segments = build_annotator_pipeline_segments(
-        annotators, output_path, input_path=input_path, workers=workers
-    )
-    num_input_items = len(pipeline_segments[0].input)
-    total_items = num_input_items * len(annotators)
-    print(f"Processing {num_input_items} items * {len(annotators)} annotators.")
-
-    run_pipeline(pipeline_segments, total_items, debug)
-    print(f"output saved to {output_path}")
-
-
-def run_pipeline(pipeline_segments, total_items, debug):
-    with click.progressbar(length=total_items) as bar:
-        last_complete_count = 0
-
-        def show_progress(data):
-            nonlocal last_complete_count
-            complete_count = data["completed"]
-            bar.update(complete_count - last_complete_count)
-            last_complete_count = complete_count
-
+    def run(self, progress_callback, debug):
         pipeline = Pipeline(
-            *pipeline_segments,
-            progress_callback=show_progress,
+            *self.pipeline_segments,
+            progress_callback=progress_callback,
             debug=debug,
         )
-
         pipeline.run()
+
+    @abstractmethod
+    def _initialize_segments(self):
+        pass
+
+    def _add_prompt_segments(self, suts, include_sink=True):
+        input = CsvPromptInput(self.input_path)
+        self.pipeline_segments.append(PromptSource(input))
+        self.pipeline_segments.append(PromptSutAssigner(suts))
+        self.pipeline_segments.append(
+            PromptSutWorkers(suts, self.num_workers, cache_path=self.cache_dir)
+        )
+        if include_sink:
+            output = CsvPromptOutput(self.output_path, suts)
+            self.pipeline_segments.append(PromptSink(suts, output))
+
+    def _add_annotator_segments(self, annotators, include_source=True):
+        if include_source:
+            input = CsvAnnotatorInput(self.input_path)
+            self.pipeline_segments.append(AnnotatorSource(input))
+        self.pipeline_segments.append(AnnotatorAssigner(annotators))
+        self.pipeline_segments.append(AnnotatorWorkers(annotators, self.num_workers))
+        output = JsonlAnnotatorOutput(self.output_path)
+        self.pipeline_segments.append(AnnotatorSink(annotators, output))
+
+
+class PromptRunner(PipelineRunner):
+    def __init__(self, *args, suts):
+        self.suts = suts
+        super().__init__(*args)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.suts)
+
+    def _initialize_segments(self):
+        self._add_prompt_segments(self.suts, include_sink=True)
+
+
+class PromptPlusAnnotatorRunner(PipelineRunner):
+    def __init__(self, *args, suts, annotators):
+        self.suts = suts
+        self.annotators = annotators
+        super().__init__(*args)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.suts) * len(self.annotators)
+
+    def _initialize_segments(self):
+        # Hybrid pipeline: prompt source + annotator sink
+        self._add_prompt_segments(self.suts, include_sink=False)
+        self._add_annotator_segments(self.annotators, include_source=False)
+
+
+class AnnotatorRunner(PipelineRunner):
+    def __init__(self, *args, annotators):
+        self.annotators = annotators
+        super().__init__(*args)
+
+    @property
+    def num_total_items(self):
+        return self.num_input_items * len(self.annotators)
+
+    def _initialize_segments(self):
+        self._add_annotator_segments(self.annotators, include_source=True)

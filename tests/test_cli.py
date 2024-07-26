@@ -89,7 +89,7 @@ def test_run_prompts_normal(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-prompts", "--sut", "demo_yes_no", str(in_path)],
+        ["run-csv-items", "--sut", "demo_yes_no", str(in_path)],
         catch_exceptions=False,
     )
 
@@ -116,7 +116,7 @@ def test_run_prompts_with_annotators(tmp_path):
     result = runner.invoke(
         main.modelgauge_cli,
         [
-            "run-prompts",
+            "run-csv-items",
             "--sut",
             "demo_yes_no",
             "--annotator",
@@ -159,7 +159,7 @@ def test_run_prompts_bad_sut(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         main.modelgauge_cli,
-        ["run-prompts", "--sut", "noreqs", str(in_path)],
+        ["run-csv-items", "--sut", "noreqs", str(in_path)],
         catch_exceptions=False,
     )
     assert result.exit_code == 2
@@ -181,7 +181,7 @@ def test_run_annotators(tmp_path):
     result = runner.invoke(
         main.modelgauge_cli,
         [
-            "run-annotators",
+            "run-csv-items",
             "--annotator",
             "demo_annotator",
             str(in_path),
