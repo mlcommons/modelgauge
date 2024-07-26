@@ -1,5 +1,6 @@
 import itertools
 import multiprocessing
+import multiprocessing.pool
 import os
 from typing import Sequence, Optional
 
