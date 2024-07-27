@@ -127,14 +127,53 @@ def test_json_annotator_output_different_annotation_types(tmp_path):
 
 @pytest.fixture
 def annotators():
-    annotator = FakeAnnotator()
-    annotator.translate_response = MagicMock(
-        side_effect=lambda _, response: {
-            "sut_text": response.sut_text,
-            "dummy": "d",
-        }
+    annotator_pydantic = FakeAnnotator()
+    annotator_dict = FakeAnnotator()
+    # Return the same annotation but as a dict.
+    annotator_dict.translate_response = MagicMock(
+        side_effect=lambda *args: annotator_pydantic.translate_response(
+            *args
+        ).model_dump()
     )
-    return {"fake1": FakeAnnotator(), "fake2": annotator}
+    annotator_dummy = FakeAnnotator()
+    annotator_dummy.translate_response = MagicMock(return_value="d")
+    return {
+        "annotator_pydantic": annotator_pydantic,
+        "annotator_dict": annotator_dict,
+        "dummy": annotator_dummy,
+    }
+
+
+@pytest.mark.parametrize(
+    "annotator_uid,annotation",
+    [
+        ("annotator_pydantic", FakeAnnotation(sut_text="response")),
+        ("annotator_dict", {"sut_text": "response"}),
+        ("dummy", "d"),
+    ],
+)
+def test_annotator_worker_normal(annotators, annotator_uid, annotation):
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    w = AnnotatorWorkers(annotators)
+    result = w.handle_item((sut_interaction, annotator_uid))
+
+    assert result[0] == sut_interaction
+    assert result[1] == annotator_uid
+    assert result[2] == annotation
+
+
+def test_annotator_worker_cache(annotators, tmp_path):
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    w = AnnotatorWorkers(annotators, cache_path=tmp_path)
+
+    for _ in range(2):
+        _, _, annotation = w.handle_item((sut_interaction, "annotator_pydantic"))
+        assert annotation == FakeAnnotation(sut_text="response")
+        assert annotators["annotator_pydantic"].annotate_calls == 1
+
+        _, _, annotation = w.handle_item((sut_interaction, "annotator_pydantic"))
+        assert annotation == FakeAnnotation(sut_text="response")
+        assert annotators["annotator_pydantic"].annotate_calls == 1
 
 
 def test_full_run(annotators):
@@ -160,15 +199,18 @@ def test_full_run(annotators):
         interactions[0], make_sut_interaction("1", "a", "s", "b")
     )
     assert output.output[interactions[0]] == {
-        "fake1": {"sut_text": "b"},
-        "fake2": {"sut_text": "b", "dummy": "d"},
+        "annotator_pydantic": {"sut_text": "b"},
+        "annotator_dict": {"sut_text": "b"},
+        "dummy": "d",
     }
+
     assert sut_interactions_is_equal(
         interactions[1], make_sut_interaction("2", "c", "s", "d")
     )
     assert output.output[interactions[1]] == {
-        "fake1": {"sut_text": "d"},
-        "fake2": {"sut_text": "d", "dummy": "d"},
+        "annotator_pydantic": {"sut_text": "d"},
+        "annotator_dict": {"sut_text": "d"},
+        "dummy": "d",
     }
 
 
@@ -196,7 +238,7 @@ def test_progress(annotators):
     p.run()
 
     assert progress_items[0]["completed"] == 0
-    assert progress_items[-1]["completed"] == 4
+    assert progress_items[-1]["completed"] == len(annotators) * len(input.items)
 
 
 @pytest.mark.parametrize(
@@ -237,7 +279,9 @@ def test_prompt_response_annotation_pipeline(
             interaction,
             make_sut_interaction(prompt["UID"], prompt["Text"], sut, prompt["Text"]),
         )
+        annotation = {"sut_text": prompt["Text"]}
         assert output.output[interaction] == {
-            "fake1": {"sut_text": prompt["Text"]},
-            "fake2": {"sut_text": prompt["Text"], "dummy": "d"},
+            "annotator_pydantic": annotation,
+            "annotator_dict": annotation,
+            "dummy": "d",
         }
