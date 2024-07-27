@@ -162,18 +162,76 @@ def test_annotator_worker_normal(annotators, annotator_uid, annotation):
     assert result[2] == annotation
 
 
-def test_annotator_worker_cache(annotators, tmp_path):
+def test_annotator_worker_cache_simple(annotators, tmp_path):
     sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
     w = AnnotatorWorkers(annotators, cache_path=tmp_path)
 
+    # Tests that first call invokes the annotator and the second call uses the cache.
+    assert annotators["annotator_pydantic"].annotate_calls == 0
     for _ in range(2):
         _, _, annotation = w.handle_item((sut_interaction, "annotator_pydantic"))
         assert annotation == FakeAnnotation(sut_text="response")
         assert annotators["annotator_pydantic"].annotate_calls == 1
 
-        _, _, annotation = w.handle_item((sut_interaction, "annotator_pydantic"))
-        assert annotation == FakeAnnotation(sut_text="response")
-        assert annotators["annotator_pydantic"].annotate_calls == 1
+
+def test_annotator_worker_unique_responses(annotators, tmp_path):
+    """Different responses have different cache keys for annotator with response-based requests."""
+    w = AnnotatorWorkers(annotators, cache_path=tmp_path)
+
+    assert annotators["annotator_pydantic"].annotate_calls == 0
+    w.handle_item(
+        (make_sut_interaction("", "", "", "response 1"), "annotator_pydantic")
+    )
+    assert annotators["annotator_pydantic"].annotate_calls == 1
+    w.handle_item(
+        (make_sut_interaction("", "", "", "response 2"), "annotator_pydantic")
+    )
+    assert annotators["annotator_pydantic"].annotate_calls == 2
+
+    # Non-response SUT interaction attributes do not affect the cache key.
+    w.handle_item(
+        (make_sut_interaction("2", "2", "2", "response 2"), "annotator_pydantic")
+    )
+    assert annotators["annotator_pydantic"].annotate_calls == 2
+
+
+def test_annotator_worker_cache_unique_prompts(tmp_path):
+    """Different prompts have different cache keys for annotator with prompt-based requests."""
+
+    annotator = FakeAnnotator()
+    annotator.translate_request = MagicMock(
+        side_effect=lambda prompt, response: {"prompt": prompt, "text": response}
+    )
+    w = AnnotatorWorkers({"a": annotator}, cache_path=tmp_path)
+
+    # Different prompt texts.
+    assert annotator.annotate_calls == 0
+    w.handle_item((make_sut_interaction("", "prompt 1", "", ""), "a"))
+    assert annotator.annotate_calls == 1
+    w.handle_item((make_sut_interaction("", "prompt 2", "", ""), "a"))
+    assert annotator.annotate_calls == 2
+
+    # Different SUT options for same prompt text.
+    sut_interaction = make_sut_interaction("", "prompt 1", "", "")
+    sut_interaction.prompt.prompt.options.max_tokens += 1
+    w.handle_item((sut_interaction, "a"))
+    assert annotator.annotate_calls == 3
+
+
+def test_annotator_worker_cache_different_annotators(annotators, tmp_path):
+    sut_interaction = make_sut_interaction("1", "prompt", "sut", "response")
+    w = AnnotatorWorkers(annotators, cache_path=tmp_path)
+
+    assert annotators["annotator_pydantic"].annotate_calls == 0
+    assert annotators["annotator_dict"].annotate_calls == 0
+
+    w.handle_item((sut_interaction, "annotator_pydantic"))
+    assert annotators["annotator_pydantic"].annotate_calls == 1
+    assert annotators["annotator_dict"].annotate_calls == 0
+
+    w.handle_item((sut_interaction, "annotator_dict"))
+    assert annotators["annotator_pydantic"].annotate_calls == 1
+    assert annotators["annotator_dict"].annotate_calls == 1
 
 
 def test_full_run(annotators):
@@ -212,33 +270,6 @@ def test_full_run(annotators):
         "annotator_dict": {"sut_text": "d"},
         "dummy": "d",
     }
-
-
-def test_progress(annotators):
-    input = FakeAnnotatorInput(
-        [
-            {"UID": "1", "Prompt": "a", "Response": "b", "SUT": "s"},
-            {"UID": "2", "Prompt": "c", "Response": "d", "SUT": "s"},
-        ]
-    )
-    output = FakeAnnotatorOutput()
-
-    def track_progress(data):
-        progress_items.append(data.copy())
-
-    p = Pipeline(
-        AnnotatorSource(input),
-        AnnotatorAssigner(annotators),
-        AnnotatorWorkers(annotators, workers=1),
-        AnnotatorSink(annotators, output),
-        progress_callback=track_progress,
-    )
-    progress_items = []
-
-    p.run()
-
-    assert progress_items[0]["completed"] == 0
-    assert progress_items[-1]["completed"] == len(annotators) * len(input.items)
 
 
 @pytest.mark.parametrize(

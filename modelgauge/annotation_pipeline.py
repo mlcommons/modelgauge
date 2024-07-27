@@ -103,7 +103,14 @@ class AnnotatorWorkers(CachingPipe):
         self.annotators = annotators
 
     def key(self, item):
-        return item
+        sut_interaction, annotator_uid = item
+        annotator = self.annotators[annotator_uid]
+        request = annotator.translate_request(
+            sut_interaction.prompt, sut_interaction.response
+        )
+        if isinstance(request, BaseModel):
+            request = request.model_dump_json()
+        return (request, annotator_uid)
 
     def handle_uncached_item(self, item):
         sut_interaction, annotator_uid = item
