@@ -13,10 +13,10 @@ from modelgauge.annotator_registry import ANNOTATORS
 from modelgauge.config import load_secrets_from_config
 from modelgauge.load_plugins import load_plugins
 from modelgauge.prompt import TextPrompt
+from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT
 from modelgauge.sut_registry import SUTS
 from modelgauge.suts.together_client import CHAT_MODELS
-from modelgauge.single_turn_prompt_response import PromptWithContext
 
 """
   Simple API server for modelgauge functionality. Currently used just for interviews.
