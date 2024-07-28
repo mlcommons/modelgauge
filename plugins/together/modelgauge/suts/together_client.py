@@ -1,4 +1,5 @@
 import requests
+
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
@@ -18,7 +19,6 @@ from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
 from pydantic import BaseModel, Field
 from requests.adapters import HTTPAdapter, Retry
-from together.utils import response_status_exception  # type: ignore
 from typing import Any, List, Optional
 
 
@@ -61,14 +61,14 @@ def _retrying_post(url, headers, json_payload):
         allowed_methods=["POST"],
     )
     session.mount("https://", HTTPAdapter(max_retries=retries))
-    response = session.post(url, headers=headers, json=json_payload, timeout=120)
+    response = None
     try:
-        response_status_exception(response)
+        response = session.post(url, headers=headers, json=json_payload, timeout=120)
+        return response
     except Exception as e:
         raise Exception(
-            f"Exception calling {url} with {json_payload}. Response {response.text}"
+            f"Exception calling {url} with {json_payload}. Response {response.text if response else response}"
         ) from e
-    return response
 
 
 class TogetherCompletionsRequest(BaseModel):
@@ -281,7 +281,6 @@ class TogetherChatSUT(PromptResponseSUT[TogetherChatRequest, TogetherChatRespons
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
-        response_status_exception(response)
         return TogetherChatResponse.model_validate(response.json(), strict=True)
 
     def translate_response(
@@ -410,7 +409,6 @@ class TogetherInferenceSUT(
         }
         as_json = request.model_dump(exclude_none=True)
         response = _retrying_post(self._URL, headers, as_json)
-        response_status_exception(response)
         return TogetherInferenceResponse(**response.json())
 
     def translate_response(
