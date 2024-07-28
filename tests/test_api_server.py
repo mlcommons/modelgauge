@@ -1,7 +1,7 @@
 import os
 from unittest.mock import patch
 
-from starlette.testclient import TestClient # type: ignore
+from starlette.testclient import TestClient  # type: ignore
 
 
 class TestApiApp:
