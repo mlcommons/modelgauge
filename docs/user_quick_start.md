@@ -9,7 +9,8 @@
 
 ## Installation
 
-Run the following (ideally inside a Python virtual environment):
+Run the following (ideally inside a Poetry virtual environment. See [Developer Quick Start](dev_quick_start.md) 
+for the installation.):
 
 ```shell
 pip install modelgauge
