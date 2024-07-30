@@ -64,7 +64,7 @@ app = FastAPI()
 
 
 @app.get("/")
-async def root():
+async def get_options():
     return {"suts": list(suts.keys()), "annotators": list(annotators.keys())}
 
 
@@ -74,7 +74,7 @@ def process_work_item(
     sut = suts[sut_key]
     s_req = sut.translate_text_prompt(prompt)
     s_resp = sut.translate_response(s_req, sut.evaluate(s_req))
-    result = {"sut": sut.uid, "response": s_resp}
+    result = {"sut": sut.uid, "sut_response": s_resp}
     if annotator_key:
         annotator = annotators[annotator_key]
         a_req = annotator.translate_request(
@@ -91,15 +91,24 @@ auth_header = APIKeyHeader(name="x-key")
 
 
 @app.post("/")
-async def postroot(req: ProcessingRequest, key: str = Depends(auth_header)):
+async def process_sut_request(req: ProcessingRequest, key: str = Depends(auth_header)):
     if key != SECRET_KEY:
         raise HTTPException(401, "not authorized; send x-key header")
+    for sut in req.suts:
+        if not sut in suts:
+            raise HTTPException(422, f"sut {sut} not found")
     if req.annotators:
         work_items = list(itertools.product(req.prompts, req.suts, req.annotators))
     else:
         work_items = list(itertools.product(req.prompts, req.suts))  # type:ignore
 
     print(work_items)
-    pool = multiprocessing.pool.ThreadPool(len(work_items))
+    results = await process_work_items(work_items)
+    return {"request": req, "response": results}
+
+
+async def process_work_items(work_items):
+    worker_count = len(work_items) or 1
+    pool = multiprocessing.pool.ThreadPool(worker_count)
     results = pool.starmap(process_work_item, work_items)
-    return {"request": req, "result": results}
+    return results
