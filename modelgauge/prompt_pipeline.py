@@ -10,6 +10,9 @@ from modelgauge.single_turn_prompt_response import PromptWithContext
 from modelgauge.sut import PromptResponseSUT, SUT, SUTCompletion
 
 
+PROMPT_CSV_INPUT_COLUMNS = ["UID", "Text"]
+
+
 @dataclass
 class SutInteraction:
     prompt: PromptWithContext
@@ -41,6 +44,7 @@ class CsvPromptInput(PromptInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
+        self._validate_file()
 
     def __iter__(self) -> Iterable[PromptWithContext]:
         with open(self.path, newline="") as f:
@@ -53,7 +57,14 @@ class CsvPromptInput(PromptInput):
                     # Context can be any type you want.
                     context=row,
                 )
-                # yield PromptItem(row)
+
+    def _validate_file(self):
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            columns = next(csvreader)
+        assert all(
+            c in columns for c in PROMPT_CSV_INPUT_COLUMNS
+        ), f"Invalid input file. Must have columns: {', '.join(PROMPT_CSV_INPUT_COLUMNS)}."
 
 
 class PromptOutput(metaclass=ABCMeta):
@@ -71,6 +82,10 @@ class PromptOutput(metaclass=ABCMeta):
 class CsvPromptOutput(PromptOutput):
     def __init__(self, path, suts):
         super().__init__()
+        assert (
+            path.suffix.lower() == ".csv"
+        ), f"Invalid output file {path}. Must be of type CSV."
+
         self.path = path
         self.suts = suts
         self.file = None
@@ -79,8 +94,7 @@ class CsvPromptOutput(PromptOutput):
     def __enter__(self):
         self.file = open(self.path, "w", newline="")
         self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
-        headers = ["UID", "Text"]
-        self.writer.writerow(headers + [s for s in self.suts.keys()])
+        self.writer.writerow(PROMPT_CSV_INPUT_COLUMNS + [s for s in self.suts.keys()])
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

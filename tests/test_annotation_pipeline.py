@@ -86,6 +86,24 @@ def test_csv_annotator_input(tmp_path):
     assert sut_interactions_is_equal(item, make_sut_interaction("1", "a", "s", "b"))
 
 
+@pytest.mark.parametrize(
+    "header",
+    [
+        "Prompt,UID,Extra,Response,Response\n",
+        "UID,Prompt,SUT\n",
+        "Extra,Response,Extra\n",
+    ],
+)
+def test_csv_annotator_input_invalid_columns(tmp_path, header):
+    file_path = tmp_path / "input.csv"
+    file_path.write_text(header)
+    with pytest.raises(
+        AssertionError,
+        match="Invalid input file. Must have columns: UID, Prompt, SUT, Response.",
+    ):
+        CsvAnnotatorInput(file_path)
+
+
 def test_json_annotator_output(tmp_path):
     file_path = tmp_path / "output.jsonl"
     with JsonlAnnotatorOutput(file_path) as output:
@@ -123,6 +141,15 @@ def test_json_annotator_output_different_annotation_types(tmp_path):
 
     with jsonlines.open(file_path) as reader:
         assert reader.read()["Annotations"] == annotations
+
+        
+@pytest.mark.parametrize("output_fname", ["output.csv", "output.json"])
+def test_csv_annotator_output_invalid(tmp_path, output_fname):
+    file_path = tmp_path / output_fname
+    with pytest.raises(
+        AssertionError, match=f"Invalid output file {file_path}. Must be of type JSONL."
+    ):
+        JsonlAnnotatorOutput(file_path)
 
 
 @pytest.fixture
@@ -261,7 +288,6 @@ def test_full_run(annotators):
         "annotator_dict": {"sut_text": "b"},
         "dummy": "d",
     }
-
     assert sut_interactions_is_equal(
         interactions[1], make_sut_interaction("2", "c", "s", "d")
     )
@@ -297,6 +323,7 @@ def test_prompt_response_annotation_pipeline(
         AnnotatorSink(annotators, output),
     )
     p.run()
+
 
     assert len(output.output) == len(input.items) * len(suts)
     interactions = sorted(

@@ -12,7 +12,9 @@ from modelgauge.pipeline import CachingPipe, Pipe, Sink, Source
 from modelgauge.prompt import TextPrompt
 from modelgauge.prompt_pipeline import PromptOutput, SutInteraction
 from modelgauge.single_turn_prompt_response import PromptWithContext
-from modelgauge.sut import SUTCompletion
+from modelgauge.sut import PromptResponseSUT, SUTCompletion
+
+ANNOTATOR_CSV_INPUT_COLUMNS = ["UID", "Prompt", "SUT", "Response"]
 
 
 class AnnotatorInput(metaclass=ABCMeta):
@@ -31,6 +33,7 @@ class CsvAnnotatorInput(AnnotatorInput):
     def __init__(self, path):
         super().__init__()
         self.path = path
+        self._validate_file()
 
     def __iter__(self) -> Iterable[SutInteraction]:
         with open(self.path, newline="") as f:
@@ -46,10 +49,22 @@ class CsvAnnotatorInput(AnnotatorInput):
                 response = SUTCompletion(text=row["Response"])
                 yield SutInteraction(prompt, row["SUT"], response)
 
+    def _validate_file(self):
+        with open(self.path, newline="") as f:
+            csvreader = csv.reader(f)
+            columns = next(csvreader)
+        assert all(
+            c in columns for c in ANNOTATOR_CSV_INPUT_COLUMNS
+        ), f"Invalid input file. Must have columns: {', '.join(ANNOTATOR_CSV_INPUT_COLUMNS)}."
+
 
 class JsonlAnnotatorOutput(PromptOutput):
     def __init__(self, path):
         super().__init__()
+        assert (
+            path.suffix.lower() == ".jsonl"
+        ), f"Invalid output file {path}. Must be of type JSONL."
+
         self.path = path
         self.file = None
         self.writer = None
