@@ -142,7 +142,7 @@ def test_json_annotator_output_different_annotation_types(tmp_path):
     with jsonlines.open(file_path) as reader:
         assert reader.read()["Annotations"] == annotations
 
-        
+
 @pytest.mark.parametrize("output_fname", ["output.csv", "output.json"])
 def test_csv_annotator_output_invalid(tmp_path, output_fname):
     file_path = tmp_path / output_fname
@@ -323,7 +323,6 @@ def test_prompt_response_annotation_pipeline(
         AnnotatorSink(annotators, output),
     )
     p.run()
-
 
     assert len(output.output) == len(input.items) * len(suts)
     interactions = sorted(
