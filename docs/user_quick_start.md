@@ -9,7 +9,7 @@
 
 ## Installation
 
-Run the following (ideally inside a Python virtual environment)::
+Run the following (ideally inside a Python virtual environment):
 
 ```shell
 pip install modelgauge
