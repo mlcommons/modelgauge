@@ -2,7 +2,7 @@ import itertools
 import multiprocessing
 import multiprocessing.pool
 import os
-from typing import Sequence, Optional
+from typing import Sequence
 
 from fastapi import FastAPI, Depends, HTTPException  # type: ignore
 from fastapi.security import APIKeyHeader  # type: ignore
@@ -68,26 +68,35 @@ async def get_options():
     return {"suts": list(suts.keys()), "annotators": list(annotators.keys())}
 
 
-def process_work_item(
-    prompt: TextPrompt, sut_key: str, annotator_key: Optional[str] = None
-):
+def process_sut_item(prompt: TextPrompt, sut_key: str):
     sut = suts[sut_key]
     s_req = sut.translate_text_prompt(prompt)
     s_resp = sut.translate_response(s_req, sut.evaluate(s_req))
-    result = {"sut": sut.uid, "sut_response": s_resp}
-    if annotator_key:
-        annotator = annotators[annotator_key]
+    return {"sut": sut.uid, "prompt": prompt, "sut_response": s_resp}
+
+
+def process_annotation(result: dict, annotator_keys: Sequence[str]):
+    result["annotations"] = {}
+    for key in annotator_keys:
+        annotator = annotators[key]
         a_req = annotator.translate_request(
-            PromptWithContext(prompt=prompt, source_id="whatever, man"),
-            s_resp.completions[0],
+            PromptWithContext(prompt=result["prompt"], source_id="whatever, man"),
+            result["sut_response"].completions[0],
         )
-        result["annotation"] = annotator.translate_response(
+        result["annotations"][key] = annotator.translate_response(
             a_req, annotator.annotate(a_req)
         )
     return result
 
 
 auth_header = APIKeyHeader(name="x-key")
+
+
+async def process_work_items(function, work_items):
+    if not work_items:
+        return []
+    pool = multiprocessing.pool.ThreadPool(len(work_items))
+    return pool.starmap(function, work_items)
 
 
 @app.post("/")
@@ -97,18 +106,14 @@ async def process_sut_request(req: ProcessingRequest, key: str = Depends(auth_he
     for sut in req.suts:
         if not sut in suts:
             raise HTTPException(422, f"sut {sut} not found")
+
+    sut_work_items = list(itertools.product(req.prompts, req.suts))  # type:ignore
+    sut_results = await process_work_items(process_sut_item, sut_work_items)
+
     if req.annotators:
-        work_items = list(itertools.product(req.prompts, req.suts, req.annotators))
-    else:
-        work_items = list(itertools.product(req.prompts, req.suts))  # type:ignore
+        annotator_work_items = [
+            [sut_result, req.annotators] for sut_result in sut_results
+        ]
+        await process_work_items(process_annotation, annotator_work_items)
 
-    print(work_items)
-    results = await process_work_items(work_items)
-    return {"request": req, "response": results}
-
-
-async def process_work_items(work_items):
-    worker_count = len(work_items) or 1
-    pool = multiprocessing.pool.ThreadPool(worker_count)
-    results = pool.starmap(process_work_item, work_items)
-    return results
+    return {"response": sut_results}

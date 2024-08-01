@@ -55,7 +55,7 @@ class TestApiApp:
         assert response.status_code == 200
 
     def test_post_main_with_item_and_sut(self):
-        with patch("modelgauge.api_server.process_work_item") as pwi:
+        with patch("modelgauge.api_server.process_sut_item"):
             response = self.client.post(
                 "/",
                 json=self.a_request(prompt="hello", sut="alpaca-7b"),
@@ -64,7 +64,7 @@ class TestApiApp:
             assert response.status_code == 200
 
     def test_post_main_with_unknown_sut(self):
-        with patch("modelgauge.api_server.process_work_item") as pwi:
+        with patch("modelgauge.api_server.process_sut_item"):
             response = self.client.post(
                 "/",
                 json=self.a_request(prompt="hello", sut="doesnotexist"),
