@@ -62,6 +62,8 @@ jsonlines = "^4.0.0"
 diskcache = "^5.6.3"
 starlette = "^0.37.2"
 fastapi = "^0.111.1"
+together = "^1.2.3"
+
 
 [tool.poetry.group.dev.dependencies]
 modelgauge_demo_plugin = {path = "demo_plugin", develop = true, optional=true}
