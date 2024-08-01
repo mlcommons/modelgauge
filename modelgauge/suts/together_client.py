@@ -1,4 +1,8 @@
-import requests
+from typing import Any, List, Optional
+
+import requests  # type:ignore
+from pydantic import BaseModel, Field
+from requests.adapters import HTTPAdapter, Retry  # type:ignore
 
 from modelgauge.prompt import ChatPrompt, ChatRole, SUTOptions, TextPrompt
 from modelgauge.prompt_formatting import format_chat
@@ -17,9 +21,6 @@ from modelgauge.sut_capabilities import (
 )
 from modelgauge.sut_decorator import modelgauge_sut
 from modelgauge.sut_registry import SUTS
-from pydantic import BaseModel, Field
-from requests.adapters import HTTPAdapter, Retry
-from typing import Any, List, Optional
 
 
 class TogetherApiKey(RequiredSecret):

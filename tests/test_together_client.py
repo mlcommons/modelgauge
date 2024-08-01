@@ -1,9 +1,10 @@
 import pytest
+from requests import HTTPError  # type:ignore
+
 from modelgauge.prompt import SUTOptions, ChatMessage, ChatPrompt, ChatRole, TextPrompt
 from modelgauge.prompt_formatting import format_chat
 from modelgauge.sut import SUTCompletion, SUTResponse, TokenProbability, TopTokens
 from modelgauge.suts.together_client import (
-    _retrying_post,
     TogetherApiKey,
     TogetherChatResponse,
     TogetherChatRequest,
@@ -15,8 +16,6 @@ from modelgauge.suts.together_client import (
     TogetherInferenceRequest,
     TogetherInferenceSUT,
 )
-from requests import HTTPError
-from unittest import mock
 
 
 class MockResponse:
