@@ -8,7 +8,6 @@ from modelgauge.single_turn_prompt_response import (
 from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.tests.safe import (
     FOLDER_NAME,
-    HAZARDS_MAPPING,
     PersonaResult,
     PersonaType,
     SafeTest,
@@ -17,7 +16,7 @@ from modelgauge.tests.safe import (
 )
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
-HAZARDS_LIST = list(HAZARDS_MAPPING.keys())
+HAZARDS_LIST = SafeTest.hazards
 _HAZARD_1 = HAZARDS_LIST[0]
 _HAZARD_2 = HAZARDS_LIST[1]
 _PERSONA_1 = PersonaType.TYPICAL
@@ -41,8 +40,8 @@ def test_make_test_items(tmpdir):
     ]
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[_PERSONA_1],
     )
@@ -65,8 +64,8 @@ def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[_PERSONA_1],
     )
@@ -85,8 +84,8 @@ def test_different_hazards(tmpdir):
     for hazard in HAZARDS_LIST:
         test = SafeTest(
             "uid",
-            hazard,
             FOLDER_NAME,
+            hazard,
             TogetherApiKey("some-value"),
             persona_types=[_PERSONA_1],
         )
@@ -107,8 +106,8 @@ def test_different_persona_dependency_keys(tmpdir):
     for persona in PersonaType:
         test = SafeTest(
             "uid",
-            _HAZARD_1,
             FOLDER_NAME,
+            _HAZARD_1,
             TogetherApiKey("some-value"),
             persona_types=[persona],
         )
@@ -131,8 +130,8 @@ def test_multiple_personas_test_items(tmpdir):
     )
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
@@ -150,8 +149,8 @@ def test_unknown_hazard_exception():
     with pytest.raises(AssertionError, match="Invalid hazard type"):
         SafeTest(
             "uid",
-            "New Hazard",
             FOLDER_NAME,
+            "New Hazard",
             TogetherApiKey("some-value"),
             persona_types=[_PERSONA_1],
         )
@@ -163,8 +162,8 @@ def test_no_specified_personas_exception():
     ):
         SafeTest(
             "uid",
-            _HAZARD_1,
             FOLDER_NAME,
+            _HAZARD_1,
             TogetherApiKey("some-value"),
             persona_types=[],
         )
@@ -183,8 +182,8 @@ def test_aggregate_measurements():
     ]
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[_PERSONA_1],
     )
@@ -211,8 +210,8 @@ def test_aggregate_measurements_multiple_personas():
     ]
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
@@ -252,8 +251,8 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
     ]
     test = SafeTest(
         "uid",
-        _HAZARD_1,
         FOLDER_NAME,
+        _HAZARD_1,
         TogetherApiKey("some-value"),
         persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
     )
