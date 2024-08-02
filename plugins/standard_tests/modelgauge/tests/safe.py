@@ -34,7 +34,7 @@ import csv
 from abc import ABC, abstractmethod
 from enum import Enum
 from pydantic import BaseModel
-from typing import Dict, List, Mapping
+from typing import Dict, Generic, List, Mapping, TypeVar
 
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
@@ -59,15 +59,11 @@ from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 
-
-class PersonaType(str, Enum):
-    TYPICAL = "typical"
-    MALICIOUS = "malicious"
-    VULNERABLE = "vulnerable"
+PersonaType = TypeVar("PersonaType", bound=Enum)
 
 
 class SafeTestItemContext(BaseModel):
-    persona_type: PersonaType
+    persona_type: str
 
 
 class PersonaResult(BaseModel):
@@ -76,10 +72,10 @@ class PersonaResult(BaseModel):
 
 
 class SafeTestResult(BaseModel):
-    persona_results: Mapping[PersonaType, PersonaResult]
+    persona_results: Mapping[str, PersonaResult]
 
 
-class SafeTestBase(PromptResponseTest, ABC):
+class SafeTestBase(PromptResponseTest, ABC, Generic[PersonaType]):
     """Base class for different versions of the MLCommons SAFE tests.
 
     Concrete SAFE test classes must set a class attribute `hazards` to be a list of applicable hazard acronyms.
@@ -145,22 +141,28 @@ class SafeTestBase(PromptResponseTest, ABC):
         persona_results = {}
         for persona in self.persona_types:
             if persona in measurement_stats:
-                persona_results[persona] = PersonaResult(
+                persona_results[persona.value] = PersonaResult(
                     frac_safe=measurement_stats[persona].mean,
                     num_items=measurement_stats[persona].count,
                 )
         return SafeTestResult(persona_results=persona_results)
 
 
+class SafePersonas(str, Enum):
+    TYPICAL = "typical"
+    MALICIOUS = "malicious"
+    VULNERABLE = "vulnerable"
+
+
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SafeTest(SafeTestBase):
+class SafeTest(SafeTestBase[SafePersonas]):
     hazards = ["vcr", "nvc", "scr", "cae", "cbr", "ssh", "hat"]
 
     def __init__(self, uid: str, folder_name: str, *args, **kwargs):
         super().__init__(uid, *args, **kwargs)
         self.folder_name = folder_name
 
-    def _persona_dependency_key(self, persona: PersonaType) -> str:
+    def _persona_dependency_key(self, persona: SafePersonas) -> str:
         return f"{self.folder_name}_{self.hazard}_{persona.value}"
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
@@ -214,8 +216,14 @@ class Locale(str, Enum):
     HI_IN = "HI_IN"  # Hindi, India
 
 
+class SafePersonasVersion1(str, Enum):
+    NORMAL = "normal"
+    SKILLED = "skilled"
+    UNSKILLED = "unskilled"
+
+
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
-class SafeTestVersion1(SafeTestBase):
+class SafeTestVersion1(SafeTestBase[SafePersonasVersion1]):
     """Version 1.0 of SAFE test.
 
     Assumptions about working group deliverables:
@@ -284,9 +292,9 @@ class SafeTestVersion1(SafeTestBase):
                     if not text:
                         continue
 
-                    # Check that prompt is for correct hazard/persona/locale
+                    # Check that prompt is for correct hazard/persona/locale.
                     file_hazard = row["Hazard UID"]
-                    persona = PersonaType(row["Persona"])
+                    persona = SafePersonasVersion1(row["Persona"])
                     locale = Locale(row["Locale"])
                     assert (
                         file_hazard == self.hazard
@@ -320,7 +328,7 @@ TESTS.register(
     Locale.EN_US,
     "dfm",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL],
+    persona_types=[SafePersonasVersion1.NORMAL],
 )
 
 FOLDER_NAME = "data_04apr2024"
@@ -331,7 +339,7 @@ TESTS.register(
     FOLDER_NAME,
     "cae",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -339,7 +347,7 @@ TESTS.register(
     FOLDER_NAME,
     "cbr",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -347,7 +355,7 @@ TESTS.register(
     FOLDER_NAME,
     "hat",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -355,7 +363,7 @@ TESTS.register(
     FOLDER_NAME,
     "nvc",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -363,7 +371,7 @@ TESTS.register(
     FOLDER_NAME,
     "scr",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
 TESTS.register(
     SafeTest,
@@ -371,7 +379,7 @@ TESTS.register(
     FOLDER_NAME,
     "ssh",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.VULNERABLE],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.VULNERABLE],
 )
 TESTS.register(
     SafeTest,
@@ -379,5 +387,5 @@ TESTS.register(
     FOLDER_NAME,
     "vcr",
     API_KEY_SECRET,
-    persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )

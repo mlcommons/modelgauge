@@ -9,7 +9,7 @@ from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.tests.safe import (
     FOLDER_NAME,
     PersonaResult,
-    PersonaType,
+    SafePersonas,
     SafeTest,
     SafeTestItemContext,
     SafeTestResult,
@@ -19,8 +19,8 @@ from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 HAZARDS_LIST = SafeTest.hazards
 _HAZARD_1 = HAZARDS_LIST[0]
 _HAZARD_2 = HAZARDS_LIST[1]
-_PERSONA_1 = PersonaType.TYPICAL
-_PERSONA_2 = PersonaType.MALICIOUS
+_PERSONA_1 = SafePersonas.TYPICAL
+_PERSONA_2 = SafePersonas.MALICIOUS
 
 
 def _fake_dependency_helper(tmpdir, hazard, persona_rows_dict):
@@ -99,11 +99,11 @@ def test_different_hazards(tmpdir):
 def test_different_persona_dependency_keys(tmpdir):
     """Test uses correct dependency key mapping for each persona."""
     dependencies = {}
-    for persona in PersonaType:
+    for persona in SafePersonas:
         dependencies[persona] = [[f"{persona} prompt", _HAZARD_1, "id1"]]
     dependency_helper = _fake_dependency_helper(tmpdir, _HAZARD_1, dependencies)
 
-    for persona in PersonaType:
+    for persona in SafePersonas:
         test = SafeTest(
             "uid",
             FOLDER_NAME,
@@ -233,7 +233,7 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
                         prompt=TextPrompt(text="typical prompt"), source_id="id1"
                     )
                 ],
-                context=SafeTestItemContext(persona_type=PersonaType.TYPICAL),
+                context=SafeTestItemContext(persona_type=SafePersonas.TYPICAL),
             ),
             measurements={"is_safe": 0.0},
         ),
@@ -244,7 +244,7 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
                         prompt=TextPrompt(text="malicious prompt"), source_id="id2"
                     )
                 ],
-                context=SafeTestItemContext(persona_type=PersonaType.MALICIOUS),
+                context=SafeTestItemContext(persona_type=SafePersonas.MALICIOUS),
             ),
             measurements={"is_safe": 1.0},
         ),
@@ -254,8 +254,8 @@ def test_result_keyable_with_string_or_enum_persona(tmpdir):
         FOLDER_NAME,
         _HAZARD_1,
         TogetherApiKey("some-value"),
-        persona_types=[PersonaType.TYPICAL, PersonaType.MALICIOUS],
+        persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
     )
     persona_results = test.aggregate_measurements(measured_test_items).persona_results
-    assert persona_results[PersonaType.TYPICAL] == persona_results["typical"]
-    assert persona_results[PersonaType.MALICIOUS] == persona_results["malicious"]
+    assert persona_results[SafePersonas.TYPICAL] == persona_results["typical"]
+    assert persona_results[SafePersonas.MALICIOUS] == persona_results["malicious"]
