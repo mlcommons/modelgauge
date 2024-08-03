@@ -1,4 +1,6 @@
 import pytest
+from enum import Enum
+
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
     MeasuredTestItem,
@@ -11,10 +13,113 @@ from modelgauge.tests.safe import (
     PersonaResult,
     SafePersonas,
     SafeTest,
+    SafeTestBase,
     SafeTestItemContext,
     SafeTestResult,
 )
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
+
+FAKE_API_KEY = TogetherApiKey("some-value")
+
+
+class TestBaseSafeTestCommonFunctionality:
+    class FakePersonas(str, Enum):
+        HUMAN = "human"
+        ALIEN = "alien"
+
+    class FakeSafeTest(SafeTestBase[FakePersonas]):
+        hazards = ["hazard1", "hazard2"]
+
+        def get_dependencies(self):
+            pass
+
+        def make_test_items(self, dependency_helper):
+            pass
+
+    @pytest.fixture
+    def fake_test_human(self):
+        return self.FakeSafeTest(
+            "uid", "hazard1", FAKE_API_KEY, [self.FakePersonas.HUMAN]
+        )
+
+    @pytest.fixture
+    def fake_test_multiple_personas(self):
+        return self.FakeSafeTest(
+            "uid",
+            "hazard1",
+            FAKE_API_KEY,
+            [self.FakePersonas.HUMAN, self.FakePersonas.ALIEN],
+        )
+
+    @staticmethod
+    def _make_measured_test_item(persona: FakePersonas, is_safe: float):
+        return MeasuredTestItem(
+            test_item=TestItem(
+                prompts=[PromptWithContext(prompt=TextPrompt(text=""), source_id="")],
+                context=SafeTestItemContext(persona_type=persona),
+            ),
+            measurements={"is_safe": is_safe},
+        )
+
+    def test_unknown_hazard_exception(self):
+        with pytest.raises(AssertionError, match="Invalid hazard type"):
+            self.FakeSafeTest(
+                "uid", "New Hazard", FAKE_API_KEY, [self.FakePersonas.HUMAN]
+            )
+
+    def test_no_specified_personas_exception(self):
+        with pytest.raises(
+            AssertionError, match="At least one persona type must be specified"
+        ):
+            self.FakeSafeTest("uid", "hazard1", FAKE_API_KEY, [])
+
+    # todo: Add test for measure_quality
+
+    def test_aggregate_measurements(self, fake_test_human):
+        persona = self.FakePersonas.HUMAN
+        # 2 safe, 1 unsafe
+        measured_test_items = [
+            self._make_measured_test_item(persona, 0.0),
+            self._make_measured_test_item(persona, 1.0),
+            self._make_measured_test_item(persona, 1.0),
+        ]
+        results = fake_test_human.aggregate_measurements(measured_test_items)
+        assert results == SafeTestResult(
+            persona_results={persona: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
+        )
+
+    def test_aggregate_measurements_multiple_personas(
+        self, fake_test_multiple_personas
+    ):
+        # 1 unsafe human, 1 unsafe alien, 1 safe alien.
+        measured_test_items = [
+            self._make_measured_test_item(self.FakePersonas.HUMAN, 0.0),
+            self._make_measured_test_item(self.FakePersonas.ALIEN, 0.0),
+            self._make_measured_test_item(self.FakePersonas.ALIEN, 1.0),
+        ]
+        results = fake_test_multiple_personas.aggregate_measurements(
+            measured_test_items
+        )
+        assert results == SafeTestResult(
+            persona_results={
+                self.FakePersonas.HUMAN: PersonaResult(frac_safe=0.0, num_items=1),
+                self.FakePersonas.ALIEN: PersonaResult(frac_safe=0.5, num_items=2),
+            }
+        )
+
+    def test_result_keyable_with_string_or_enum_persona(
+        self, tmpdir, fake_test_multiple_personas
+    ):
+        measured_test_items = [
+            self._make_measured_test_item(self.FakePersonas.HUMAN, 0.0),
+            self._make_measured_test_item(self.FakePersonas.ALIEN, 1.0),
+        ]
+        persona_results = fake_test_multiple_personas.aggregate_measurements(
+            measured_test_items
+        ).persona_results
+        assert persona_results[self.FakePersonas.HUMAN] == persona_results["human"]
+        assert persona_results[self.FakePersonas.ALIEN] == persona_results["alien"]
+
 
 HAZARDS_LIST = SafeTest.hazards
 _HAZARD_1 = HAZARDS_LIST[0]
@@ -39,11 +144,7 @@ def test_make_test_items(tmpdir):
         ["prompt 2", _HAZARD_1, "id2"],
     ]
     test = SafeTest(
-        "uid",
-        FOLDER_NAME,
-        _HAZARD_1,
-        TogetherApiKey("some-value"),
-        persona_types=[_PERSONA_1],
+        "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[_PERSONA_1]
     )
     dependency_helper = _fake_dependency_helper(
         tmpdir, _HAZARD_1, {_PERSONA_1: text_prompts}
@@ -63,11 +164,7 @@ def test_make_test_items(tmpdir):
 def test_hazard_mismatch_exception(tmpdir):
     """An error is raised if the test encounters an item in the dataset with a different hazard."""
     test = SafeTest(
-        "uid",
-        FOLDER_NAME,
-        _HAZARD_1,
-        TogetherApiKey("some-value"),
-        persona_types=[_PERSONA_1],
+        "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[_PERSONA_1]
     )
     dependency_helper = _fake_dependency_helper(
         tmpdir, _HAZARD_1, {_PERSONA_1: [["prompt", _HAZARD_2, "id"]]}
@@ -83,11 +180,7 @@ def test_different_hazards(tmpdir):
     items = []
     for hazard in HAZARDS_LIST:
         test = SafeTest(
-            "uid",
-            FOLDER_NAME,
-            hazard,
-            TogetherApiKey("some-value"),
-            persona_types=[_PERSONA_1],
+            "uid", FOLDER_NAME, hazard, FAKE_API_KEY, persona_types=[_PERSONA_1]
         )
         dependency_helper = _fake_dependency_helper(
             tmpdir, hazard, {_PERSONA_1: [["prompt", hazard, "id"]]}
@@ -105,11 +198,7 @@ def test_different_persona_dependency_keys(tmpdir):
 
     for persona in SafePersonas:
         test = SafeTest(
-            "uid",
-            FOLDER_NAME,
-            _HAZARD_1,
-            TogetherApiKey("some-value"),
-            persona_types=[persona],
+            "uid", FOLDER_NAME, _HAZARD_1, FAKE_API_KEY, persona_types=[persona]
         )
         item = test.make_test_items(dependency_helper)[0]
         assert item.prompts[0].prompt.text == f"{persona} prompt"
@@ -132,7 +221,7 @@ def test_multiple_personas_test_items(tmpdir):
         "uid",
         FOLDER_NAME,
         _HAZARD_1,
-        TogetherApiKey("some-value"),
+        FAKE_API_KEY,
         persona_types=[_PERSONA_1, _PERSONA_2],
     )
     items = test.make_test_items(dependency_helper)
@@ -143,119 +232,3 @@ def test_multiple_personas_test_items(tmpdir):
     ]
     # Ensure we got all the right prompts, and in a stable order.
     assert [item.prompts[0].prompt.text for item in items] == prompts
-
-
-def test_unknown_hazard_exception():
-    with pytest.raises(AssertionError, match="Invalid hazard type"):
-        SafeTest(
-            "uid",
-            FOLDER_NAME,
-            "New Hazard",
-            TogetherApiKey("some-value"),
-            persona_types=[_PERSONA_1],
-        )
-
-
-def test_no_specified_personas_exception():
-    with pytest.raises(
-        AssertionError, match="At least one persona type must be specified"
-    ):
-        SafeTest(
-            "uid",
-            FOLDER_NAME,
-            _HAZARD_1,
-            TogetherApiKey("some-value"),
-            persona_types=[],
-        )
-
-
-def test_aggregate_measurements():
-    dummy_item = TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text="prompt"), source_id="id")],
-        context=SafeTestItemContext(persona_type=_PERSONA_1),
-    )
-    # 2 safe, 1 unsafe
-    measured_test_items = [
-        MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 0.0}),
-        MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
-        MeasuredTestItem(test_item=dummy_item, measurements={"is_safe": 1.0}),
-    ]
-    test = SafeTest(
-        "uid",
-        FOLDER_NAME,
-        _HAZARD_1,
-        TogetherApiKey("some-value"),
-        persona_types=[_PERSONA_1],
-    )
-    results = test.aggregate_measurements(measured_test_items)
-    assert results == SafeTestResult(
-        persona_results={_PERSONA_1: PersonaResult(frac_safe=2.0 / 3.0, num_items=3)}
-    )
-
-
-def test_aggregate_measurements_multiple_personas():
-    dummy_item_persona_1 = TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text="prompt"), source_id="id")],
-        context=SafeTestItemContext(persona_type=_PERSONA_1),
-    )
-    dummy_item_persona_2 = TestItem(
-        prompts=[PromptWithContext(prompt=TextPrompt(text="prompt"), source_id="id")],
-        context=SafeTestItemContext(persona_type=_PERSONA_2),
-    )
-    # 2 safe, 1 unsafe
-    measured_test_items = [
-        MeasuredTestItem(test_item=dummy_item_persona_1, measurements={"is_safe": 0.0}),
-        MeasuredTestItem(test_item=dummy_item_persona_2, measurements={"is_safe": 0.0}),
-        MeasuredTestItem(test_item=dummy_item_persona_2, measurements={"is_safe": 1.0}),
-    ]
-    test = SafeTest(
-        "uid",
-        FOLDER_NAME,
-        _HAZARD_1,
-        TogetherApiKey("some-value"),
-        persona_types=[_PERSONA_1, _PERSONA_2],
-    )
-    results = test.aggregate_measurements(measured_test_items)
-    assert results == SafeTestResult(
-        persona_results={
-            _PERSONA_1: PersonaResult(frac_safe=0.0, num_items=1),
-            _PERSONA_2: PersonaResult(frac_safe=0.5, num_items=2),
-        }
-    )
-
-
-def test_result_keyable_with_string_or_enum_persona(tmpdir):
-    measured_test_items = [
-        MeasuredTestItem(
-            test_item=TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="typical prompt"), source_id="id1"
-                    )
-                ],
-                context=SafeTestItemContext(persona_type=SafePersonas.TYPICAL),
-            ),
-            measurements={"is_safe": 0.0},
-        ),
-        MeasuredTestItem(
-            test_item=TestItem(
-                prompts=[
-                    PromptWithContext(
-                        prompt=TextPrompt(text="malicious prompt"), source_id="id2"
-                    )
-                ],
-                context=SafeTestItemContext(persona_type=SafePersonas.MALICIOUS),
-            ),
-            measurements={"is_safe": 1.0},
-        ),
-    ]
-    test = SafeTest(
-        "uid",
-        FOLDER_NAME,
-        _HAZARD_1,
-        TogetherApiKey("some-value"),
-        persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
-    )
-    persona_results = test.aggregate_measurements(measured_test_items).persona_results
-    assert persona_results[SafePersonas.TYPICAL] == persona_results["typical"]
-    assert persona_results[SafePersonas.MALICIOUS] == persona_results["malicious"]

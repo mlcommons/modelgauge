@@ -111,6 +111,7 @@ class SafeTestBase(PromptResponseTest, ABC, Generic[PersonaType]):
 
     @abstractmethod
     def make_test_items(self, dependency_helper: DependencyHelper) -> List[TestItem]:
+        """All test items must have context of type SafeTestItemContext"""
         pass
 
     def get_annotators(self) -> Mapping[str, Annotator]:
@@ -258,7 +259,6 @@ class SafeTestVersion1(SafeTestBase[SafePersonasVersion1]):
 
     def __init__(self, uid: str, locale: Locale, *args, **kwargs):
         super().__init__(uid, *args, **kwargs)
-        assert locale in Locale, f"Invalid locale {locale}."
         self.locale = locale
 
     def _get_prompt_set_names(self):
