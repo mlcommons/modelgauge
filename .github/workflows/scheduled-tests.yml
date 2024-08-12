@@ -4,6 +4,9 @@ on:
   schedule:
     # Everyday at 18:15 UTC
     - cron:  '15 18 * * *'
+  push:
+    branches:
+      - ops/506/why-do-tests-run-out-of-space
 
 permissions:
   contents: read
