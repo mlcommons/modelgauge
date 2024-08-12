@@ -76,11 +76,9 @@ jobs:
       run: |
         df -h
         sudo rm -rf \
-          "$AGENT_TOOLSDIRECTORY" \
           /opt/google/chrome \
           /opt/microsoft/msedge \
           /opt/microsoft/powershell \
-          /opt/pipx \
           /usr/lib/mono \
           /usr/local/julia* \
           /usr/local/lib/android \
