@@ -79,9 +79,8 @@ jobs:
 
     - name: Test dependency installation
       run: |
-        mkdir -p ../installation/config
+        mkdir -p ../installation
         cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
-        cp ./config/secrets.toml ../installation/config/secrets
         cd ../installation
         poetry lock
         poetry install --no-root
