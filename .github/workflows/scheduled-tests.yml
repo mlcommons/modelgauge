@@ -100,7 +100,7 @@ jobs:
         cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
         cd ../installation
         poetry lock
-        poetry install
+        poetry install --no-root
         poetry run modelgauge list-tests
 
     - uses: JasonEtco/create-an-issue@v2
