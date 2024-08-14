@@ -6,7 +6,7 @@ authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-modelgauge = { path = "../modelgauge", develop = true, extras = ["all_plugins"] }
+modelgauge = { version = "^0", extras = ["all_plugins"] }
 
 [build-system]
 requires = ["poetry-core"]
