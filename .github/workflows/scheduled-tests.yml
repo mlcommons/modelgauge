@@ -77,10 +77,11 @@ jobs:
         source .venv/bin/activate
         pytest --nbmake --expensive-tests
 
-    - name: Test dependency installation
+    - name: Regression test the published artifact
       run: |
         mkdir -p ../installation
         cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
+        cp ./config/* ../installation/config/
         cd ../installation
         poetry lock
         poetry install --no-root
