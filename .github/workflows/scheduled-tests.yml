@@ -79,7 +79,7 @@ jobs:
 
     - name: Regression test the published artifact
       run: |
-        mkdir -p ../installation
+        mkdir -p ../installation/config
         cat ./tests/data/install_pyproject.toml > ../installation/pyproject.toml
         cp ./config/* ../installation/config/
         cd ../installation
