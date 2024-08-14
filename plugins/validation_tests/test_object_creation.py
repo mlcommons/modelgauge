@@ -73,8 +73,7 @@ def test_all_suts_construct_and_record_init(sut_name):
 
 
 @expensive_tests
-@pytest.mark.timeout(20)
-@flaky
+@pytest.mark.timeout(45)
 @pytest.mark.parametrize("sut_name", [key for key, _ in SUTS.items()])
 def test_all_suts_can_evaluate(sut_name):
     sut = SUTS.make_instance(sut_name, secrets=load_secrets_from_config())
