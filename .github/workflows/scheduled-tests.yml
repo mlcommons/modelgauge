@@ -68,6 +68,9 @@ jobs:
 
           [demo]
           api_key="12345"
+
+          [perspective_api]
+          api_key="${{ secrets.PERSPECTIVE_API_KEY }}"
       run: |
         mkdir -p config
         echo "$SECRETS_CONFIG" > config/secrets.toml
