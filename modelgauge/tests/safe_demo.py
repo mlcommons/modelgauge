@@ -1,8 +1,6 @@
-from enum import Enum
-from typing import Dict, List, Mapping
+from typing import Dict, Mapping
 
 from modelgauge.annotator import Annotator
-from modelgauge.annotators.llama_guard_annotator import SafetyCategory
 from modelgauge.annotators.llama_guard_2_lora_annotator import (
     LlamaGuard2LoRAAnnotator,
     LlamaGuard2LoRAConfig,
@@ -11,12 +9,7 @@ from modelgauge.safety_model_constants import DEFAULT_MINIMAL_SAFETY_CATEGORIES
 from modelgauge.safety_model_response import SafetyModelResponse
 
 from modelgauge.secret_values import InjectSecret
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-    TestItemAnnotations,
-)
+from modelgauge.single_turn_prompt_response import TestItemAnnotations
 from modelgauge.secret_values import RequiredSecret, SecretDescription
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.suts.together_client import TogetherApiKey
@@ -74,6 +67,24 @@ TESTS.register(
     VLLM_API_KEY_SECRET,
     FOLDER_NAME,
     "cae",
+    API_KEY_SECRET,
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
+)
+TESTS.register(
+    SafeTestDemo,
+    "safe-cbr-demo",
+    VLLM_API_KEY_SECRET,
+    FOLDER_NAME,
+    "cbr",
+    API_KEY_SECRET,
+    persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
+)
+TESTS.register(
+    SafeTestDemo,
+    "safe-nvc-demo",
+    VLLM_API_KEY_SECRET,
+    FOLDER_NAME,
+    "hat",
     API_KEY_SECRET,
     persona_types=[SafePersonas.TYPICAL, SafePersonas.MALICIOUS],
 )
