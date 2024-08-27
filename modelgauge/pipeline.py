@@ -74,6 +74,7 @@ class PipelineSegment(ABC):
         self._queue: Queue = Queue()
         self.completed = 0
         self._debug_enabled = False
+        self._thread_id = 0
 
     def start(self):
         pass
@@ -127,7 +128,8 @@ class PipelineSegment(ABC):
             )
 
     def thread_name(self, method_name="run"):
-        return f"{self.__class__.__name__}-{method_name}"
+        self._thread_id += 1
+        return f"{self.__class__.__name__}-{method_name}-{self._thread_id}"
 
 
 class Source(PipelineSegment):
