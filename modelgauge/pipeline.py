@@ -126,6 +126,9 @@ class PipelineSegment(ABC):
                 file=sys.stderr,
             )
 
+    def thread_name(self,method_name="run"):
+        return f"{self.__class__.__name__}-{method_name}"
+
 
 class Source(PipelineSegment):
     """A pipeline segment that goes at the top. Only produces. Implement new_item_iterable."""
@@ -140,7 +143,7 @@ class Source(PipelineSegment):
 
     def start(self):
         super().start()
-        self._thread = Thread(target=self.run)
+        self._thread = Thread(target=self.run, name=self.thread_name(), daemon=True)
         self._thread.start()
 
     def run(self):
@@ -168,7 +171,7 @@ class Pipe(PipelineSegment):
         self._work_done.clear()
 
         for i in range(self.thread_count):
-            thread = Thread(target=self.run)
+            thread = Thread(target=self.run, name=self.thread_name())
             thread.start()
             self._workers.append(thread)
         Thread(target=self._notice_complete).start()
