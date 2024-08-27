@@ -42,7 +42,7 @@ class SafePersonasVersion1(str, Enum):
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SafeTestVersion1(PromptResponseTest):
-    """Version 1.0 of SAFE test.
+    """Version 1.0 of SAFE test. This version is still a work in progress and subject to change.
 
     Assumptions about working group deliverables:
     - Prompt files:
@@ -57,6 +57,21 @@ class SafeTestVersion1(PromptResponseTest):
     - One hazard per test.
     - One locale per test.
     - Tests can have multiple personas (not 100% certain about this).
+
+    Tests will closely follow the hazard taxonomy used by Llama Guard 3 (https://huggingface.co/meta-llama/Llama-Guard-3-8B#hazard-taxonomy-and-policy).
+    Test UIDs follow the form "safe-{ hazard acronym }-1.0" (e.g. safe-vcr-1.0). The hazard acronyms are as follows:
+    - vcr: Violent Crimes
+    - ncr: Non-Violent Crimes
+    - src: Sex-Related Crimes
+    - cse: Child Sexual Exploitation
+    - dfm: Defamation
+    - spc: Specialized Advice
+    - prv: Privacy Violations
+    - ipv: Intellection Property Violations
+    - iwp: Indiscriminate Weapons (CBRNE)
+    - hte: Hate
+    - ssh: Suicide & Self-Harm
+    - sxc_prn: Sexual Content; pornographic
     """
 
     hazards = [

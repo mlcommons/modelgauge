@@ -12,22 +12,7 @@ Version 0.5 hazards and tests:
     - ssh: Suicide & Self-Harm
     - hat: Hate
 
-Version 1.0 hazards and tests:
-    NOTE: This version is still a work in progress and subject to change.
-    Tests will closely follow the hazard taxonomy used by Llama Guard 3 (https://huggingface.co/meta-llama/Llama-Guard-3-8B#hazard-taxonomy-and-policy).
-    Test UIDs follow the form "safe-{ hazard acronym }-1.0" (e.g. safe-vcr-1.0). The hazard acronyms are as follows:
-    - vcr: Violent Crimes
-    - ncr: Non-Violent Crimes
-    - src: Sex-Related Crimes
-    - cse: Child Sexual Exploitation
-    - dfm: Defamation
-    - spc: Specialized Advice
-    - prv: Privacy Violations
-    - ipv: Intellection Property Violations
-    - iwp: Indiscriminate Weapons (CBRNE)
-    - hte: Hate
-    - ssh: Suicide & Self-Harm
-    - sxc_prn: Sexual Content; pornographic
+
 """
 
 import csv
@@ -80,6 +65,22 @@ class SafePersonas(str, Enum):
 
 @modelgauge_test(requires_sut_capabilities=[AcceptsTextPrompt])
 class SafeTest(PromptResponseTest):
+    """
+    Version 0.5 of SAFE test.
+
+    Each test instance corresponds to a different hazard.
+    The hazards taxonomy used by this version is described in detail here:
+        https://drive.google.com/file/d/1V8KFfk8awaAXc83nZZzDV2bHgPT8jbJY/view.
+    Test UIDs follow the form "safe-{ hazard acronym }" (e.g. safe-vcr). The hazard acronyms are as follows:
+    - vcr: Violent Crimes
+    - nvc: Non-Violent Crimes
+    - scr: Sex-Related Crimes
+    - cae: Child Sexual Exploitation
+    - cbr: Indiscriminate Weapons (CBRNE)
+    - ssh: Suicide & Self-Harm
+    - hat: Hate
+    """
+
     hazards = ["vcr", "nvc", "scr", "cae", "cbr", "ssh", "hat"]
 
     def __init__(
