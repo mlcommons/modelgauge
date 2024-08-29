@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "modelgauge-ensemble"
+version = "0.1"
+description = "Annotators"
+authors = ["MLCommons AI Safety <ai-safety-engineering@mlcommons.org>"]
+readme = "README.md"
+packages = [
+    { include = "modelgauge" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^1.26.4"
+scikit-learn = "^1.5.0"
+pandas = "^2.2.2"
+#modelgauge = {path = "../../modelgauge", develop = true}
+modelgauge_openai = {path = "../openai", develop = true}
+pytest = "^8.3.1"
+debugpy = "^1.8.2"
+mypy = "^1.11.0"
+isort = "^5.13.2"
+pre-commit = "^3.8.0"
+black = "^24.4.2"
+openai = "1.40.3"
+huggingface-hub = "^0.24.6"
+
+[tool.black]
+target-version = ["py310"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

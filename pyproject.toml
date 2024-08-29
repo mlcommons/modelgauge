@@ -53,6 +53,7 @@ modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
+modelgauge_ensemble = {version = "*", optional = true}
 tomli = "^2.0.1"
 click = "^8.1.7"
 typing-extensions = "^4.10.0"
@@ -70,10 +71,11 @@ modelgauge_standard_tests = {path = "plugins/standard_tests", develop = true, op
 modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
+modelgauge_ensemble = { path = "plugins/ensemble", develop = true, optional = true}
 pytest-datafiles = "^3.0.0"
-pytest = "^7.4.3"
+pytest = "^8.3.1"
 mypy = "^1.7.1"
-black = "^23.11.0"
+black = "^24.4.2"
 pytest-mock = "^3.12.0"
 pytest-timeout = "^2.3.1"
 flaky = "^3.8.1"
@@ -101,7 +103,8 @@ standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api"]
+ensemble = ["modelgauge_ensemble"]
+all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge_ensemble"]
 
 
 [[tool.poetry_bumpversion.replacements]]
