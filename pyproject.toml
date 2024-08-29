@@ -53,6 +53,7 @@ modelgauge_standard_tests = {version = "*", optional = true}
 modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
+modelgauge-teacher-models = {git = "https://github.com/mlcommons/modeltune.git", rev = "feat/ensemble-annotators-installer", subdirectory = "annotations/auto_annotation", optional = true }
 tomli = "^2.0.1"
 click = "^8.1.7"
 typing-extensions = "^4.10.0"
@@ -62,7 +63,6 @@ diskcache = "^5.6.3"
 starlette = "^0.37.2"
 fastapi = "^0.111.1"
 together = "^1.2.3"
-modelgauge-teacher-models = {git = "https://github.com/mlcommons/modeltune.git", rev = "feat/ensemble-annotators-installer", subdirectory = "annotations/auto_annotation"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -102,7 +102,8 @@ standard_tests = ["modelgauge_standard_tests"]
 openai = ["modelgauge_openai"]
 huggingface = ["modelgauge_huggingface"]
 perspective_api = ["modelgauge_perspective_api"]
-all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api"]
+annotators = ["modelgauge-teacher-models"]
+all_plugins = ["modelgauge_demo_plugin", "modelgauge_openai", "modelgauge_huggingface", "modelgauge_standard_tests", "modelgauge_perspective_api", "modelgauge-teacher-models"]
 
 
 [[tool.poetry_bumpversion.replacements]]
