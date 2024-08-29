@@ -4856,10 +4856,10 @@ cffi = {version = ">=1.11", markers = "platform_python_implementation == \"PyPy\
 cffi = ["cffi (>=1.11)"]
 
 [extras]
-all-plugins = ["modelgauge-teacher-models", "modelgauge_demo_plugin", "modelgauge_huggingface", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests"]
+all-plugins = ["modelgauge_demo_plugin", "modelgauge_huggingface", "modelgauge_openai", "modelgauge_perspective_api", "modelgauge_standard_tests"]
 demo = ["modelgauge_demo_plugin"]
-ensemble = ["modelgauge-teacher-models"]
 huggingface = ["modelgauge_huggingface"]
+modeltune = ["modelgauge_teacher_models"]
 openai = ["modelgauge_openai"]
 perspective-api = ["modelgauge_perspective_api"]
 standard-tests = ["modelgauge_standard_tests"]
@@ -4867,4 +4867,4 @@ standard-tests = ["modelgauge_standard_tests"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "a713c5cc2ba112e6b7286c42a9b49d86604b23fa13155de24a77226afec311ab"
+content-hash = "c3e13de274f6fcac855543441929668f4af3f5557b624b7e97068f195fb5ce9c"
