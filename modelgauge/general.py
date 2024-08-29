@@ -87,12 +87,11 @@ def current_local_datetime():
     """Get the current local date time, with timezone."""
     return datetime.datetime.now().astimezone()
 
-    
+
 class APIException(Exception):
     """Failure in or with an underlying API. Consider specializing for
     specific errors that should be handled differently."""
-    
-    
+
+
 class TestItemError(Exception):
     """Error encountered while processing a test item"""
-
