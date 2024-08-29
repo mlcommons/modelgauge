@@ -62,6 +62,7 @@ diskcache = "^5.6.3"
 starlette = "^0.37.2"
 fastapi = "^0.111.1"
 together = "^1.2.3"
+modelgauge-teacher-models = {git = "https://github.com/mlcommons/modeltune.git", rev = "feat/ensemble-annotators-installer", subdirectory = "annotations/auto_annotation"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -71,9 +72,9 @@ modelgauge_openai = {path = "plugins/openai", develop = true, optional=true}
 modelgauge_huggingface = {path = "plugins/huggingface", develop = true, optional=true}
 modelgauge_perspective_api = {path = "plugins/perspective_api", develop = true, optional=true}
 pytest-datafiles = "^3.0.0"
-pytest = "^7.4.3"
+pytest = "^8.3.1"
 mypy = "^1.7.1"
-black = "^23.11.0"
+black = "^24.4.2"
 pytest-mock = "^3.12.0"
 pytest-timeout = "^2.3.1"
 flaky = "^3.8.1"
