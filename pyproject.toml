@@ -50,10 +50,10 @@ sqlitedict = "^2.1.0"
 gdown = ">=5.1.0"
 modelgauge_demo_plugin = {version = "*", optional = true}
 modelgauge_standard_tests = {version = "*", optional = true}
-modelgauge_openai = {version = "*", optional = false}
+modelgauge_openai = {version = "*", optional = true}
 modelgauge_huggingface = {version = "*", optional = true}
 modelgauge_perspective_api = {version = "*", optional = true}
-modelgauge_teacher_models = {git = "https://github.com/mlcommons/modeltune.git", rev = "feat/ensemble-annotators-installer", subdirectory = "annotations/auto_annotation", extras = ["main"], "optional" = false}
+modelgauge_teacher_models = {git = "https://github.com/mlcommons/modeltune.git", rev = "feat/ensemble-annotators-installer", subdirectory = "annotations/auto_annotation", extras = ["main"], "optional" = true}
 tomli = "^2.0.1"
 click = "^8.1.7"
 typing-extensions = "^4.10.0"
