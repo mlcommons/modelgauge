@@ -449,11 +449,14 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
-# LANGUAGE_MODELS = {
-#     "llama-2-7b": "meta-llama/Llama-2-7b-hf",
-# }
-# for uid, model_name in LANGUAGE_MODELS.items():
-#     SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
+LANGUAGE_MODELS = {
+    # This was deprecated around 2024-08-29
+    # You may add some once they are available.
+    # Leaving this empty dict in the code as an example to get you started.
+    # "llama-2-7b": "meta-llama/Llama-2-7b-hf",
+}
+for uid, model_name in LANGUAGE_MODELS.items():
+    SUTS.register(TogetherCompletionsSUT, uid, model_name, InjectSecret(TogetherApiKey))
 
 # Chat
 CHAT_MODELS = {
