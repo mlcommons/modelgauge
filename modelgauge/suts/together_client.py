@@ -449,7 +449,7 @@ class TogetherInferenceSUT(
         return SUTResponse(completions=sut_completions)
 
 
-LANGUAGE_MODELS = {
+LANGUAGE_MODELS: dict[str, str] = {
     # This was deprecated around 2024-08-29
     # You may add some once they are available.
     # Leaving this empty dict in the code as an example to get you started.
