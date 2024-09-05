@@ -213,7 +213,7 @@ class SafeTestVersion1(PromptResponseTest):
             #  Modify annotators to use secrets that were loaded from config instead of reading from environment.
             MISTRAL_8x22B_CONFIG.llm_config.api_key = self.together_api_key
             LLAMA_3_70B_CONFIG.llm_config.api_key = self.together_api_key
-            LG2_LORA_CONFIG.api_key = self.vllm_api_key
+            LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
 
             LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
