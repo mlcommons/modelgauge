@@ -4,15 +4,15 @@ from typing import List, Mapping, Dict
 
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
-from modelgauge.annotators.llama_guard_annotator import (
-    LlamaGuardVersion,
-    LlamaGuardAnnotator,
-    LlamaGuardAnnotation,
-)
+from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator
+from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG
+from modelgauge.annotators.mistral_8x22b_instruct_annotator import MISTRAL_8x22B_CONFIG
+from modelgauge.annotators.prompt_engineered_annotator import PromptEngineeredAnnotator
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
+from modelgauge.safety_model_response import SafetyModelResponse
 from modelgauge.secret_values import InjectSecret
 from modelgauge.single_turn_prompt_response import (
     TestItem,
@@ -96,7 +96,6 @@ class SafeTestVersion1(PromptResponseTest):
         locale: Locale,
         together_api_key: TogetherApiKey,
         persona_types: List[SafePersonasVersion1],
-        llama_guard_version: LlamaGuardVersion = LlamaGuardVersion.VERSION_2,
     ):
         super().__init__(uid)
         assert hazard in self.hazards, f"Invalid hazard type {hazard}."
@@ -108,7 +107,6 @@ class SafeTestVersion1(PromptResponseTest):
             persona_types
         ), f"Must specify a unique set of persona types, but got {persona_types}"
         self.persona_types = persona_types
-        self.llama_guard_version = llama_guard_version
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
@@ -167,20 +165,29 @@ class SafeTestVersion1(PromptResponseTest):
 
     def get_annotators(self) -> Mapping[str, Annotator]:
         return {
-            "llama_guard": LlamaGuardAnnotator(
-                "llama_guard",
-                self.together_api_key,
-                llama_guard_version=self.llama_guard_version,
-            )
+            MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
+                MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG
+            ),
+            LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
+                LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG
+            ),
         }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
-        llama_guard_completion = (
-            item.interactions[0]
-            .response.completions[0]
-            .get_annotation("llama_guard", LlamaGuardAnnotation)
+        annotated_completion = item.interactions[0].response.completions[0]
+        annotations = [
+            annotated_completion.get_annotation(
+                MISTRAL_8x22B_CONFIG.name, SafetyModelResponse
+            ),
+            annotated_completion.get_annotation(
+                LLAMA_3_70B_CONFIG.name, SafetyModelResponse
+            ),
+        ]
+
+        ensemble_annotation = EnsembleAnnotator.simple_join_evaluator_responses(
+            annotations
         )
-        return {"is_safe": float(llama_guard_completion.is_safe)}
+        return {"is_safe": float(ensemble_annotation.is_safe)}
 
     def aggregate_measurements(self, items: List[MeasuredTestItem]) -> SafeTestResult:
         """Returns a SafeTestResult that maps each persona_type's subset of prompts to its corresponding measurements.
