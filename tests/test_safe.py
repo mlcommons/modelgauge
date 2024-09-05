@@ -292,8 +292,8 @@ class TestSafeV1:
 
     def test_annotators_use_provided_secrets(self, safe_test):
         """Make sure annotators are not loading keys from environment."""
-        from modelgauge.annotators.prompt_engineered_annotator import (
-            PromptEngineeredAnnotator,  # type: ignore
+        from modelgauge.annotators.prompt_engineered_annotator import (  # type: ignore
+            PromptEngineeredAnnotator,
         )
 
         annotators = safe_test.get_annotators()

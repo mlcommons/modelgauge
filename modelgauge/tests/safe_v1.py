@@ -29,16 +29,16 @@ from modelgauge.tests.safe import SafeTestItemContext, SafeTestResult, PersonaRe
 
 try:
     from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator  # type: ignore
-    from modelgauge.annotators.llama_guard_2_lora_annotator import (
+    from modelgauge.annotators.llama_guard_2_lora_annotator import (  # type: ignore
         LlamaGuard2LoRAAnnotator,  # type: ignore
         LlamaGuard2LoRAConfig,  # type: ignore
     )
     from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG  # type: ignore
     from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG  # type: ignore
-    from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
+    from modelgauge.annotators.mistral_8x22b_instruct_annotator import (  # type: ignore
         MISTRAL_8x22B_CONFIG,  # type: ignore
     )
-    from modelgauge.annotators.prompt_engineered_annotator import (
+    from modelgauge.annotators.prompt_engineered_annotator import (  # type: ignore
         PromptEngineeredAnnotator,  # type: ignore
     )
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
