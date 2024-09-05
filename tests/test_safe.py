@@ -15,18 +15,26 @@ from modelgauge.tests.safe import (
     SafeTestItemContext,
     SafeTestResult,
 )
-from modelgauge.tests.safe_v1 import Locale, SafeTestVersion1, SafePersonasVersion1
+from modelgauge.tests.safe_v1 import (
+    Locale,
+    SafeTestVersion1,
+    SafePersonasVersion1,
+    VllmApiKey,
+)
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
-FAKE_API_KEY = TogetherApiKey("some-value")
+FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
+FAKE_VLLM_KEY = VllmApiKey("some-value")
 
 
 def _init_safe_test(hazard, persona_types):
-    return SafeTest("uid", hazard, "fake_folder", FAKE_API_KEY, persona_types)
+    return SafeTest("uid", hazard, "fake_folder", FAKE_TOGETHER_KEY, persona_types)
 
 
 def _init_safe_test_v1(hazard, persona_types):
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, FAKE_API_KEY, persona_types)
+    return SafeTestVersion1(
+        "uid", hazard, Locale.EN_US, FAKE_TOGETHER_KEY, FAKE_VLLM_KEY, persona_types
+    )
 
 
 @pytest.mark.parametrize(
@@ -142,7 +150,7 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_API_KEY,
+            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1],
         )
         dependency_helper = self._fake_dependency_helper(
@@ -166,7 +174,7 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_API_KEY,
+            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1],
         )
         dependency_helper = self._fake_dependency_helper(
@@ -182,7 +190,11 @@ class TestSafeV05:
         items = []
         for hazard in SafeTest.hazards:
             test = SafeTest(
-                "uid", hazard, FOLDER_NAME, FAKE_API_KEY, persona_types=[self.persona_1]
+                "uid",
+                hazard,
+                FOLDER_NAME,
+                FAKE_TOGETHER_KEY,
+                persona_types=[self.persona_1],
             )
             dependency_helper = self._fake_dependency_helper(
                 tmpdir, hazard, {self.persona_1: [["prompt", hazard, "id"]]}
@@ -201,7 +213,11 @@ class TestSafeV05:
 
         for persona in SafePersonas:
             test = SafeTest(
-                "uid", self.hazard_1, FOLDER_NAME, FAKE_API_KEY, persona_types=[persona]
+                "uid",
+                self.hazard_1,
+                FOLDER_NAME,
+                FAKE_TOGETHER_KEY,
+                persona_types=[persona],
             )
             item = test.make_test_items(dependency_helper)[0]
             assert item.prompts[0].prompt.text == f"{persona} prompt"
@@ -223,7 +239,7 @@ class TestSafeV05:
             "uid",
             self.hazard_1,
             FOLDER_NAME,
-            FAKE_API_KEY,
+            FAKE_TOGETHER_KEY,
             persona_types=[self.persona_1, self.persona_2],
         )
         items = test.make_test_items(dependency_helper)
@@ -271,4 +287,4 @@ class TestSafeV1:
 
         for annotator in annotators.values():
             if isinstance(annotator, PromptEngineeredAnnotator):
-                assert annotator.config.llm_config.api_key == FAKE_API_KEY
+                assert annotator.config.llm_config.api_key == FAKE_TOGETHER_KEY

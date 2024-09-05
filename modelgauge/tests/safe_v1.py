@@ -5,7 +5,12 @@ from typing import List, Mapping, Dict
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
 from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator
+from modelgauge.annotators.llama_guard_2_lora_annotator import (
+    LlamaGuard2LoRAAnnotator,
+    LlamaGuard2LoRAConfig,
+)
 from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG
+from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG
 from modelgauge.annotators.mistral_8x22b_instruct_annotator import MISTRAL_8x22B_CONFIG
 from modelgauge.annotators.prompt_engineered_annotator import PromptEngineeredAnnotator
 from modelgauge.base_test import PromptResponseTest
@@ -13,7 +18,7 @@ from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
 from modelgauge.safety_model_response import SafetyModelResponse
-from modelgauge.secret_values import InjectSecret
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import (
     TestItem,
     PromptWithContext,
@@ -25,6 +30,17 @@ from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestItemContext, SafeTestResult, PersonaResult
+
+
+# TODO: Make optional?
+class VllmApiKey(RequiredSecret):
+    @classmethod
+    def description(cls) -> SecretDescription:
+        return SecretDescription(
+            scope="vllm",
+            key="api_key",
+            instructions="Contact MLCommons admin for access.",
+        )
 
 
 class Locale(str, Enum):
@@ -95,6 +111,7 @@ class SafeTestVersion1(PromptResponseTest):
         hazard: str,
         locale: Locale,
         together_api_key: TogetherApiKey,
+        vllm_api_key: VllmApiKey,
         persona_types: List[SafePersonasVersion1],
     ):
         super().__init__(uid)
@@ -102,6 +119,7 @@ class SafeTestVersion1(PromptResponseTest):
         self.hazard = hazard
         self.locale = locale
         self.together_api_key = together_api_key
+        self.vllm_api_key = vllm_api_key
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
@@ -167,6 +185,9 @@ class SafeTestVersion1(PromptResponseTest):
         # Modify annotators to use secrets that were loaded from config instead of reading from environment variables.
         MISTRAL_8x22B_CONFIG.llm_config.api_key = self.together_api_key
         LLAMA_3_70B_CONFIG.llm_config.api_key = self.together_api_key
+        LG2_LORA_CONFIG.api_key = self.vllm_api_key
+
+        LG2_LORA_CONFIG.base_url = "http://evaluator.dev.modelmodel.org:8000/v1"
 
         return {
             MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
@@ -175,17 +196,21 @@ class SafeTestVersion1(PromptResponseTest):
             LLAMA_3_70B_CONFIG.name: PromptEngineeredAnnotator(
                 LLAMA_3_70B_CONFIG.name, LLAMA_3_70B_CONFIG
             ),
+            LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
+                LG2_LORA_CONFIG.name, LG2_LORA_CONFIG
+            ),
         }
 
     def measure_quality(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]
+        annotator_ids = [
+            MISTRAL_8x22B_CONFIG.name,
+            LLAMA_3_70B_CONFIG.name,
+            LG2_LORA_CONFIG.name,
+        ]
         annotations = [
-            annotated_completion.get_annotation(
-                MISTRAL_8x22B_CONFIG.name, SafetyModelResponse
-            ),
-            annotated_completion.get_annotation(
-                LLAMA_3_70B_CONFIG.name, SafetyModelResponse
-            ),
+            annotated_completion.get_annotation(annotator_id, SafetyModelResponse)
+            for annotator_id in annotator_ids
         ]
 
         ensemble_annotation = EnsembleAnnotator.simple_join_evaluator_responses(
@@ -211,7 +236,8 @@ class SafeTestVersion1(PromptResponseTest):
         return SafeTestResult(persona_results=persona_results)
 
 
-API_KEY_SECRET = InjectSecret(TogetherApiKey)
+TOGETHER_KEY = InjectSecret(TogetherApiKey)
+VLLM_KEY = InjectSecret(VllmApiKey)
 
 # TODO: Remove version number from 1.0 UIDs.
 #  Will need to consider how to handle hazard acronyms that are shared between v0.5 and v1.0 (e.g. safe-vcr).
@@ -221,6 +247,7 @@ TESTS.register(
     "safe-dfm-1.0",
     "dfm",
     Locale.EN_US,
-    API_KEY_SECRET,
+    TOGETHER_KEY,
+    VLLM_KEY,
     persona_types=[SafePersonasVersion1.NORMAL],
 )
