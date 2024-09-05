@@ -249,5 +249,5 @@ TESTS.register(
     Locale.EN_US,
     TOGETHER_KEY,
     VLLM_KEY,
-    persona_types=[SafePersonasVersion1.NORMAL],
+    persona_types=[SafePersonasVersion1.NORMAL, SafePersonasVersion1.SKILLED],
 )
