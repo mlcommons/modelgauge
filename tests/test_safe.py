@@ -33,7 +33,20 @@ def _init_safe_test(hazard, persona_types):
 
 def _init_safe_test_v1(hazard, persona_types):
     return SafeTestVersion1(
-        "uid", hazard, Locale.EN_US, FAKE_TOGETHER_KEY, FAKE_VLLM_KEY, persona_types
+        "uid", hazard, Locale.EN_US, persona_types, FAKE_TOGETHER_KEY
+    )
+
+
+def _init_safe_test_v1_private(hazard, persona_types):
+    # TODO: Mock the private annotators
+    return SafeTestVersion1(
+        "uid",
+        hazard,
+        Locale.EN_US,
+        persona_types,
+        FAKE_TOGETHER_KEY,
+        FAKE_VLLM_KEY,
+        use_private_annotators=True,
     )
 
 
