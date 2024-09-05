@@ -164,6 +164,10 @@ class SafeTestVersion1(PromptResponseTest):
         return test_items
 
     def get_annotators(self) -> Mapping[str, Annotator]:
+        # Modify annotators to use secrets that were loaded from config instead of reading from environment variables.
+        MISTRAL_8x22B_CONFIG.llm_config.api_key = self.together_api_key
+        LLAMA_3_70B_CONFIG.llm_config.api_key = self.together_api_key
+
         return {
             MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
                 MISTRAL_8x22B_CONFIG.name, MISTRAL_8x22B_CONFIG
