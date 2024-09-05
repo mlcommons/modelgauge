@@ -1,4 +1,5 @@
 import csv
+import os
 from enum import Enum
 from typing import List, Mapping, Dict
 
@@ -120,6 +121,10 @@ class SafeTestVersion1(PromptResponseTest):
         self.locale = locale
         self.together_api_key = together_api_key
         self.vllm_api_key = vllm_api_key
+        self.vllm_endpoint_url = os.environ.get("VLLM_ENDPOINT_URL")
+        assert (
+            self.vllm_endpoint_url
+        ), "Environment variable `VLLM_ENDPOINT_URL` is not set."
         assert len(persona_types), "At least one persona type must be specified."
         assert len(set(persona_types)) == len(
             persona_types
@@ -187,7 +192,7 @@ class SafeTestVersion1(PromptResponseTest):
         LLAMA_3_70B_CONFIG.llm_config.api_key = self.together_api_key
         LG2_LORA_CONFIG.api_key = self.vllm_api_key
 
-        LG2_LORA_CONFIG.base_url = "http://evaluator.dev.modelmodel.org:8000/v1"
+        LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
         return {
             MISTRAL_8x22B_CONFIG.name: PromptEngineeredAnnotator(
