@@ -28,20 +28,20 @@ from modelgauge.test_registry import TESTS
 from modelgauge.tests.safe import SafeTestItemContext, SafeTestResult, PersonaResult
 
 try:
-    from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator
+    from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator  # type: ignore
     from modelgauge.annotators.llama_guard_2_lora_annotator import (
         LlamaGuard2LoRAAnnotator,
         LlamaGuard2LoRAConfig,
-    )
-    from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG
-    from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG
+    )  # type: ignore
+    from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG  # type: ignore
+    from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_CONFIG,
-    )
+    )  # type: ignore
     from modelgauge.annotators.prompt_engineered_annotator import (
         PromptEngineeredAnnotator,
-    )
-    from modelgauge.safety_model_response import SafetyModelResponse
+    )  # type: ignore
+    from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 
     PRIVATE_ANNOTATORS_AVAILABLE = True
 except ImportError:
