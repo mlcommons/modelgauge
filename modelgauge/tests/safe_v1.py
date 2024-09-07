@@ -174,7 +174,7 @@ class SafeTestVersion1(PromptResponseTest):
     # TODO: Encapsulate multipart secrets (e.g. key and URL).
     # I'm not convinced the SafeTestV1 class needs to concern itself
     # with the internals of vllm access.
-    def _configure_vllm_annotators(self, vllm_api_key: Optional[VllmApiKey] = None):
+    def _configure_vllm_annotators(self, vllm_api_key: VllmApiKey):
         self.vllm_api_key = vllm_api_key
         self.vllm_endpoint_url = os.environ.get("VLLM_ENDPOINT_URL")
         assert self.vllm_api_key, "VLLM API key is required for private annotators."
@@ -184,9 +184,7 @@ class SafeTestVersion1(PromptResponseTest):
         LG2_LORA_CONFIG.api_key = self.vllm_api_key.value
         LG2_LORA_CONFIG.base_url = self.vllm_endpoint_url
 
-    def _configure_huggingface_annotators(
-        self, huggingface_key: Optional[HuggingFaceKey] = None
-    ):
+    def _configure_huggingface_annotators(self, huggingface_key: HuggingFaceKey):
         WILDGUARD_ANNOTATOR_CONFIG.api_key = huggingface_key.value
         assert (
             WILDGUARD_ANNOTATOR_CONFIG.is_valid()
