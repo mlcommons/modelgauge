@@ -343,7 +343,7 @@ ANNOTATORS.register(
 
 if __name__ == "__main__":
     import sys
-    from modelgauge.config import load_secrets_from_config
+    from modelgauge.config import load_secrets_from_config # type: ignore
     from modelgauge.prompt import TextPrompt
 
     secrets = load_secrets_from_config()

@@ -5,58 +5,42 @@ from typing import Dict, List, Mapping, Optional
 
 from modelgauge.aggregations import get_measurement_stats_by_key
 from modelgauge.annotator import Annotator
-from modelgauge.annotators.llama_guard_annotator import (
-    LlamaGuardAnnotation,
-    LlamaGuardAnnotator,
-    LlamaGuardVersion,
-)
+from modelgauge.annotators.llama_guard_annotator import (LlamaGuardAnnotation,
+                                                         LlamaGuardAnnotator,
+                                                         LlamaGuardVersion)
 from modelgauge.base_test import PromptResponseTest
 from modelgauge.dependency_helper import DependencyHelper
 from modelgauge.external_data import ExternalData, WebData
 from modelgauge.prompt import SUTOptions, TextPrompt
-from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
-from modelgauge.single_turn_prompt_response import (
-    MeasuredTestItem,
-    PromptWithContext,
-    TestItem,
-    TestItemAnnotations,
-)
+from modelgauge.secret_values import (InjectSecret, RequiredSecret,
+                                      SecretDescription)
+from modelgauge.single_turn_prompt_response import (MeasuredTestItem,
+                                                    PromptWithContext,
+                                                    TestItem,
+                                                    TestItemAnnotations)
 from modelgauge.sut_capabilities import AcceptsTextPrompt
 from modelgauge.suts.together_client import TogetherApiKey
 from modelgauge.test_decorator import modelgauge_test
 from modelgauge.test_registry import TESTS
-from modelgauge.tests.safe import PersonaResult, SafeTestItemContext, SafeTestResult
+from modelgauge.tests.safe import (PersonaResult, SafeTestItemContext,
+                                   SafeTestResult)
 
 try:
-    from modelgauge.annotators.ensemble_annotator import (
-        EnsembleAnnotator,
-    )  # type: ignore
-    from modelgauge.annotators.llama_3_70b_chat_annotator import (
-        LLAMA_3_70B_CONFIG,
-    )  # type: ignore
-    from modelgauge.annotators.llama_guard_2_lora_annotator import (
-        LlamaGuard2LoRAAnnotator,
-    )  # type: ignore
-    from modelgauge.annotators.llama_guard_2_lora_annotator import (
-        LlamaGuard2LoRAConfig,
-    )  # type: ignore; type: ignore
-    from modelgauge.annotators.local_lg2_lora_annotator import (
-        config as LG2_LORA_CONFIG,
-    )  # type: ignore
-    from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
-        MISTRAL_8x22B_CONFIG,
-    )  # type: ignore; type: ignore
-    from modelgauge.annotators.prompt_engineered_annotator import (
-        PromptEngineeredAnnotator,
-    )  # type: ignore; type: ignore
-    from modelgauge.annotators.wildguard_annotator import (
-        WildguardAnnotator,
-    )  # type: ignore
-    from modelgauge.annotators.wildguard_annotator import (
-        WILDGUARD_ANNOTATOR_CONFIG,
-    )  # type: ignore
+    # fmt: off
+    # mypy will error out if # type: ignore isn't at the end of the physical line where
+    # the imported module is listed, not the logical parsed line. So a linter/formatter
+    # may break mypy validation :(
+    from modelgauge.annotators.ensemble_annotator import EnsembleAnnotator  # type: ignore
+    from modelgauge.annotators.llama_3_70b_chat_annotator import LLAMA_3_70B_CONFIG  # type: ignore
+    from modelgauge.annotators.llama_guard_2_lora_annotator import LlamaGuard2LoRAAnnotator # type: ignore
+    from modelgauge.annotators.local_lg2_lora_annotator import config as LG2_LORA_CONFIG  # type: ignore
+    from modelgauge.annotators.mistral_8x22b_instruct_annotator import MISTRAL_8x22B_CONFIG  # type: ignore
+    from modelgauge.annotators.prompt_engineered_annotator import PromptEngineeredAnnotator  # type: ignore
+    from modelgauge.annotators.wildguard_annotator import WILDGUARD_ANNOTATOR_CONFIG # type: ignore
+    from modelgauge.annotators.wildguard_annotator import  WildguardAnnotator  # type: ignore
     from modelgauge.safety_model_response import SafetyModelResponse  # type: ignore
 
+    # fmt: on
     PRIVATE_ANNOTATORS_AVAILABLE = True
 except ImportError:
     PRIVATE_ANNOTATORS_AVAILABLE = False
