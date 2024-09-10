@@ -79,10 +79,10 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             LG2_LORA_CONFIG.name: LlamaGuard2LoRAAnnotator(
                 LG2_LORA_CONFIG.name, LG2_LORA_CONFIG
             ),
-            # WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
-            #     WILDGUARD_ANNOTATOR_CONFIG.name,
-            #     WILDGUARD_ANNOTATOR_CONFIG,
-            # ),
+            WILDGUARD_ANNOTATOR_CONFIG.name: WildguardAnnotator(
+                WILDGUARD_ANNOTATOR_CONFIG.name,
+                WILDGUARD_ANNOTATOR_CONFIG,
+            ),
         }
 
     def __load_secrets(self):
