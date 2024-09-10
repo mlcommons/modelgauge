@@ -1,6 +1,7 @@
 import os
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 
 from modelgauge.suts.together_client import TogetherApiKey
 
@@ -20,12 +21,13 @@ def test_can_load():
             from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
 
 
+# TODO remove the patch once feat/557-encapsulate of the private repo is in main
 @patch("modelgauge.private_ensemble_annotator_set.WildguardAnnotator")
 def test_annotators(WildguardAnnotator):
     from modelgauge.private_ensemble_annotator_set import (
         EnsembleAnnotatorSet,
-        VllmApiKey,
         HuggingFaceKey,
+        VllmApiKey,
     )
 
     os.environ["VLLM_ENDPOINT_URL"] = "fake"
