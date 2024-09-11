@@ -1,10 +1,10 @@
-from huggingface_hub import (
+from huggingface_hub import (  # type: ignore
     ChatCompletionOutput,
     InferenceClient,
     InferenceEndpointStatus,
     get_inference_endpoint,
 )
-from huggingface_hub.utils import HfHubHTTPError
+from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel
 from typing import List, Optional
 
@@ -97,7 +97,7 @@ class HuggingFaceInferenceSUT(
             self._create_client()
 
         request_dict = request.model_dump(exclude_none=True)
-        return self.client.chat_completion(**request_dict)
+        return self.client.chat_completion(**request_dict)  # type: ignore
 
     def translate_response(
         self, request: HuggingFaceInferenceChatRequest, response: ChatCompletionOutput

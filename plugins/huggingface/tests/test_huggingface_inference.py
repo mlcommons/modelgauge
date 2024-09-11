@@ -1,6 +1,6 @@
 import pytest
-from huggingface_hub import InferenceEndpointStatus
-from huggingface_hub.utils import HfHubHTTPError
+from huggingface_hub import InferenceEndpointStatus  # type: ignore
+from huggingface_hub.utils import HfHubHTTPError  # type: ignore
 from pydantic import BaseModel
 from unittest.mock import Mock, patch
 
