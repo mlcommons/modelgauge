@@ -49,38 +49,40 @@ class HuggingFaceInferenceSUT(
     ):
         super().__init__(uid)
         self.token = token
-        self.endpoint = get_inference_endpoint(inference_endpoint, token=token.value)
+        self.inference_endpoint = inference_endpoint
         self.client = None
 
     def _create_client(self):
+        endpoint = get_inference_endpoint(
+            self.inference_endpoint, token=self.token.value
+        )
+
         timeout = 60 * 6
-        if self.endpoint.status in [
+        if endpoint.status in [
             InferenceEndpointStatus.PENDING,
             InferenceEndpointStatus.INITIALIZING,
             InferenceEndpointStatus.UPDATING,
         ]:
             print(
-                f"Endpoint starting. Status: {self.endpoint.status}. Waiting up to {timeout}s to start."
+                f"Endpoint starting. Status: {endpoint.status}. Waiting up to {timeout}s to start."
             )
-            self.endpoint.wait(timeout)
-        elif self.endpoint.status == InferenceEndpointStatus.SCALED_TO_ZERO:
+            endpoint.wait(timeout)
+        elif endpoint.status == InferenceEndpointStatus.SCALED_TO_ZERO:
             print("Endpoint scaled to zero... requesting to resume.")
             try:
-                self.endpoint.resume(running_ok=True)
+                endpoint.resume(running_ok=True)
             except HfHubHTTPError:
                 raise ConnectionError(
                     "Failed to resume endpoint. Please resume manually."
                 )
             print(f"Requested resume. Waiting up to {timeout}s to start.")
-            self.endpoint.wait(timeout)
-        elif self.endpoint.status != InferenceEndpointStatus.RUNNING:
+            endpoint.wait(timeout)
+        elif endpoint.status != InferenceEndpointStatus.RUNNING:
             raise ConnectionError(
                 "Endpoint is not running: Please contact admin to ensure endpoint is starting or running"
             )
 
-        self.client = InferenceClient(
-            base_url=self.endpoint.url, token=self.token.value
-        )
+        self.client = InferenceClient(base_url=endpoint.url, token=self.token.value)
 
     def translate_text_prompt(
         self, prompt: TextPrompt
