@@ -1,6 +1,7 @@
 import os
-from typing import Dict
+from typing import Dict, Any
 
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.config import load_secrets_from_config
 from modelgauge.secret_values import RequiredSecret, SecretDescription
@@ -16,16 +17,16 @@ try:
     )  # type: ignore
     from modelgauge.annotators.llama_guard_2_lora_annotator import (
         LlamaGuard2LoRAAnnotator,
-    )  # type: ignore; type: ignore
+    )  # type: ignore
     from modelgauge.annotators.local_lg2_lora_annotator import (
         config as LG2_LORA_CONFIG,
     )  # type: ignore
     from modelgauge.annotators.mistral_8x22b_instruct_annotator import (
         MISTRAL_8x22B_CONFIG,
-    )  # type: ignore; type: ignore
+    )  # type: ignore
     from modelgauge.annotators.prompt_engineered_annotator import (
         PromptEngineeredAnnotator,
-    )  # type: ignore; type: ignore
+    )  # type: ignore
     from modelgauge.annotators.wildguard_annotator import (  # type: ignore
         WILDGUARD_ANNOTATOR_CONFIG,
         WildguardAnnotator,
@@ -59,8 +60,8 @@ class HuggingFaceKey(RequiredSecret):
 
 class EnsembleAnnotatorSet(AnnotatorSet):
 
-    annotators = {}
-    configuration = {}
+    annotators: dict[str, Annotator] = {}
+    configuration: dict[str, Any] = {}
 
     def configure(self):
         self.__load_secrets()

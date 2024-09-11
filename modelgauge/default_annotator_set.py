@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Dict, Any
 
+from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotation,
@@ -18,8 +19,8 @@ ANNOTATOR_NAME = "llama_guard_2"
 
 class DefaultAnnotatorSet(AnnotatorSet):
 
-    annotators = {}
-    configuration = {}
+    annotators: dict[str, Annotator] = {}
+    configuration: dict[str, Any] = {}
 
     # TODO all these should be static
     def configure(self):
