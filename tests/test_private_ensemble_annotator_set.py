@@ -23,7 +23,8 @@ def test_can_load():
 
 # TODO remove the patch once feat/557-encapsulate of the private repo is in main
 @patch("modelgauge.private_ensemble_annotator_set.WildguardAnnotator")
-def test_annotators(WildguardAnnotator):
+@patch("modelgauge.private_ensemble_annotator_set.load_secrets_from_config")
+def test_annotators(load_secrets_from_config, WildguardAnnotator):
     from modelgauge.private_ensemble_annotator_set import (
         EnsembleAnnotatorSet,
         HuggingFaceKey,
