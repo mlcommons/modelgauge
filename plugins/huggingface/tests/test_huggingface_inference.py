@@ -67,16 +67,22 @@ def test_huggingface_inference_translate_text_prompt_request(
         InferenceEndpointStatus.UPDATING,
     ],
 )
+@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
 def test_huggingface_inference_connect_endpoint(
-    fake_sut, mock_endpoint, endpoint_status
+    mock_get_inference_endpoint, fake_sut, mock_endpoint, endpoint_status
 ):
+    mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = endpoint_status
 
     fake_sut._create_client()
     mock_endpoint.wait.assert_called_once()
 
 
-def test_huggingface_inference_connect_endpoint_scaled_to_zero(fake_sut, mock_endpoint):
+@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
+def test_huggingface_inference_connect_endpoint_scaled_to_zero(
+    mock_get_inference_endpoint, fake_sut, mock_endpoint
+):
+    mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.SCALED_TO_ZERO
 
     fake_sut._create_client()
@@ -85,9 +91,11 @@ def test_huggingface_inference_connect_endpoint_scaled_to_zero(fake_sut, mock_en
     mock_endpoint.wait.assert_called_once()
 
 
+@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
 def test_huggingface_inference_connect_endpoint_fails_to_resume(
-    fake_sut, mock_endpoint
+    mock_get_inference_endpoint, fake_sut, mock_endpoint
 ):
+    mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.SCALED_TO_ZERO
     mock_endpoint.resume.side_effect = HfHubHTTPError("Failure.")
 
@@ -98,15 +106,23 @@ def test_huggingface_inference_connect_endpoint_fails_to_resume(
         mock_endpoint.wait.assert_not_called()
 
 
-def test_huggingface_inference_connect_failed_endpoint(fake_sut, mock_endpoint):
+@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
+def test_huggingface_inference_connect_failed_endpoint(
+    mock_get_inference_endpoint, fake_sut, mock_endpoint
+):
+    mock_get_inference_endpoint.return_value = mock_endpoint
     mock_endpoint.status = InferenceEndpointStatus.FAILED
 
     with pytest.raises(ConnectionError):
         fake_sut._create_client()
 
 
+@patch("modelgauge.suts.huggingface_inference.get_inference_endpoint")
 @patch("modelgauge.suts.huggingface_inference.InferenceClient")
-def test_huggingface_inference_lazy_load_client(mock_client, fake_sut, sut_request):
+def test_huggingface_inference_lazy_load_client(
+    mock_client, mock_get_inference_endpoint, fake_sut, mock_endpoint, sut_request
+):
+    mock_get_inference_endpoint.return_value = mock_endpoint
     assert fake_sut.client is None
 
     fake_sut.evaluate(sut_request)
