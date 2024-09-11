@@ -4,7 +4,7 @@ from typing import Dict, Any
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
 from modelgauge.config import load_secrets_from_config
-from modelgauge.secret_values import RequiredSecret, SecretDescription
+from modelgauge.secret_values import InjectSecret, RequiredSecret, SecretDescription
 from modelgauge.single_turn_prompt_response import TestItemAnnotations
 from modelgauge.suts.together_client import TogetherApiKey
 
@@ -63,6 +63,9 @@ class EnsembleAnnotatorSet(AnnotatorSet):
     annotators: dict[str, Annotator] = {}
     configuration: dict[str, Any] = {}
 
+    def __init__(self):
+        self.configure()
+
     def configure(self):
         self.__load_secrets()
         self.__configure_vllm_annotators()
@@ -88,10 +91,9 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         }
 
     def __load_secrets(self):
-        secrets = load_secrets_from_config()
-        self.configuration["together_api_key"] = TogetherApiKey.make(secrets)
-        self.configuration["huggingface_key"] = HuggingFaceKey.make(secrets)
-        self.configuration["vllm_api_key"] = VllmApiKey.make(secrets)
+        self.configuration["together_api_key"] = InjectSecret(TogetherApiKey)
+        self.configuration["huggingface_key"] = InjectSecret(HuggingFaceKey)
+        self.configuration["vllm_api_key"] = InjectSecret(VllmApiKey)
         # TODO: maybe put the requirements into a self.requires dict to handle this declaratively?
         assert self.configuration[
             "together_api_key"
@@ -110,11 +112,11 @@ class EnsembleAnnotatorSet(AnnotatorSet):
         assert self.configuration[
             "vllm_endpoint_url"
         ], "Environment variable `VLLM_ENDPOINT_URL` is not set."
-        LG2_LORA_CONFIG.api_key = self.configuration["vllm_api_key"].value
+        LG2_LORA_CONFIG.api_key = self.configuration["vllm_api_key"]
         LG2_LORA_CONFIG.base_url = self.configuration["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.api_key = self.configuration["huggingface_key"].value
+        WILDGUARD_ANNOTATOR_CONFIG.api_key = self.configuration["huggingface_key"]
         assert (
             WILDGUARD_ANNOTATOR_CONFIG.is_valid()
         ), "HuggingFace configuration is missing a token or endpoint URL."

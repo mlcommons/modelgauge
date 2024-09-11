@@ -7,11 +7,11 @@ from modelgauge.annotators.llama_guard_annotator import (
     LlamaGuardAnnotator,
     LlamaGuardVersion,
 )
-from modelgauge.config import load_secrets_from_config
 from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
 )
 from modelgauge.suts.together_client import TogetherApiKey
+from modelgauge.secret_values import InjectSecret
 
 
 ANNOTATOR_NAME = "llama_guard_2"
@@ -22,14 +22,15 @@ class DefaultAnnotatorSet(AnnotatorSet):
     annotators: dict[str, Annotator] = {}
     configuration: dict[str, Any] = {}
 
-    # TODO all these should be static
+    def __init__(self):
+        self.configure()
+
     def configure(self):
         self.__load_secrets()
         self._load_annotators()
 
     def __load_secrets(self):
-        secrets = load_secrets_from_config()
-        self.configuration["together_api_key"] = TogetherApiKey.make(secrets)
+        self.configuration["together_api_key"] = InjectSecret(TogetherApiKey)
 
     def _load_annotators(self):
         self.annotators[ANNOTATOR_NAME] = LlamaGuardAnnotator(
