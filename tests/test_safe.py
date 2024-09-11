@@ -1,9 +1,13 @@
 import pytest
-
+from unittest.mock import patch
 from modelgauge.default_annotator_set import DefaultAnnotatorSet
 
 try:
-    from modelgauge.private_ensemble_annotator_set import EnsembleAnnotatorSet
+    from modelgauge.private_ensemble_annotator_set import (
+        EnsembleAnnotatorSet,
+        HuggingFaceKey,
+        VllmApiKey,
+    )
 except:
     pass
 from modelgauge.prompt import TextPrompt
@@ -25,6 +29,8 @@ from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersi
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
+FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
+FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
 
 
 def _init_safe_test(hazard, persona_types):
@@ -34,6 +40,7 @@ def _init_safe_test(hazard, persona_types):
 def _init_safe_test_v1(hazard, persona_types):
     annotators = DefaultAnnotatorSet()
     annotators.configure()
+    annotators.configuration["together_api_key"] = FAKE_TOGETHER_KEY
     return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, annotators)
 
 
@@ -42,6 +49,9 @@ def _init_safe_test_v1_private(hazard, persona_types):
     try:
         annotators = EnsembleAnnotatorSet()
         annotators.configure()
+        annotators.configuration["together_api_key"] = FAKE_TOGETHER_KEY
+        annotators.configuration["huggingface_key"] = FAKE_HUGGINGFACE_KEY
+        annotators.configuration["vllm_api_key"] = FAKE_VLLM_KEY
         return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, annotators)
     except:
         return _init_safe_test_v1(hazard, persona_types)
