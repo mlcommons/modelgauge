@@ -81,7 +81,7 @@ class Locale(str, Enum):
     EN_US = "EN_US"  # English, United States
     FR_FR = "FR_FR"  # French, France
     ZH_CN = "ZH_CN"  # Simplified Chinese, China
-    HI_IN = "HI_IN"  # Hindi, India
+    HI_IN = "HI_HI"  # Hindi, India
 
 
 class SafePersonasVersion1(str, Enum):
@@ -196,7 +196,7 @@ class SafeTestVersion1(PromptResponseTest):
 
     def _get_prompt_set_names(self):
         # TODO: Get all filenames with this test's hazard from modellab.
-        return [f"safe-{self.hazard}-20240801-FAKE"]
+        return [f"safetest_{self.hazard}_09122024"]
 
     def get_dependencies(self) -> Mapping[str, ExternalData]:
         modellab_base_download_url = (
@@ -221,14 +221,14 @@ class SafeTestVersion1(PromptResponseTest):
             with open(data_file, "r") as csvfile:
                 reader = csv.DictReader(csvfile)
                 for row in reader:
-                    text = row["Text"].strip()
+                    text = row["prompt_text"].strip()
                     if not text:
                         continue
 
                     # Check that prompt is for correct hazard/persona/locale.
-                    file_hazard = row["Hazard UID"]
-                    persona = SafePersonasVersion1(row["Persona"])
-                    locale = Locale(row["Locale"])
+                    file_hazard = row["hazard"]
+                    persona = SafePersonasVersion1(row["persona"])
+                    locale = Locale(row["locale"])
                     assert (
                         file_hazard == self.hazard
                     ), f"Expected {data_file} to have {self.hazard}, but had {file_hazard}."
@@ -239,7 +239,7 @@ class SafeTestVersion1(PromptResponseTest):
 
                     prompt = PromptWithContext(
                         prompt=TextPrompt(text=text, options=sut_options),
-                        source_id=row["Prompt UID"],
+                        source_id=row["prompt_uid"],
                     )
                     test_items.append(
                         TestItem(
@@ -325,30 +325,37 @@ class SafeTestVersion1(PromptResponseTest):
 
 
 TOGETHER_KEY = InjectSecret(TogetherApiKey)
+ALL_PERSONAS = [
+    SafePersonasVersion1.NORMAL,
+    SafePersonasVersion1.SKILLED,
+    SafePersonasVersion1.UNSKILLED,
+]
 
 # TODO: Remove version number from 1.0 UIDs.
 #  Will need to consider how to handle hazard acronyms that are shared between v0.5 and v1.0 (e.g. safe-vcr).
 #  This will likely involve some sort of versioning mechanism in the test registry.
-TESTS.register(
-    SafeTestVersion1,
-    "safe-dfm-1.0",
-    "dfm",
-    Locale.EN_US,
-    [SafePersonasVersion1.NORMAL, SafePersonasVersion1.SKILLED],
-    TOGETHER_KEY,
-)
-
-if PRIVATE_ANNOTATORS_AVAILABLE:
-    VLLM_API_KEY = InjectSecret(VllmApiKey)
-    HUGGINGFACE_KEY = InjectSecret(HuggingFaceKey)  # was: os.getenv("HF_TOKEN", "")
+for hazard in SafeTestVersion1.hazards:
     TESTS.register(
         SafeTestVersion1,
-        "safe-dfm-1.0-private",
-        "dfm",
+        f"safe-{hazard}-1.0",
+        hazard,
         Locale.EN_US,
-        [SafePersonasVersion1.NORMAL, SafePersonasVersion1.SKILLED],
+        ALL_PERSONAS,
         TOGETHER_KEY,
-        vllm_api_key=VLLM_API_KEY,
-        huggingface_key=HUGGINGFACE_KEY,
-        use_private_annotators=True,
     )
+
+if PRIVATE_ANNOTATORS_AVAILABLE:
+    for hazard in SafeTestVersion1.hazards:
+        VLLM_API_KEY = InjectSecret(VllmApiKey)
+        HUGGINGFACE_KEY = InjectSecret(HuggingFaceKey)  # was: os.getenv("HF_TOKEN", "")
+        TESTS.register(
+            SafeTestVersion1,
+            f"safe-{hazard}-1.0-private",
+            hazard,
+            Locale.EN_US,
+            ALL_PERSONAS,
+            TOGETHER_KEY,
+            vllm_api_key=VLLM_API_KEY,
+            huggingface_key=HUGGINGFACE_KEY,
+            use_private_annotators=True,
+        )
