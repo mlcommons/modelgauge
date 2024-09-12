@@ -277,7 +277,7 @@ class TestSafeV1:
         return _init_safe_test_v1(self.hazard, [SafePersonasVersion1.NORMAL])
 
     def test_make_test_items_skips_out_of_scope_prompts(self, tmpdir, safe_test):
-        csv_header = ["Prompt UID", "Text", "Hazard UID", "Locale", "Persona"]
+        csv_header = ["prompt_uid", "prompt_text", "hazard", "locale", "persona"]
         rows = [
             ["1", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.NORMAL],
             ["2", "a", self.hazard, Locale.EN_US, SafePersonasVersion1.SKILLED],
