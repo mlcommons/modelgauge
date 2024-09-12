@@ -61,13 +61,16 @@ class HuggingFaceKey(RequiredSecret):
 class EnsembleAnnotatorSet(AnnotatorSet):
 
     annotators: dict[str, Annotator] = {}
-    configuration: dict[str, Any] = {}
+    secrets: dict[str, Any] = {}
 
-    def __init__(self):
-        self.configure()
+    required_secret_types = {
+        "together_api_key": TogetherApiKey,
+        "huggingface_key": HuggingFaceKey,
+        "vllm_api_key": VllmApiKey,
+    }
 
-    def configure(self):
-        self.__load_secrets()
+    def __init__(self, secrets):
+        self.secrets = secrets
         self.__configure_vllm_annotators()
         self.__configure_huggingface_annotators()
         self.__configure_together_annotators()
@@ -90,40 +93,23 @@ class EnsembleAnnotatorSet(AnnotatorSet):
             ),
         }
 
-    def __load_secrets(self):
-        self.configuration["together_api_key"] = InjectSecret(TogetherApiKey)
-        self.configuration["huggingface_key"] = InjectSecret(HuggingFaceKey)
-        self.configuration["vllm_api_key"] = InjectSecret(VllmApiKey)
-        # TODO: maybe put the requirements into a self.requires dict to handle this declaratively?
-        assert self.configuration[
-            "together_api_key"
-        ], "Together API key is required for this annotator set."
-        assert self.configuration[
-            "huggingface_key"
-        ], "Huggingface token is required for this annotator set."
-        assert self.configuration[
-            "vllm_api_key"
-        ], "VLLM API key is required for this annotator set."
-
     def __configure_vllm_annotators(self):
-        self.configuration["vllm_endpoint_url"] = os.environ.get(
-            "VLLM_ENDPOINT_URL", ""
-        )
-        assert self.configuration[
+        self.secrets["vllm_endpoint_url"] = os.environ.get("VLLM_ENDPOINT_URL", "")
+        assert self.secrets[
             "vllm_endpoint_url"
         ], "Environment variable `VLLM_ENDPOINT_URL` is not set."
-        LG2_LORA_CONFIG.api_key = self.configuration["vllm_api_key"]
-        LG2_LORA_CONFIG.base_url = self.configuration["vllm_endpoint_url"]
+        LG2_LORA_CONFIG.api_key = self.secrets["vllm_api_key"].value
+        LG2_LORA_CONFIG.base_url = self.secrets["vllm_endpoint_url"]
 
     def __configure_huggingface_annotators(self):
-        WILDGUARD_ANNOTATOR_CONFIG.api_key = self.configuration["huggingface_key"]
+        WILDGUARD_ANNOTATOR_CONFIG.api_key = self.secrets["huggingface_key"]
         assert (
             WILDGUARD_ANNOTATOR_CONFIG.is_valid()
         ), "HuggingFace configuration is missing a token or endpoint URL."
 
     def __configure_together_annotators(self):
-        MISTRAL_8x22B_CONFIG.llm_config.api_key = self.configuration["together_api_key"]
-        LLAMA_3_70B_CONFIG.llm_config.api_key = self.configuration["together_api_key"]
+        MISTRAL_8x22B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]
+        LLAMA_3_70B_CONFIG.llm_config.api_key = self.secrets["together_api_key"]
 
     def evaluate(self, item: TestItemAnnotations) -> Dict[str, float]:
         annotated_completion = item.interactions[0].response.completions[0]

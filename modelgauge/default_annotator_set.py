@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 from modelgauge.annotator import Annotator
 from modelgauge.annotator_set import AnnotatorSet
@@ -11,31 +11,26 @@ from modelgauge.single_turn_prompt_response import (
     TestItemAnnotations,
 )
 from modelgauge.suts.together_client import TogetherApiKey
-from modelgauge.secret_values import InjectSecret
-
-
-ANNOTATOR_NAME = "llama_guard_2"
 
 
 class DefaultAnnotatorSet(AnnotatorSet):
 
+    ANNOTATOR_NAME = "llama_guard_2"
     annotators: dict[str, Annotator] = {}
-    configuration: dict[str, Any] = {}
+    secrets: dict[str, Any] = {}
 
-    def __init__(self):
-        self.configure()
+    required_secret_types = {
+        "together_api_key": TogetherApiKey,
+    }
 
-    def configure(self):
-        self.__load_secrets()
+    def __init__(self, secrets):
+        self.secrets = secrets
         self._load_annotators()
 
-    def __load_secrets(self):
-        self.configuration["together_api_key"] = InjectSecret(TogetherApiKey)
-
     def _load_annotators(self):
-        self.annotators[ANNOTATOR_NAME] = LlamaGuardAnnotator(
-            ANNOTATOR_NAME,
-            self.configuration["together_api_key"],
+        self.annotators[DefaultAnnotatorSet.ANNOTATOR_NAME] = LlamaGuardAnnotator(
+            DefaultAnnotatorSet.ANNOTATOR_NAME,
+            self.secrets["together_api_key"],
             llama_guard_version=LlamaGuardVersion.VERSION_2,
         )
 
@@ -43,6 +38,6 @@ class DefaultAnnotatorSet(AnnotatorSet):
         annotation = (
             item.interactions[0]
             .response.completions[0]
-            .get_annotation(ANNOTATOR_NAME, LlamaGuardAnnotation)
+            .get_annotation(DefaultAnnotatorSet.ANNOTATOR_NAME, LlamaGuardAnnotation)
         )
         return {"is_safe": float(annotation.is_safe)}
