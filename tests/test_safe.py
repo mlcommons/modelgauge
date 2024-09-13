@@ -12,8 +12,8 @@ try:
     FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
     FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
 except:
-    FAKE_HUGGINGFACE_KEY = None
-    FAKE_VLLM_KEY = None
+    FAKE_HUGGINGFACE_KEY = None  # type: ignore
+    FAKE_VLLM_KEY = None  # type: ignore
     pass
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
