@@ -38,23 +38,36 @@ def _init_safe_test(hazard, persona_types):
 
 
 def _init_safe_test_v1(hazard, persona_types):
-    annotators = DefaultAnnotatorSet()
-    annotators.configure()
-    annotators.configuration["together_api_key"] = FAKE_TOGETHER_KEY
-    return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, annotators)
+    secrets = {"together_api_key": FAKE_TOGETHER_KEY}
+    return SafeTestVersion1(
+        "uid",
+        hazard,
+        Locale.EN_US,
+        persona_types,
+        annotator_class=DefaultAnnotatorSet,
+        **secrets,
+    )
 
 
 def _init_safe_test_v1_private(hazard, persona_types):
     # TODO: Mock the private annotators
     try:
-        annotators = EnsembleAnnotatorSet()
-        annotators.configure()
-        annotators.configuration["together_api_key"] = FAKE_TOGETHER_KEY
-        annotators.configuration["huggingface_key"] = FAKE_HUGGINGFACE_KEY
-        annotators.configuration["vllm_api_key"] = FAKE_VLLM_KEY
-        return SafeTestVersion1("uid", hazard, Locale.EN_US, persona_types, annotators)
+        secrets = {
+            "together_api_key": FAKE_TOGETHER_KEY,
+            "huggingface_key": FAKE_HUGGINGFACE_KEY,
+            "vllm_api_key": FAKE_VLLM_KEY,
+        }
+        return SafeTestVersion1(
+            "uid",
+            hazard,
+            Locale.EN_US,
+            persona_types,
+            annotator_class=EnsembleAnnotatorSet,
+            **secrets,
+        )
     except:
-        return _init_safe_test_v1(hazard, persona_types)
+        pass  # TODO: is this what we want?
+        # @return _init_safe_test_v1(hazard, persona_types)
 
 
 @pytest.mark.parametrize(
