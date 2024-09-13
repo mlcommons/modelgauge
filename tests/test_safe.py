@@ -8,7 +8,12 @@ try:
         HuggingFaceKey,
         VllmApiKey,
     )
+
+    FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
+    FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
 except:
+    FAKE_HUGGINGFACE_KEY = None
+    FAKE_VLLM_KEY = None
     pass
 from modelgauge.prompt import TextPrompt
 from modelgauge.single_turn_prompt_response import (
@@ -29,8 +34,6 @@ from modelgauge.tests.safe_v1 import Locale, SafePersonasVersion1, SafeTestVersi
 from tests.fake_dependency_helper import FakeDependencyHelper, make_csv
 
 FAKE_TOGETHER_KEY = TogetherApiKey("some-value")
-FAKE_HUGGINGFACE_KEY = HuggingFaceKey("fake-hf-token")
-FAKE_VLLM_KEY = VllmApiKey("fake-vllm-key")
 
 
 def _init_safe_test(hazard, persona_types):
