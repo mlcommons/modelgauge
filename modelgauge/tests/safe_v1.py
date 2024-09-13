@@ -203,7 +203,7 @@ for hazard in SafeTestVersion1.hazards:
     TESTS.register(
         SafeTestVersion1,
         f"safe-{hazard}-1.0",
-        "hazard",
+        hazard,
         Locale.EN_US,
         ALL_PERSONAS,
         annotator_class=DefaultAnnotatorSet,
