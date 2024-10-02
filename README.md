@@ -1,11 +1,6 @@
 # ModelGauge
 
-Goal: Make it easy to automatically and uniformly measure the behavior of many AI Systems.
-
-> [!WARNING]
-> This repo is still in **beta** with a planned full release in Fall 2024. Until then we reserve the right to make backward incompatible changes as needed.
-
-ModelGauge is an evolution of [crfm-helm](https://github.com/stanford-crfm/helm/), intended to meet their existing use cases as well as those needed by the [MLCommons AI Safety](https://mlcommons.org/working-groups/ai-safety/ai-safety/) project.
+ModelGauge was originally planned to be an evolution of [crfm-helm](https://github.com/stanford-crfm/helm/), intended to meet their existing use cases as well as those needed by the [MLCommons AI Safety](https://mlcommons.org/working-groups/ai-safety/ai-safety/) project. However, that project, instead of using a big set of existing tests instead developed a smaller set of custom ones. Because of that, some of this code was moved into the related project [MLCommons ModelBench](https://github.com/mlcommons/modelgauge/) and this repo was archived.
 
 ## Summary
 
